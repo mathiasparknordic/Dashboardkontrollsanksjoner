@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Nordic · Sanksjonsbehandling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --pn-darkblue: #1a2641;
+    --pn-darkblue-soft: #243152;
+    --pn-darkblue-deep: #131b2f;
+    --pn-turkis1: #83bbba;
+    --pn-turkis2: #bcddde;
+    --pn-turkis3: #519a9c;
+    --pn-yellow: #ffcc00;
+    --pn-gray1: #f0f0f0;
+    --pn-gray2: #e3e3e3;
+    --pn-gray3: #dadad9;
+    --pn-gray4: #bcbcbc;
+    --pn-text-muted: #6b7280;
+    --pn-white: #ffffff;
+    --pn-bg: #eaf3f3;
+    --radius: 6px;
+    --radius-lg: 12px;
+    --shadow-soft: 0 2px 12px rgba(26, 38, 65, 0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Saira', sans-serif;
+    background: var(--pn-bg);
+    color: var(--pn-darkblue);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    min-height: 100vh;
+  }
+  button { font-family: inherit; }
+
+  /* ====== LOGIN ====== */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    background: var(--pn-darkblue);
+    position: relative;
+    overflow: hidden;
+  }
+  .login-screen.hidden { display: none; }
+  .login-left {
+    flex: 1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--pn-white);
+    position: relative;
+    z-index: 2;
+  }
+  .login-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(131, 187, 187, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 204, 0, 0.08) 0%, transparent 40%);
+    z-index: -1;
+  }
+  .login-logo {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .login-logo .park { color: var(--pn-turkis1); }
+  .login-tag {
+    font-size: 11px;
+    color: var(--pn-turkis1);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .login-hero h2 {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.05;
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+  .login-hero h2 .accent { color: var(--pn-yellow); }
+  .login-hero p {
+    color: var(--pn-turkis2);
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 440px;
+    margin-bottom: 22px;
+  }
+  .login-values {
+    display: flex;
+    gap: 28px;
+    margin-top: 14px;
+  }
+  .login-values .val {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--pn-turkis1);
+    font-weight: 600;
+    position: relative;
+    padding-left: 14px;
+  }
+  .login-values .val::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 6px; height: 6px;
+    background: var(--pn-yellow);
+    transform: translateY(-50%);
+  }
+  .login-footer { font-size: 11px; color: var(--pn-turkis1); letter-spacing: 0.06em; }
+  .login-right {
+    width: 480px;
+    background: var(--pn-bg);
+    padding: 80px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .login-right h3 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--pn-darkblue);
+  }
+  .login-right .sub {
+    color: var(--pn-text-muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  .field {
+    margin-bottom: 18px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--pn-turkis3);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--pn-gray3);
+    border-radius: var(--radius);
+    background: var(--pn-white);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--pn-darkblue);
+  }
+  .field input:focus {
+    outline: 2px solid var(--pn-turkis3);
+    border-color: var(--pn-turkis3);
+  }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.18s;
+  }
+  .login-btn:hover { background: var(--pn-darkblue-deep); }
+  .login-hint {
+    font-size: 11px;
+    color: var(--pn-text-muted);
+    text-align: center;
+    margin-top: 18px;
+    line-height: 1.5;
+  }
+  .login-hint code {
+    background: var(--pn-gray2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  /* ====== APP SHELL ====== */
+  .app { display: none; min-height: 100vh; }
+  .app.visible { display: flex; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    background: var(--pn-darkblue);
+    color: var(--pn-turkis2);
+    padding: 28px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .logo-wrap {
+    padding: 0 24px 26px 24px;
+    border-bottom: 1px solid rgba(131, 187, 187, 0.18);
+  }
+  .logo {
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    color: var(--pn-white);
+  }
+  .logo .park { color: var(--pn-turkis1); }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--pn-turkis1);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  .nav { padding: 18px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 24px;
+    color: var(--pn-turkis2);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .nav-item:hover { background: var(--pn-darkblue-soft); color: var(--pn-white); }
+  .nav-item.active {
+    background: var(--pn-darkblue-soft);
+    border-left-color: var(--pn-yellow);
+    color: var(--pn-white);
+  }
+  .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--pn-yellow);
+    color: var(--pn-darkblue);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .sidebar-user {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(131, 187, 187, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar {
+    width: 34px; height: 34px;
+    background: var(--pn-turkis3);
+    color: var(--pn-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { color: var(--pn-white); font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--pn-turkis1); text-transform: uppercase; letter-spacing: 0.08em; }
+  .user-logout {
+    background: transparent; border: none;
+    color: var(--pn-turkis1); cursor: pointer;
+    padding: 6px;
+  }
+  .user-logout:hover { color: var(--pn-white); }
+
+  /* MAIN */
+  .main { flex: 1; min-width: 0; }
+  .topbar {
+    background: var(--pn-white);
+    padding: 18px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--pn-turkis2);
+  }
+  .topbar h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--pn-darkblue);
+    letter-spacing: 0.02em;
+  }
+  .topbar h1 .accent { color: var(--pn-turkis3); font-weight: 500; }
+  .top-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-primary {
+    background: var(--pn-yellow);
+    color: var(--pn-darkblue);
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-outline {
+    background: var(--pn-white);
+    border: 1px solid var(--pn-darkblue);
+    color: var(--pn-darkblue);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .btn-outline:hover { background: var(--pn-darkblue); color: var(--pn-white); }
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--pn-darkblue);
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { background: var(--pn-gray1); border-radius: var(--radius); }
+
+  /* Profile dropdown in topbar */
+  .profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px 4px 4px;
+    border-radius: var(--radius);
+    transition: background 0.15s;
+    position: relative;
+    margin-left: 6px;
+  }
+  .profile-trigger:hover { background: var(--pn-gray1); }
+  .profile-avatar {
+    width: 34px; height: 34px;
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .profile-chev { color: var(--pn-text-muted); }
+  .profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 240px;
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 32px rgba(19, 27, 47, 0.18);
+    overflow: hidden;
+    display: none;
+    z-index: 50;
+    border: 1px solid var(--pn-gray2);
+  }
+  .profile-menu.open { display: block; animation: fadeIn 0.18s; }
+  .profile-menu-head {
+    padding: 14px 16px;
+    background: var(--pn-bg);
+    border-bottom: 1px solid var(--pn-gray2);
+  }
+  .profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    color: var(--pn-darkblue);
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .profile-menu-item:hover { background: var(--pn-bg); }
+  .profile-menu-item.logout-item {
+    border-top: 1px solid var(--pn-gray2);
+    color: #9b1c1c;
+  }
+  .profile-menu-item svg { flex-shrink: 0; color: var(--pn-turkis3); }
+  .profile-menu-item.logout-item svg { color: #9b1c1c; }
+
+  .content { padding: 28px 36px 60px 36px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.32s ease-out; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== DROP ZONE HERO ====== */
+  .dropzone-hero {
+    background: linear-gradient(135deg, var(--pn-darkblue) 0%, var(--pn-darkblue-soft) 60%, #2a3960 100%);
+    color: var(--pn-white);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 32px;
+    align-items: center;
+  }
+  .dropzone-hero::before {
+    content: '';
+    position: absolute;
+    right: -80px;
+    bottom: -120px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(131, 187, 187, 0.18) 0%, transparent 70%);
+  }
+  .dropzone-text { position: relative; z-index: 1; }
+  .dropzone-text .label {
+    font-size: 11px;
+    color: var(--pn-yellow);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .dropzone-text h2 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .dropzone-text p {
+    color: var(--pn-turkis2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .dropzone {
+    border: 2px dashed var(--pn-turkis1);
+    border-radius: 10px;
+    padding: 36px 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(131, 187, 187, 0.08);
+    position: relative;
+    z-index: 1;
+  }
+  .dropzone:hover, .dropzone.drag-active {
+    border-color: var(--pn-yellow);
+    background: rgba(255, 204, 0, 0.08);
+    transform: scale(1.01);
+  }
+  .dropzone .icon {
+    width: 48px; height: 48px;
+    margin: 0 auto 14px auto;
+    color: var(--pn-yellow);
+  }
+  .dropzone .main-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--pn-white);
+    margin-bottom: 6px;
+  }
+  .dropzone .main-text strong {
+    color: var(--pn-yellow);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .dropzone .sub-text {
+    font-size: 12px;
+    color: var(--pn-turkis2);
+    letter-spacing: 0.04em;
+  }
+  .dropzone input { display: none; }
+
+  /* ====== KPI ====== */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--pn-white);
+    padding: 20px 22px;
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--pn-turkis1);
+    box-shadow: var(--shadow-soft);
+  }
+  .kpi.accent-yellow { border-left-color: var(--pn-yellow); }
+  .kpi.accent-dark { border-left-color: var(--pn-darkblue); }
+  .kpi.accent-turkis3 { border-left-color: var(--pn-turkis3); }
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pn-turkis3);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--pn-darkblue);
+    line-height: 1;
+  }
+  .kpi-unit { font-size: 14px; font-weight: 500; color: var(--pn-gray4); margin-left: 4px; }
+  .kpi-sub { margin-top: 6px; font-size: 12px; color: var(--pn-text-muted); }
+  .kpi-sub .up { color: #c47b00; font-weight: 600; }
+  .kpi-sub .down { color: #2e8b57; font-weight: 600; }
+
+  /* ====== BATCH STATUS CARDS ====== */
+  .batch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .batch-card {
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .batch-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: var(--pn-turkis3);
+  }
+  .batch-card.economy::before { background: var(--pn-yellow); }
+  .batch-card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .batch-card .head .title-block .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--pn-text-muted);
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .batch-card .head .title-block .name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--pn-darkblue);
+  }
+  .batch-card .head .title-block .sub {
+    font-size: 12px;
+    color: var(--pn-text-muted);
+    margin-top: 2px;
+  }
+  .batch-card .status-tag {
+    background: var(--pn-turkis2);
+    color: var(--pn-darkblue);
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 4px;
+  }
+  .batch-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 0;
+    border-top: 1px solid var(--pn-gray2);
+    border-bottom: 1px solid var(--pn-gray2);
+  }
+  .batch-stat .num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pn-darkblue);
+    line-height: 1;
+  }
+  .batch-stat .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pn-text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .batch-recipient {
+    font-size: 12px;
+    color: var(--pn-text-muted);
+    margin-bottom: 12px;
+  }
+  .batch-recipient strong { color: var(--pn-darkblue); font-weight: 600; }
+  .batch-actions { display: flex; gap: 8px; }
+  .batch-card .send-info {
+    font-size: 12px;
+    color: var(--pn-text-muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--pn-turkis3);
+    box-shadow: 0 0 0 0 rgba(81, 154, 156, 0.6);
+    animation: pulse 2s infinite;
+  }
+  .batch-card.economy .pulse-dot { background: var(--pn-yellow); box-shadow: 0 0 0 0 rgba(255,204,0,0.6); }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(81, 154, 156, 0.55); }
+    70% { box-shadow: 0 0 0 8px rgba(81, 154, 156, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(81, 154, 156, 0); }
+  }
+
+  /* ====== PANELS ====== */
+  .panel {
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-soft);
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pn-darkblue);
+  }
+  .panel-meta { font-size: 12px; color: var(--pn-text-muted); }
+  .accent-bar {
+    display: inline-block;
+    width: 22px;
+    height: 3px;
+    background: var(--pn-yellow);
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+
+  /* ====== TABLE ====== */
+  .table-wrap {
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+  .table-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--pn-gray2);
+  }
+  .filter-group {
+    display: flex;
+    background: var(--pn-bg);
+    border-radius: var(--radius);
+    padding: 3px;
+    gap: 2px;
+  }
+  .filter-btn {
+    background: transparent;
+    border: none;
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pn-darkblue);
+    cursor: pointer;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .filter-btn.active { background: var(--pn-darkblue); color: var(--pn-white); }
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.data thead th {
+    text-align: left;
+    padding: 11px 24px;
+    background: var(--pn-bg);
+    font-weight: 600;
+    color: var(--pn-darkblue);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--pn-gray2);
+  }
+  table.data tbody td {
+    padding: 13px 24px;
+    border-bottom: 1px solid var(--pn-gray1);
+    color: var(--pn-darkblue);
+  }
+  table.data tbody tr { cursor: pointer; transition: background 0.12s; }
+  table.data tbody tr:hover { background: var(--pn-bg); }
+  table.data .blanket { font-weight: 600; font-variant-numeric: tabular-nums; }
+  table.data .regnr {
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    display: inline-block;
+  }
+  .anlegg-nr {
+    background: var(--pn-turkis2);
+    color: var(--pn-darkblue);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    display: inline-block;
+    margin-right: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.data .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .pill.pn { background: #fff4cc; color: #8a6500; }
+  .pill.leie { background: var(--pn-turkis2); color: var(--pn-darkblue); }
+  .pill.sent { background: #d1efe1; color: #1d6d44; }
+  .pill.pending { background: var(--pn-gray2); color: var(--pn-darkblue); }
+
+  /* ====== MODAL ====== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(19, 27, 47, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    width: 720px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.25s ease-out;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-head {
+    padding: 22px 28px;
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .modal-head .head-text .lbl {
+    font-size: 11px;
+    color: var(--pn-yellow);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .modal-head h3 {
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--pn-turkis1);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0;
+  }
+  .modal-close:hover { color: var(--pn-white); }
+  .modal-body { padding: 26px 28px; }
+  .modal-foot {
+    padding: 16px 28px;
+    background: var(--pn-bg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .extracted-banner {
+    background: linear-gradient(90deg, rgba(131,187,187,0.18) 0%, rgba(255,204,0,0.10) 100%);
+    border-left: 3px solid var(--pn-turkis3);
+    padding: 12px 14px;
+    border-radius: 4px;
+    margin-bottom: 22px;
+    font-size: 13px;
+    color: var(--pn-darkblue);
+  }
+  .extracted-banner strong { font-weight: 600; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 24px;
+    margin-bottom: 20px;
+  }
+  .info-row .lbl {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pn-turkis3);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .info-row .val {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--pn-darkblue);
+  }
+  .info-row .val.lg { font-size: 22px; font-weight: 700; }
+  .divider { height: 1px; background: var(--pn-gray2); margin: 20px 0; }
+
+  .choice-block {
+    margin-bottom: 8px;
+  }
+  .choice-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pn-darkblue);
+    margin-bottom: 12px;
+  }
+  .choice-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .choice {
+    border: 2px solid var(--pn-gray2);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: var(--pn-white);
+    position: relative;
+  }
+  .choice:hover { border-color: var(--pn-turkis1); }
+  .choice.selected {
+    border-color: var(--pn-darkblue);
+    background: linear-gradient(135deg, rgba(131,187,187,0.10) 0%, rgba(255,204,0,0.06) 100%);
+  }
+  .choice.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 12px; right: 12px;
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .choice .ch-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--pn-darkblue);
+  }
+  .choice .ch-desc {
+    font-size: 12px;
+    color: var(--pn-text-muted);
+    line-height: 1.5;
+  }
+  .choice .ch-icon {
+    width: 32px; height: 32px;
+    margin-bottom: 10px;
+    color: var(--pn-turkis3);
+  }
+  .choice.selected .ch-icon { color: var(--pn-darkblue); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  .field-lbl {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pn-turkis3);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field-input {
+    width: 100%;
+    border: 1px solid var(--pn-gray3);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--pn-darkblue);
+    background: var(--pn-white);
+  }
+  textarea.field-input { resize: vertical; min-height: 70px; }
+  .field-input:focus { outline: 2px solid var(--pn-turkis3); border-color: var(--pn-turkis3); }
+  .leie-fields { display: none; padding-top: 4px; }
+  .leie-fields.visible { display: block; animation: fadeIn 0.25s; }
+
+  /* ====== BATCH PREVIEW PAGE ====== */
+  .preview-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid var(--pn-gray2);
+  }
+  .preview-tab {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pn-text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+  .preview-tab.active {
+    color: var(--pn-darkblue);
+    border-bottom-color: var(--pn-yellow);
+  }
+  .preview-tab .badge {
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+  .preview-section { display: none; }
+  .preview-section.active { display: block; }
+
+  .preview-summary {
+    background: var(--pn-white);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+  .preview-summary .item .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--pn-text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .preview-summary .item .val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--pn-darkblue);
+  }
+  .preview-summary .item .val.email {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--pn-darkblue);
+    word-break: break-all;
+  }
+  .send-btn {
+    background: var(--pn-darkblue);
+    color: var(--pn-white);
+    border: none;
+    padding: 12px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .send-btn:hover { background: var(--pn-darkblue-deep); }
+
+  /* responsive */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .dropzone-hero { grid-template-columns: 1fr; }
+    .batch-grid { grid-template-columns: 1fr; }
+    .preview-summary { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-left">
+    <div>
+      <div class="login-logo"><span class="park">park</span> nordic</div>
+      <div class="login-tag">Sanksjonsbehandling</div>
+    </div>
+
+    <div class="login-hero">
+      <h2>P for <span class="accent">parkering</span><br>– ikke for problemer.</h2>
+      <p>Internt verktøy for innbetalings­håndtering av kontrollsanksjoner.
+        Last opp PDF-blankett, velg behandling, og la systemet samle ukens utsendelse til Riverty og økonomi.</p>
+      <div class="login-values">
+        <span class="val">Tydelig</span>
+        <span class="val">Trivelig</span>
+        <span class="val">Tilgjengelig</span>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      © PARK NORDIC AS · 992 532 920 · INTERNT VERKTØY
+    </div>
+  </div>
+
+  <div class="login-right">
+    <h3>Logg inn</h3>
+    <p class="sub">Tilgang kun for administrasjonen.</p>
+
+    <div id="loginError" style="display: none; background: #fde8e8; color: #9b1c1c; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; border-left: 3px solid #9b1c1c;"></div>
+
+    <form onsubmit="event.preventDefault(); doLogin();">
+      <div class="field">
+        <label>E-postadresse</label>
+        <input type="email" id="loginEmail" placeholder="navn@parknordic.no" value="mathias@parknordic.no" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Passord</label>
+        <input type="password" id="loginPw" placeholder="••••••••" value="nordic1234" autocomplete="current-password">
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+        <a href="#" onclick="event.preventDefault(); openForgotPwd();" style="font-size: 12px; color: var(--pn-turkis3); text-decoration: none; font-weight: 500;">Glemt passord?</a>
+      </div>
+      <button type="submit" class="login-btn">Logg inn</button>
+    </form>
+    <div class="login-hint">
+      Demo: bruk en av disse @parknordic.no-brukerne:<br>
+      <code>fredrik, sten, ambjorg, isabelle, anders, kim, mathias, inger, britt, heshmat</code><br>
+      Passord: <code>nordic1234</code>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GLEMT PASSORD MODAL ===================== -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal" style="width: 480px;">
+    <div class="modal-head">
+      <div class="head-text">
+        <div class="lbl">Kontogjenoppretting</div>
+        <h3>Glemt passord?</h3>
+      </div>
+      <button class="modal-close" onclick="closeForgotPwd()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--pn-text-muted); font-size: 14px; margin-bottom: 18px; line-height: 1.55;">
+        Skriv inn e-postadressen din, så sender vi en lenke for å sette et nytt passord.
+      </p>
+      <div class="field" style="margin-bottom: 4px;">
+        <label class="field-lbl">E-postadresse</label>
+        <input type="email" id="forgotEmail" class="field-input" placeholder="navn@parknordic.no">
+      </div>
+      <div id="forgotResult" style="display: none; padding: 12px 14px; border-radius: 6px; margin-top: 14px; font-size: 13px; line-height: 1.5;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeForgotPwd()">Avbryt</button>
+      <button class="btn-primary" onclick="submitForgotPwd()">Send gjenopprettingslenke</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ENDRE PASSORD MODAL ===================== -->
+<div class="modal-overlay" id="changePwdModal">
+  <div class="modal" style="width: 480px;">
+    <div class="modal-head">
+      <div class="head-text">
+        <div class="lbl">Kontosikkerhet</div>
+        <h3>Endre passord</h3>
+      </div>
+      <button class="modal-close" onclick="closeChangePwd()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--pn-text-muted); font-size: 13px; margin-bottom: 18px;">
+        Pålogget som <strong style="color: var(--pn-darkblue);" data-user-email>—</strong>
+      </p>
+      <div class="field">
+        <label class="field-lbl">Nåværende passord</label>
+        <input type="password" id="cpCurrent" class="field-input" autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Nytt passord <span style="text-transform: none; color: var(--pn-text-muted); letter-spacing: 0; font-weight: 400;">(minst 8 tegn)</span></label>
+        <input type="password" id="cpNew" class="field-input" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Bekreft nytt passord</label>
+        <input type="password" id="cpConfirm" class="field-input" autocomplete="new-password">
+      </div>
+      <div id="changePwdResult" style="display: none; padding: 10px 14px; border-radius: 6px; margin-top: 8px; font-size: 13px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeChangePwd()">Avbryt</button>
+      <button class="btn-primary" onclick="submitChangePwd()">Lagre nytt passord</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div class="app" id="app">
+
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><span class="park">park</span> nordic</div>
+    <div class="logo-sub">Sanksjonsbehandling</div>
+  </div>
+  <nav class="nav">
+    <a class="nav-item active" data-page="dashboard">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" data-page="sanctions">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Sanksjoner
+    </a>
+    <a class="nav-item" data-page="anlegg">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Anlegg
+    </a>
+    <a class="nav-item" data-page="weekly">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Ukens utsendelse
+      <span class="nav-badge">2</span>
+    </a>
+    <a class="nav-item" data-page="settings">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Innstillinger
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar" data-user-initialer>MF</div>
+    <div class="user-info">
+      <div class="user-name" data-user-name>Mathias Frøholm</div>
+      <div class="user-role" data-user-rolle>Admin</div>
+    </div>
+    <button class="user-logout" onclick="doLogout()" title="Logg ut">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="page active" id="page-dashboard">
+    <div class="topbar">
+      <h1><span class="accent">Sanksjons­behandling</span> · Dashboard</h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="goTo('weekly')">Forhåndsvis ukens utsendelse</button>
+        <button class="btn-primary" onclick="document.getElementById('pdfInput').click()">+ Last opp PDF</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DROP ZONE HERO -->
+      <div class="dropzone-hero">
+        <div class="dropzone-text">
+          <div class="label">Hovedhandling</div>
+          <h2>Slipp PDF-blankett her<br>– resten ordner systemet.</h2>
+          <p>Systemet leser ileggelsen, du velger om sanksjonen skal dekkes av Park Nordic eller trekkes fra leieberegningen. Ukens samlinger sendes automatisk hver fredag.</p>
+        </div>
+
+        <label class="dropzone" id="dropzone" for="pdfInput">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="main-text">Dra og slipp PDF her, eller <strong>velg fil</strong></div>
+          <div class="sub-text">Støtter blanketter fra Park Nordic ileggelsessystem · maks 10 MB</div>
+          <input type="file" id="pdfInput" accept="application/pdf" multiple>
+        </label>
+      </div>
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi accent-yellow">
+          <div class="kpi-label">Sanksjoner denne måneden</div>
+          <div class="kpi-value">12</div>
+          <div class="kpi-sub">forrige uke: <span class="up">5</span></div>
+        </div>
+        <div class="kpi accent-dark">
+          <div class="kpi-label">Total beløp · måned</div>
+          <div class="kpi-value">7 920<span class="kpi-unit">kr</span></div>
+          <div class="kpi-sub">snitt 660 kr per sanksjon</div>
+        </div>
+        <div class="kpi accent-turkis3">
+          <div class="kpi-label">Trekkes fra leie</div>
+          <div class="kpi-value">9</div>
+          <div class="kpi-sub">5 940 kr · 75 % av total</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">PN dekker selv</div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-sub">1 980 kr · 25 % av total</div>
+        </div>
+      </div>
+
+      <!-- BATCH STATUS -->
+      <div class="batch-grid">
+
+        <div class="batch-card">
+          <div class="head">
+            <div class="title-block">
+              <div class="lbl">Ukens batch · 1</div>
+              <div class="name">Til Riverty</div>
+              <div class="sub">Alle sanksjoner som skal innkreves</div>
+            </div>
+            <span class="status-tag">Klar</span>
+          </div>
+
+          <div class="batch-stats">
+            <div class="batch-stat"><div class="num">12</div><div class="lbl">Sanksjoner</div></div>
+            <div class="batch-stat"><div class="num">7 920</div><div class="lbl">Beløp (kr)</div></div>
+            <div class="batch-stat"><div class="num">4</div><div class="lbl">Anlegg</div></div>
+          </div>
+
+          <div class="send-info">
+            <span class="pulse-dot"></span>
+            Sendes automatisk <strong style="color:var(--pn-darkblue); font-weight: 600;">fredag 15.05 kl. 08:00</strong>
+          </div>
+
+          <div class="batch-recipient">
+            Mottaker: <strong>parkering@riverty.no</strong><br>
+            Format: Excel-fil med sanksjonsnummer
+          </div>
+
+          <div class="batch-actions">
+            <button class="btn-outline" onclick="goTo('weekly')">Forhåndsvis</button>
+            <button class="btn-ghost">Send nå</button>
+          </div>
+        </div>
+
+        <div class="batch-card economy">
+          <div class="head">
+            <div class="title-block">
+              <div class="lbl">Ukens batch · 2</div>
+              <div class="name">Til Økonomi (intern)</div>
+              <div class="sub">Sanksjoner som trekkes fra leieberegning per anlegg</div>
+            </div>
+            <span class="status-tag" style="background: #fff4cc; color: #8a6500;">Klar</span>
+          </div>
+
+          <div class="batch-stats">
+            <div class="batch-stat"><div class="num">9</div><div class="lbl">Sanksjoner</div></div>
+            <div class="batch-stat"><div class="num">5 940</div><div class="lbl">Beløp (kr)</div></div>
+            <div class="batch-stat"><div class="num">3</div><div class="lbl">Anlegg</div></div>
+          </div>
+
+          <div class="send-info">
+            <span class="pulse-dot"></span>
+            Sendes automatisk <strong style="color:var(--pn-darkblue); font-weight: 600;">fredag 15.05 kl. 08:00</strong>
+          </div>
+
+          <div class="batch-recipient">
+            Mottaker: <strong>okonomi@parknordic.no</strong><br>
+            Format: Excel med beløp, anleggsnr. og navn
+          </div>
+
+          <div class="batch-actions">
+            <button class="btn-outline" onclick="goTo('weekly')">Forhåndsvis</button>
+            <button class="btn-ghost">Send nå</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <div class="table-header-bar">
+          <div class="panel-title"><span class="accent-bar"></span>Siste opplastede sanksjoner</div>
+          <div class="filter-group">
+            <button class="filter-btn active">Alle</button>
+            <button class="filter-btn">PN dekker</button>
+            <button class="filter-btn">Trekkes fra leie</button>
+          </div>
+        </div>
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Blankett</th>
+              <th>Lastet opp</th>
+              <th>Reg.nr.</th>
+              <th>Anlegg</th>
+              <th>Beløp</th>
+              <th>Behandling</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="openSanctionDetail('6000659')">
+              <td class="blanket">6000659</td>
+              <td>12.05.2026 09:42</td>
+              <td><span class="regnr">NF78345</span></td>
+              <td><span class="anlegg-nr">11609</span> Ringkollen 13-24, Sandefjord</td>
+              <td class="amount">660 kr</td>
+              <td><span class="pill leie">Trekkes fra leie</span></td>
+              <td><span class="pill pending">Venter på utsendelse</span></td>
+            </tr>
+            <tr onclick="openSanctionDetail('6000658')">
+              <td class="blanket">6000658</td>
+              <td>11.05.2026 14:18</td>
+              <td><span class="regnr">EK29104</span></td>
+              <td><span class="anlegg-nr">11720</span> Brynsengveien 2 Garasje</td>
+              <td class="amount">660 kr</td>
+              <td><span class="pill leie">Trekkes fra leie</span></td>
+              <td><span class="pill pending">Venter på utsendelse</span></td>
+            </tr>
+            <tr onclick="openSanctionDetail('6000657')">
+              <td class="blanket">6000657</td>
+              <td>10.05.2026 11:03</td>
+              <td><span class="regnr">SB44782</span></td>
+              <td><span class="anlegg-nr">11659</span> Holbergsgate 21</td>
+              <td class="amount">660 kr</td>
+              <td><span class="pill pn">PN dekker</span></td>
+              <td><span class="pill pending">Venter på utsendelse</span></td>
+            </tr>
+            <tr onclick="openSanctionDetail('6000656')">
+              <td class="blanket">6000656</td>
+              <td>09.05.2026 16:55</td>
+              <td><span class="regnr">DT19283</span></td>
+              <td><span class="anlegg-nr">10272</span> Skøyen Atrium, Oslo</td>
+              <td class="amount">330 kr</td>
+              <td><span class="pill leie">Trekkes fra leie</span></td>
+              <td><span class="pill sent">Sendt 09.05</span></td>
+            </tr>
+            <tr onclick="openSanctionDetail('6000655')">
+              <td class="blanket">6000655</td>
+              <td>08.05.2026 10:21</td>
+              <td><span class="regnr">HM52910</span></td>
+              <td><span class="anlegg-nr">11609</span> Ringkollen 13-24, Sandefjord</td>
+              <td class="amount">660 kr</td>
+              <td><span class="pill leie">Trekkes fra leie</span></td>
+              <td><span class="pill sent">Sendt 09.05</span></td>
+            </tr>
+            <tr onclick="openSanctionDetail('6000654')">
+              <td class="blanket">6000654</td>
+              <td>07.05.2026 08:33</td>
+              <td><span class="regnr">BR84219</span></td>
+              <td><span class="anlegg-nr">10166</span> Holberg P-Hus</td>
+              <td class="amount">660 kr</td>
+              <td><span class="pill pn">PN dekker</span></td>
+              <td><span class="pill sent">Sendt 09.05</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ WEEKLY PREVIEW ============ -->
+  <div class="page" id="page-weekly">
+    <div class="topbar">
+      <h1><span class="accent">Ukens utsendelse</span> · Uke 20 (12.–18. mai 2026)</h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="goTo('dashboard')">← Tilbake</button>
+        <button class="btn-primary">Send begge nå</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="preview-tabs">
+        <button class="preview-tab active" onclick="switchPreview(0, this)">
+          Til Riverty <span class="badge">12</span>
+        </button>
+        <button class="preview-tab" onclick="switchPreview(1, this)">
+          Til Økonomi (intern) <span class="badge">9</span>
+        </button>
+      </div>
+
+      <!-- RIVERTY PREVIEW -->
+      <div class="preview-section active">
+        <div class="preview-summary">
+          <div class="item">
+            <div class="lbl">Mottaker</div>
+            <div class="val email">parkering@riverty.no</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sanksjoner</div>
+            <div class="val">12</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sum beløp</div>
+            <div class="val">7 920 kr</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sendes</div>
+            <div class="val">fre 15.05 · 08:00</div>
+          </div>
+          <button class="send-btn">Send nå</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning av Excel-fil</div>
+            <div class="panel-meta">riverty_uke20_2026.xlsx</div>
+          </div>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Sanksjonsnr.</th>
+                <th>Ileggelsesdato</th>
+                <th>Reg.nr.</th>
+                <th>Anlegg</th>
+                <th>Avvik</th>
+                <th>Beløp</th>
+                <th>KID</th>
+                <th>Forfall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="blanket">6000659</td><td>05.03.2026</td><td><span class="regnr">NF78345</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert for MC</td><td class="amount">660</td><td>311200060006590</td><td>26.03.26</td></tr>
+              <tr><td class="blanket">6000658</td><td>10.05.2026</td><td><span class="regnr">EK29104</span></td><td><span class="anlegg-nr">11720</span> Brynsengveien 2</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006580</td><td>31.05.26</td></tr>
+              <tr><td class="blanket">6000657</td><td>10.05.2026</td><td><span class="regnr">SB44782</span></td><td><span class="anlegg-nr">11659</span> Holbergsgate 21</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006570</td><td>31.05.26</td></tr>
+              <tr><td class="blanket">6000653</td><td>06.05.2026</td><td><span class="regnr">CK77104</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert plass</td><td class="amount">660</td><td>311200060006530</td><td>27.05.26</td></tr>
+              <tr><td class="blanket">6000652</td><td>05.05.2026</td><td><span class="regnr">JR12440</span></td><td><span class="anlegg-nr">11720</span> Brynsengveien 2</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006520</td><td>26.05.26</td></tr>
+              <tr><td class="blanket">6000651</td><td>04.05.2026</td><td><span class="regnr">NV60338</span></td><td><span class="anlegg-nr">10272</span> Skøyen Atrium</td><td>Utenfor oppmerket</td><td class="amount">660</td><td>311200060006510</td><td>25.05.26</td></tr>
+              <tr><td class="blanket">6000650</td><td>02.05.2026</td><td><span class="regnr">PV34902</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert plass</td><td class="amount">660</td><td>311200060006500</td><td>23.05.26</td></tr>
+              <tr><td colspan="8" style="background: var(--pn-bg); padding: 12px 24px; font-size: 12px; color: var(--pn-text-muted); text-align: center;">+ 5 sanksjoner til</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ECONOMY PREVIEW -->
+      <div class="preview-section">
+        <div class="preview-summary">
+          <div class="item">
+            <div class="lbl">Mottaker</div>
+            <div class="val email">okonomi@parknordic.no</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sanksjoner</div>
+            <div class="val">9</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sum beløp</div>
+            <div class="val">5 940 kr</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Sendes</div>
+            <div class="val">fre 15.05 · 08:00</div>
+          </div>
+          <button class="send-btn">Send nå</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning av Excel-fil</div>
+            <div class="panel-meta">leiefradrag_uke20_2026.xlsx</div>
+          </div>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Anleggsnr.</th>
+                <th>Anleggsnavn</th>
+                <th>Sanksjonsnr.</th>
+                <th>Dato</th>
+                <th>Reg.nr.</th>
+                <th>Beløp</th>
+                <th>Begrunnelse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="blanket">11609</td>
+                <td>Ringkollen 13-24, Sandefjord</td>
+                <td>6000659</td>
+                <td>05.03.26</td>
+                <td><span class="regnr">NF78345</span></td>
+                <td class="amount">660</td>
+                <td>Leietaker glemte reg.</td>
+              </tr>
+              <tr>
+                <td class="blanket">11609</td>
+                <td>Ringkollen 13-24, Sandefjord</td>
+                <td>6000653</td>
+                <td>06.05.26</td>
+                <td><span class="regnr">CK77104</span></td>
+                <td class="amount">660</td>
+                <td>Avtale med gårdeier</td>
+              </tr>
+              <tr>
+                <td class="blanket">11609</td>
+                <td>Ringkollen 13-24, Sandefjord</td>
+                <td>6000650</td>
+                <td>02.05.26</td>
+                <td><span class="regnr">PV34902</span></td>
+                <td class="amount">660</td>
+                <td>Leietaker glemte reg.</td>
+              </tr>
+              <tr>
+                <td class="blanket">11720</td>
+                <td>Brynsengveien 2 Garasje</td>
+                <td>6000658</td>
+                <td>10.05.26</td>
+                <td><span class="regnr">EK29104</span></td>
+                <td class="amount">660</td>
+                <td>Leietaker glemte reg.</td>
+              </tr>
+              <tr>
+                <td class="blanket">11720</td>
+                <td>Brynsengveien 2 Garasje</td>
+                <td>6000652</td>
+                <td>05.05.26</td>
+                <td><span class="regnr">JR12440</span></td>
+                <td class="amount">660</td>
+                <td>Leietaker glemte reg.</td>
+              </tr>
+              <tr>
+                <td class="blanket">10272</td>
+                <td>Skøyen Atrium, Oslo</td>
+                <td>6000651</td>
+                <td>04.05.26</td>
+                <td><span class="regnr">NV60338</span></td>
+                <td class="amount">660</td>
+                <td>Avtale med gårdeier</td>
+              </tr>
+              <tr style="background: var(--pn-bg); font-weight: 600;">
+                <td colspan="5" style="text-align: right;">Sum:</td>
+                <td class="amount">5 940 kr</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ SANKSJONER (full list) ============ -->
+  <div class="page" id="page-sanctions">
+    <div class="topbar">
+      <h1><span class="accent">Alle</span> sanksjoner</h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="goTo('dashboard')">← Dashboard</button>
+        <button class="btn-primary" onclick="document.getElementById('pdfInput').click()">+ Last opp PDF</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="panel"><div style="color: var(--pn-text-muted)">Full sanksjonsliste med søk, filter på status/anlegg/dato, og masseopplasting – ikke i mockup.</div></div>
+    </div>
+  </div>
+
+  <!-- ============ ANLEGG ============ -->
+  <div class="page" id="page-anlegg">
+    <div class="topbar">
+      <h1><span class="accent">Anleggsregister</span> · <span id="anleggCount">608</span> anlegg</h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="goTo('dashboard')">← Dashboard</button>
+        <button class="btn-outline">Importer fra Excel</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="panel" style="margin-bottom: 16px;">
+        <input type="text" id="anleggSearch" placeholder="Søk på anleggsnr. eller navn... (608 anlegg)"
+               class="field-input"
+               style="font-size: 16px; padding: 14px 18px;"
+               oninput="filterAnlegg(this.value)">
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width: 110px;">Nr.</th>
+              <th>Anleggsnavn</th>
+              <th style="width: 140px;">Sanksjoner YTD</th>
+              <th style="width: 140px;">Trukket fra leie</th>
+              <th style="width: 80px;"></th>
+            </tr>
+          </thead>
+          <tbody id="anleggTableBody">
+            <!-- Fylles dynamisk -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="page" id="page-settings">
+    <div class="topbar">
+      <h1><span class="accent">Innstillinger</span></h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="goTo('dashboard')">← Dashboard</button>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- Min konto -->
+      <div class="panel" style="max-width: 760px; margin-bottom: 18px;">
+        <div class="panel-header">
+          <div class="panel-title"><span class="accent-bar"></span>Min konto</div>
+        </div>
+        <div class="info-grid" style="margin-bottom: 16px;">
+          <div class="info-row">
+            <div class="lbl">Navn</div>
+            <div class="val" data-user-name>—</div>
+          </div>
+          <div class="info-row">
+            <div class="lbl">E-post / brukernavn</div>
+            <div class="val" data-user-email>—</div>
+          </div>
+          <div class="info-row">
+            <div class="lbl">Rolle</div>
+            <div class="val" data-user-rolle>—</div>
+          </div>
+          <div class="info-row">
+            <div class="lbl">Passord</div>
+            <div class="val">
+              <button class="btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="openChangePwd()">Endre passord</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mottakere -->
+      <div class="panel" style="max-width: 760px; margin-bottom: 18px;">
+        <div class="panel-header">
+          <div class="panel-title"><span class="accent-bar"></span>Mottakere for ukentlige utsendelser</div>
+          <div class="panel-meta">Endres av alle med admin-tilgang</div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="field-lbl">Riverty (innkreving)</label>
+            <input class="field-input" type="email" value="parkering@riverty.no">
+          </div>
+          <div>
+            <label class="field-lbl">Økonomi (internt)</label>
+            <input class="field-input" type="email" value="okonomi@parknordic.no">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="field-lbl">Utsendelsesdag</label>
+            <select class="field-input">
+              <option>Mandag</option>
+              <option>Tirsdag</option>
+              <option>Onsdag</option>
+              <option>Torsdag</option>
+              <option selected>Fredag</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-lbl">Tidspunkt</label>
+            <input class="field-input" type="time" value="08:00">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div>
+            <label class="field-lbl">Ekstra mottakere i kopi (valgfritt)</label>
+            <input class="field-input" placeholder="navn@parknordic.no, navn2@parknordic.no">
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 10px;">
+          <button class="btn-primary">Lagre endringer</button>
+        </div>
+      </div>
+
+      <!-- Rapporter -->
+      <div class="panel" style="max-width: 760px; margin-bottom: 18px;">
+        <div class="panel-header">
+          <div class="panel-title"><span class="accent-bar"></span>Ta ut rapport</div>
+        </div>
+        <p style="color: var(--pn-text-muted); font-size: 13px; margin-bottom: 16px;">
+          Eksporter en Excel-rapport over sanksjoner for valgt periode og anlegg.
+        </p>
+
+        <div class="form-row">
+          <div>
+            <label class="field-lbl">Periode</label>
+            <select class="field-input" id="reportPeriod" onchange="toggleReportRange()">
+              <option value="ytd">YTD (hittil i år)</option>
+              <option value="month">Denne måneden</option>
+              <option value="lastmonth">Forrige måned</option>
+              <option value="lastyear">Hele 2025</option>
+              <option value="custom">Egendefinert periode...</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-lbl">Behandling</label>
+            <select class="field-input">
+              <option>Alle</option>
+              <option>Trekkes fra leie</option>
+              <option>PN dekker</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row" id="reportRange" style="display: none;">
+          <div>
+            <label class="field-lbl">Fra dato</label>
+            <input class="field-input" type="date" value="2026-01-01">
+          </div>
+          <div>
+            <label class="field-lbl">Til dato</label>
+            <input class="field-input" type="date" value="2026-05-12">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div style="position: relative;">
+            <label class="field-lbl">Anlegg</label>
+            <select class="field-input" id="reportAnleggMode" onchange="toggleReportAnlegg()">
+              <option value="all">Alle anlegg (608)</option>
+              <option value="single">Velg ett anlegg...</option>
+              <option value="multi">Velg flere anlegg...</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-lbl">Format</label>
+            <select class="field-input">
+              <option>Excel (.xlsx)</option>
+              <option>CSV</option>
+              <option>PDF-sammendrag</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="reportAnleggSingle" style="display: none; margin-bottom: 14px; position: relative;">
+          <label class="field-lbl">Søk anlegg</label>
+          <input class="field-input" id="reportAnleggSearch" autocomplete="off"
+                 placeholder="Søk på nr. eller navn..."
+                 oninput="searchReportAnlegg(this.value)" onfocus="searchReportAnlegg(this.value)">
+          <div id="reportAnleggSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--pn-white); border: 1px solid var(--pn-gray3); border-top: none; border-radius: 0 0 var(--radius) var(--radius); max-height: 220px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08);"></div>
+          <div id="reportAnleggSelected" style="margin-top: 8px; font-size: 13px; color: var(--pn-darkblue);"></div>
+        </div>
+
+        <div style="background: var(--pn-bg); padding: 14px 16px; border-radius: 6px; font-size: 13px; color: var(--pn-darkblue); margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pn-turkis3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Estimert antall sanksjoner i rapporten: <strong id="reportEstimate">47</strong> (samlet beløp 31&nbsp;020 kr)</span>
+        </div>
+
+        <div style="text-align: right;">
+          <button class="btn-outline" style="margin-right: 8px;">Forhåndsvis</button>
+          <button class="btn-primary">Last ned rapport</button>
+        </div>
+      </div>
+
+      <!-- Brukere (kun synlig info) -->
+      <div class="panel" style="max-width: 760px;">
+        <div class="panel-header">
+          <div class="panel-title"><span class="accent-bar"></span>Brukere med tilgang</div>
+          <div class="panel-meta">10 brukere · adm. av IT</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 18px;">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">FR</div> Fredrik</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">ST</div> Sten</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">AM</div> Ambjørg</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">IS</div> Isabelle</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">AN</div> Anders</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">KI</div> Kim</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">MA</div> Mathias</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">IN</div> Inger</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">BR</div> Britt</div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><div class="profile-avatar" style="width: 28px; height: 28px; font-size: 11px;">HE</div> Heshmat</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="head-text">
+        <div class="lbl">PDF lastet opp · 1 av 1</div>
+        <h3>Bekreft og velg behandling</h3>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="extracted-banner">
+        <strong>Data hentet automatisk fra blankett</strong> – kontroller og juster om nødvendig før lagring.
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row"><div class="lbl">Sanksjonsnr.</div><div class="val">6000659</div></div>
+        <div class="info-row"><div class="lbl">Beløp</div><div class="val lg">660 kr</div></div>
+        <div class="info-row"><div class="lbl">Ileggelse</div><div class="val">05.03.2026 kl. 11:00</div></div>
+        <div class="info-row"><div class="lbl">Betalingsfrist</div><div class="val">26.03.2026</div></div>
+        <div class="info-row"><div class="lbl">Kjennemerke</div><div class="val">NF78345 (Mitsubishi, svart)</div></div>
+        <div class="info-row"><div class="lbl">Avvik</div><div class="val">Reservert for MC – skilt 1P/807.7</div></div>
+        <div class="info-row" style="grid-column: span 2;">
+          <div class="lbl">Adresse fra blankett</div>
+          <div class="val" style="font-family: monospace; background: var(--pn-bg); padding: 8px 12px; border-radius: 4px; font-size: 14px;">
+            <span style="background: var(--pn-yellow); padding: 2px 6px; border-radius: 3px; font-weight: 700;">11609</span> Ringkollen 13-24, Sandefjord
+          </div>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(90deg, rgba(81,154,156,0.12) 0%, transparent 100%); border-left: 3px solid var(--pn-turkis3); padding: 14px 16px; border-radius: 4px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pn-turkis3)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <div style="font-size: 13px; color: var(--pn-darkblue);">
+          <strong>Anlegg automatisk identifisert:</strong> nr. 11609 funnet i registeret som <strong>«Ringkollen 13-24, Sandefjord»</strong>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="choice-block">
+        <div class="choice-title"><span class="accent-bar"></span>Hvordan skal denne sanksjonen behandles?</div>
+
+        <div class="choice-options">
+          <div class="choice" data-choice="pn" onclick="selectChoice(this, 'pn')">
+            <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7a2 2 0 0 1 2-2h4l2-3h2l2 3h4a2 2 0 0 1 2 2v14"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="12" cy="13" r="3"/></svg>
+            <div class="ch-title">Park Nordic dekker</div>
+            <div class="ch-desc">Full kostnad bæres av PN. Inngår kun i Riverty-utsendelse.</div>
+          </div>
+
+          <div class="choice selected" data-choice="leie" onclick="selectChoice(this, 'leie')">
+            <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <div class="ch-title">Trekkes fra leieberegning</div>
+            <div class="ch-desc">Kostnad fordeles via bruttoomsetning på anlegget. Inngår også i økonomi-rapport.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="leie-fields visible" id="leieFields">
+        <div class="form-row">
+          <div>
+            <label class="field-lbl">Anleggsnr.</label>
+            <input class="field-input" id="anleggNrInput" value="11609" readonly style="background: var(--pn-bg);">
+          </div>
+          <div style="position: relative;">
+            <label class="field-lbl">Anleggsnavn <span style="text-transform: none; letter-spacing: 0; color: var(--pn-text-muted); font-weight: 400;">(søkbar)</span></label>
+            <input class="field-input" id="anleggNavnInput" value="Ringkollen 13-24, Sandefjord" autocomplete="off" oninput="searchAnlegg(this.value)" onfocus="searchAnlegg(this.value)">
+            <div id="anleggSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--pn-white); border: 1px solid var(--pn-gray3); border-top: none; border-radius: 0 0 var(--radius) var(--radius); max-height: 220px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08);"></div>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div>
+            <label class="field-lbl">Begrunnelse for fradrag</label>
+            <textarea class="field-input" placeholder="F.eks. «Leietaker glemte å registrere bil – avtale med gårdeier»">Leietaker hos gårdeier glemte å registrere kjennemerke. Sanksjon kunne ikke makuleres jf. avtale.</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <div style="font-size: 12px; color: var(--pn-text-muted)">
+        Lagres i ukens batch og sendes <strong style="color: var(--pn-darkblue);">fredag 15.05 kl. 08:00</strong>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-ghost" onclick="closeModal()">Avbryt</button>
+        <button class="btn-primary" onclick="confirmUpload()">Lagre sanksjon</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== ANLEGGSREGISTER =====
+  const ANLEGG = [{"nr":11669,"navn":"Akersgata 51"},{"nr":10177,"navn":"Akersveien 24-26"},{"nr":11534,"navn":"Alf Bjerkes Vei 20"},{"nr":50009,"navn":"Allegaten"},{"nr":11783,"navn":"Ammerud T-banestasjon"},{"nr":11510,"navn":"Anders Jørgensens Gate 20, Horten"},{"nr":11610,"navn":"Apotekergata 20, Horten"},{"nr":11723,"navn":"Arboalleen 17,21,23"},{"nr":50020,"navn":"Arna Stasjon Avgift"},{"nr":8589,"navn":"Arna Stasjon Oblatparkering"},{"nr":11571,"navn":"Arnljot Gellines Vei 6"},{"nr":31708,"navn":"Askim Stasjon (banenor) Avgift"},{"nr":31719,"navn":"Askim Stasjon Oblatparkering"},{"nr":11815,"navn":"Aslak Boltsgate 40"},{"nr":11784,"navn":"Avløs Base"},{"nr":11351,"navn":"Baker Østbys vei"},{"nr":11586,"navn":"Baker Østbys Vei 1"},{"nr":11352,"navn":"Baker Østbys vei 5-13, Automat"},{"nr":11645,"navn":"Bankveien 10"},{"nr":11383,"navn":"Bankveien 10, Asker"},{"nr":50011,"navn":"BB-Bygget (Hauklandsbakken)"},{"nr":11770,"navn":"Bergkrystallen T-banestasjon"},{"nr":11785,"navn":"Besserud T-banestasjon"},{"nr":11481,"navn":"Bestumstubben 11"},{"nr":11395,"navn":"Billingstadsletta 17"},{"nr":11396,"navn":"Billingstadsletta 19"},{"nr":11816,"navn":"Biohuset Holsetgata 22"},{"nr":28050,"navn":"Biri Senter, Skumsrudvegen 27"},{"nr":11828,"navn":"Birkebeinerveien, Skurvbrua"},{"nr":11582,"navn":"Biskop Jens Nilssønns gt. 5"},{"nr":11822,"navn":"Bispevika P-hus"},{"nr":11655,"navn":"Bjerke Senter"},{"nr":11566,"navn":"Bjølsenhallen P-hus"},{"nr":11453,"navn":"Bjørnemyrveien 5 Rema 100, Nesodden"},{"nr":11771,"navn":"Blindern T-banestasjon"},{"nr":11750,"navn":"Blindernveien 9-11"},{"nr":11786,"navn":"Bogerud T-banestasjon"},{"nr":11639,"navn":"Borgenveien 2A"},{"nr":99026,"navn":"Botanisk hage"},{"nr":30006,"navn":"Brakerøya stasjon (banenor) Avgift"},{"nr":30019,"navn":"Brakerøya Stasjon Oblatparkering"},{"nr":11787,"navn":"Brattlikollen T-Banestasjon"},{"nr":90006,"navn":"Breivang VGS"},{"nr":11463,"navn":"Brobekkveien 38-40"},{"nr":10598,"navn":"Brobekkveien 40"},{"nr":11531,"navn":"Brobekkveien 80"},{"nr":11511,"navn":"Bromsveien 3, Horten"},{"nr":11738,"navn":"Brugata 50 og 56, Hamar"},{"nr":43070,"navn":"Bruveien 6 Kiwi, Krokstadelva"},{"nr":11772,"navn":"Brynseng T-banestasjon"},{"nr":11720,"navn":"Brynsengveien 2 Garasje"},{"nr":11721,"navn":"Brynsengveien 2 Ute"},{"nr":10669,"navn":"Brynshøgda"},{"nr":10656,"navn":"Brynsveien 3, 11-13 & 12"},{"nr":11512,"navn":"Brynsveien 5"},{"nr":11739,"navn":"Brådalstubben 1-3, Hagan"},{"nr":11788,"navn":"Bråten Sløyfa"},{"nr":99003,"navn":"Byparken Finnsnes"},{"nr":11682,"navn":"Bøkkerveien"},{"nr":10691,"navn":"Bølerlia 73, Kiwi"},{"nr":11749,"navn":"Campus Blindern"},{"nr":99020,"navn":"Campus Breivika Gjesteparkering"},{"nr":99021,"navn":"Campus Breivika Reservert"},{"nr":99031,"navn":"Campus Breivika, Biologibygget"},{"nr":99032,"navn":"Campus Breivika, Breivangveien 23"},{"nr":99033,"navn":"Campus Breivika, Huginbakken"},{"nr":99034,"navn":"Campus Breivika, Klokkargårdsbakken"},{"nr":99035,"navn":"Campus Breivika, MH bygget vest"},{"nr":11621,"navn":"Carl Berner Passasjen P-hus, Nedre"},{"nr":11622,"navn":"Carl Berner Passasjen P-hus, Øvre"},{"nr":31511,"navn":"Carlbergveien 4, Moss"},{"nr":31512,"navn":"Carlbergveien 6 A, Moss"},{"nr":31513,"navn":"Carlbergveien 6 B, Moss"},{"nr":11154,"navn":"Cecilie Thoresens vei 13"},{"nr":11153,"navn":"Cecilie Thoresensvei 15"},{"nr":11338,"navn":"Claude Monets Allè 16"},{"nr":11656,"navn":"Coop Extra Bjerke Senter"},{"nr":10173,"navn":"Darres Gate 20,22 & 24"},{"nr":11817,"navn":"Det juridiske fakultet (UiO), Karl Johans Gate 47"},{"nr":11636,"navn":"Dikeveien 4-6"},{"nr":11789,"navn":"Disen holdeplass"},{"nr":43099,"navn":"Dr. Hansteinsgate 14, 20-22"},{"nr":30005,"navn":"Drammen stasjon (banenor) Avgift"},{"nr":30027,"navn":"Drammen Stasjon (banenor) Reservert"},{"nr":11550,"navn":"Drammen Stasjon Express"},{"nr":30018,"navn":"Drammen Stasjon Oblatparkering"},{"nr":10273,"navn":"Drammensveien 118, Oslo"},{"nr":11462,"navn":"Dronningensgate 13"},{"nr":11409,"navn":"Døgnhvileplass Fugleåsen"},{"nr":11413,"navn":"Edvard Griegs vei 1,Kolbotn"},{"nr":11535,"navn":"Eikenga 25"},{"nr":11700,"navn":"Eikenga 31-33"},{"nr":11790,"navn":"Eiksmarka Sporveien"},{"nr":11591,"navn":"Eilert Sundts gate 39"},{"nr":11699,"navn":"Eivenstuen 1"},{"nr":11695,"navn":"Elvelygården P-hus"},{"nr":11188,"navn":"Enebakkveien 304"},{"nr":10250,"navn":"Engebretsvei 3-5-7 Garasje"},{"nr":10251,"navn":"Engebretsvei 3-5-7 Uteområde"},{"nr":31540,"navn":"Engfaret 3,5,7 og 9"},{"nr":10647,"navn":"Ensjøveien 16-18 / 20-22 Kontroll"},{"nr":11675,"navn":"Ensjøveien 22, Ensjø Legesenter"},{"nr":43015,"navn":"Erik Børresens Alle 1"},{"nr":11791,"navn":"Etterstad Base"},{"nr":11357,"navn":"Fastvoldgården, Jens Rings vei 30"},{"nr":11674,"navn":"Flåtestadveien 1"},{"nr":11616,"navn":"Fossumhagen"},{"nr":11596,"navn":"Fossumveien 60"},{"nr":50004,"navn":"Fosswinkelsgate 6"},{"nr":10207,"navn":"Fredrik Stangs kvartalet"},{"nr":11752,"navn":"Fredriksgate 2"},{"nr":11753,"navn":"Fredriksgate 3"},{"nr":31701,"navn":"Fredrikstad Stasjon (banenor) Avgift"},{"nr":31713,"navn":"Fredrikstad Stasjon Oblatparkering"},{"nr":10775,"navn":"Frognerseterveien 27 Kiwi"},{"nr":10575,"navn":"Frydenbergveien 48"},{"nr":10574,"navn":"Frydenbergveien 48 KIWI"},{"nr":11653,"navn":"Furulia Borettslag"},{"nr":11810,"navn":"Furuveien 2-8"},{"nr":90009,"navn":"Fylkeshuset i Tromsø"},{"nr":12040,"navn":"Gamle Fet Vei 13"},{"nr":11704,"navn":"Gamle Fetvei 20"},{"nr":50051,"navn":"Gamle Forusvei 1"},{"nr":11574,"navn":"Gamle Ski Hotell"},{"nr":11607,"navn":"Gamlebyen Fredrikstad"},{"nr":11579,"navn":"Gardemoen Airport Hotel"},{"nr":11707,"navn":"Gartneritaket"},{"nr":11746,"navn":"Gaustadalléen 23, Garasje"},{"nr":11745,"navn":"Gaustadalléen 30, Nedre Plan"},{"nr":11744,"navn":"Gaustadalléen 30, Øvre Plan"},{"nr":11747,"navn":"Geitmyrsveien 69-71"},{"nr":11583,"navn":"Gierløw Meyers gate 1, Tønsberg"},{"nr":11685,"navn":"Gimleveien 12"},{"nr":11689,"navn":"Gjerivegen 6"},{"nr":23001,"navn":"Gjerluvegen 2, Furnes"},{"nr":11346,"navn":"Gjettum Nærsenter"},{"nr":11624,"navn":"Gladengveien 15, P-hus"},{"nr":10012,"navn":"Gladengveien 17, Oslo"},{"nr":10662,"navn":"Gladengveien 3b"},{"nr":11551,"navn":"Gladengveien 8"},{"nr":10652,"navn":"Gladengvn 2-4, P-Hus"},{"nr":11792,"navn":"Grefsen Base"},{"nr":11725,"navn":"Grefsenveien 26"},{"nr":10668,"navn":"Grensesvingen 2-20, Bakside, Strømsveien 102"},{"nr":10667,"navn":"Grensesvingen 2-20, Forside, Strømsveien 102"},{"nr":11485,"navn":"Grensesvingen 2-20, Garasje"},{"nr":10646,"navn":"Grensesvingen 2-20, Kiwi, Strømsveien 102"},{"nr":10677,"navn":"Grensesvingen 7"},{"nr":10678,"navn":"Grensesvingen 7 P-hus"},{"nr":11793,"navn":"Grorud T-banestasjon"},{"nr":11644,"navn":"Grønland 9"},{"nr":10351,"navn":"Grønnegata 3-5 Garasje"},{"nr":11757,"navn":"Gullhaugveien 1-3"},{"nr":30004,"navn":"Gulskogen stasjon (banenor) Avgift"},{"nr":30017,"navn":"Gulskogen Stasjon Oblatparkering"},{"nr":11764,"navn":"Gunnar Randers Vei 19"},{"nr":10485,"navn":"Gunnar Schjeldrupsvei. 33"},{"nr":11760,"navn":"Gydas Vei 8"},{"nr":11538,"navn":"Haavard Martinsens Vei 30"},{"nr":11602,"navn":"Hafjell Alpinlandsby"},{"nr":11665,"navn":"Hagaløkkveien 7"},{"nr":31702,"navn":"Halden Stasjon (banenor) Avgift"},{"nr":31714,"navn":"Halden Stasjon Oblatparkering"},{"nr":11623,"navn":"Hans Jacob Nilsens Gate 2 og 4"},{"nr":11761,"navn":"Harald Schjelderups hus"},{"nr":43256,"navn":"Haralds gate 4, Larvik"},{"nr":10580,"navn":"Hasle Torg P-hus"},{"nr":10587,"navn":"Hasle Torg UTE (avgiftsparkering)"},{"nr":50013,"navn":"Haukelandbakken 27"},{"nr":50012,"navn":"Haukelandsveien 28"},{"nr":31555,"navn":"Havnegata 4"},{"nr":90016,"navn":"Heggen VGS"},{"nr":11677,"navn":"Hegnasletta 1-5, Sandefjord"},{"nr":11728,"navn":"Hegnasletta 6, Sandefjord"},{"nr":11773,"navn":"Hellerud T-banestasjon"},{"nr":31619,"navn":"Helsehuset Inngang"},{"nr":31618,"navn":"Helsehuset P-hus"},{"nr":10605,"navn":"Helsfyr Panorama"},{"nr":14001,"navn":"Helsfyr Panorama P-hus"},{"nr":11794,"navn":"Helsfyr T-banestasjon"},{"nr":31530,"navn":"Henrich Gernersgate 11"},{"nr":31531,"navn":"Henrich Gernersgate 13/15"},{"nr":11743,"navn":"Hesthaugvegen 18"},{"nr":11619,"navn":"Hoel Gård"},{"nr":10252,"navn":"Hoffsveien 21-23 korttid"},{"nr":10253,"navn":"Hoffsveien 21-23 Reservert område"},{"nr":43002,"navn":"Hofgaards gate 20.22 &27"},{"nr":30002,"navn":"Hokksund stasjon (banenor) Avgift"},{"nr":30015,"navn":"Hokksund Stasjon Oblatparkering"},{"nr":10166,"navn":"Holberg P-Hus"},{"nr":11659,"navn":"Holbergsgate 21"},{"nr":11590,"navn":"Holmboes gate 8"},{"nr":11795,"navn":"Holmenkollen T-banestasjon"},{"nr":11471,"navn":"Holmenveien 1"},{"nr":10382,"navn":"Holmenveien 5C"},{"nr":30009,"navn":"Holmestrand stasjon (banenor) Avgift"},{"nr":30022,"navn":"Holmestrand Stasjon Oblatparkering"},{"nr":10468,"navn":"Holmestrandgt. 4"},{"nr":11796,"navn":"Holtet base"},{"nr":11496,"navn":"Hovinbekken 3"},{"nr":11461,"navn":"Hovinveien 43, Oslo"},{"nr":10576,"navn":"Hovinveien 45, Kiwi"},{"nr":11713,"navn":"Hundervegen 105"},{"nr":11673,"navn":"Hvamsvingen 24"},{"nr":11597,"navn":"Høybråtenveien 76"},{"nr":11071,"navn":"Ica Lørenskog"},{"nr":11528,"navn":"Idrettsveien 26B"},{"nr":11672,"navn":"Industrivegen 21"},{"nr":11567,"navn":"Industriveien 11B"},{"nr":11641,"navn":"Industriveien 13"},{"nr":11568,"navn":"Industriveien 25"},{"nr":11073,"navn":"Industriveien 6, Lørenskog"},{"nr":11826,"navn":"Infanterivegen 16"},{"nr":43027,"navn":"Ingeniør Rybergs gate 101, Drammen"},{"nr":43151,"navn":"Ingeniør Rybergs gate 44, Drammen"},{"nr":11813,"navn":"Ingeniør Rybergs Gate 99, Drammen"},{"nr":11670,"navn":"Iseveien Senter"},{"nr":90004,"navn":"Ishavsbyen VGS Breivika"},{"nr":90005,"navn":"Ishavsbyen VGS Rambergan"},{"nr":11570,"navn":"Isveien Senter"},{"nr":10367,"navn":"Jacob Aallsgt. 3"},{"nr":50008,"navn":"Jahnebakken 3 (P-forbudt)"},{"nr":11506,"navn":"Jeløgata 4, Moss"},{"nr":11356,"navn":"Jens Rings vei 30"},{"nr":11735,"navn":"Jensmessveien 1"},{"nr":11724,"navn":"Jernbanegata 10, Porsgrunn"},{"nr":11814,"navn":"Jernbanegata 3"},{"nr":11663,"navn":"Jernbaneveien 12"},{"nr":11741,"navn":"Jessheimvegen 465 (McDonalds Gardermoen)"},{"nr":11664,"navn":"John G. Mattesons Vei 4"},{"nr":11797,"navn":"Jomfrubråten Sporveien"},{"nr":11339,"navn":"Jongåsveien 3"},{"nr":11648,"navn":"Josefines gate 34"},{"nr":11553,"navn":"Josefines gt.30"},{"nr":50002,"navn":"Juridisk Fakultet (Magnus Lagabøtes Plass)"},{"nr":11756,"navn":"Kabelgata"},{"nr":11774,"navn":"Kalbakken T-banestasjon"},{"nr":31502,"navn":"Kambo Seniorsenter"},{"nr":11829,"navn":"Kantveien 149"},{"nr":11452,"navn":"Kapellveien 2"},{"nr":10278,"navn":"Karenlyst Allè 7"},{"nr":10279,"navn":"Karenslyst Allé 12-14"},{"nr":11561,"navn":"Karenslyst Alle 7 - Plan 2"},{"nr":11555,"navn":"Karenslyst Alle 7 - Plan 6"},{"nr":10277,"navn":"Karenslyst Alle 7 P-hus"},{"nr":11799,"navn":"Karlsrud T-banestasjon"},{"nr":11798,"navn":"Kastelle Sporveien"},{"nr":11564,"navn":"Kilden 1, Tønsberg"},{"nr":11737,"navn":"Kirkegata 52, Lillehammer"},{"nr":11483,"navn":"Kirkeveien 1 Garasje"},{"nr":10452,"navn":"Kirkeveien 155, Oslo"},{"nr":11748,"navn":"Kirkeveien 166"},{"nr":11387,"navn":"Kiwi Fusdal"},{"nr":31525,"navn":"Kiwi Gudesgate"},{"nr":11155,"navn":"Kiwi Lambertseter"},{"nr":10683,"navn":"Kiwi Oppsal"},{"nr":11507,"navn":"Kiwi Sandaker Oslo"},{"nr":11337,"navn":"Kiwi Sandviksveien Sandvika"},{"nr":43101,"navn":"Kiwi Stasjonsveien Spikkestad"},{"nr":28008,"navn":"KIWI Strandgata Gjøvik"},{"nr":11255,"navn":"Kiwi, Holmlia Sentervei"},{"nr":11717,"navn":"Kjelleveien 23, Tønsberg"},{"nr":11611,"navn":"Knud Askers Vei 5"},{"nr":43152,"navn":"Knud Schartums gate 7, Drammen (Ragde)"},{"nr":31703,"navn":"Kolbotn Stasjon (banenor) Avgift"},{"nr":31724,"navn":"Kolbotn Stasjon Oblatparkering"},{"nr":11474,"navn":"Kolbotnveien 5"},{"nr":31529,"navn":"Kongensgate 32, Moss"},{"nr":11718,"navn":"Kongensgate 38, Moss"},{"nr":90008,"navn":"Kongsbakken VGS"},{"nr":30001,"navn":"Kongsberg stasjon (banenor) Avgift"},{"nr":30014,"navn":"Kongsberg Stasjon Oblatparkering"},{"nr":43045,"navn":"Kreftingsgate 43-45-46"},{"nr":11711,"navn":"Kristoffer Robins Vei 13"},{"nr":99022,"navn":"Krognessveien"},{"nr":11681,"navn":"Krydderhagen P-hus"},{"nr":90012,"navn":"Kvaløya VGS"},{"nr":90011,"navn":"Kvaløysletta Tannklinikk"},{"nr":43051,"navn":"Langesgate 1, Drammen"},{"nr":11730,"navn":"Langgata 3, Horten"},{"nr":11405,"navn":"Langhus Nærsenter"},{"nr":30028,"navn":"Langhus Stasjon"},{"nr":11408,"navn":"Langhusveien 211"},{"nr":11563,"navn":"Langkaia 1"},{"nr":11518,"navn":"Lienga 6"},{"nr":30007,"navn":"Lier stasjon (banenor) Avgift"},{"nr":30020,"navn":"Lier Stasjon Oblatparkering"},{"nr":11562,"navn":"Lilletorget 1 (Oslo)"},{"nr":11613,"navn":"Lilletorget, Lillehammer"},{"nr":11508,"navn":"Lillo Gård P-hus"},{"nr":11629,"navn":"Lindebergåsen 10"},{"nr":11679,"navn":"Linden Park"},{"nr":11775,"navn":"Linderud T-banestasjon"},{"nr":11776,"navn":"Ljabru Trikkeholdeplass"},{"nr":31710,"navn":"Ljan Stasjon (banenor) Avgift"},{"nr":31721,"navn":"Ljan Stasjon Oblatparkering"},{"nr":11301,"navn":"Lundekroken Sameie"},{"nr":11587,"navn":"Lyseren Strandpark"},{"nr":11831,"navn":"Lysgårdsbakkene"},{"nr":11800,"navn":"Løren T-banestasjon"},{"nr":10260,"navn":"Løvenskioldsgate 26. Kiwi"},{"nr":11777,"navn":"Majorstuen T-banestasjon"},{"nr":11466,"navn":"Maria Dehlisvei 40"},{"nr":11529,"navn":"Maridalsveien 3"},{"nr":11162,"navn":"Matkroken Ekebergveien"},{"nr":11732,"navn":"McDonalds Askerveien 71"},{"nr":11733,"navn":"McDonalds Strømsveien 241"},{"nr":11608,"navn":"McDonalds Torgny Segerstedts Vei 11"},{"nr":31515,"navn":"Midtveien 5 Moss"},{"nr":30003,"navn":"Mjøndalen stasjon (banenor) Avgift"},{"nr":30016,"navn":"Mjøndalen Stasjon Oblatparkering"},{"nr":11640,"navn":"Moengvegen 6"},{"nr":11430,"navn":"Moerveien 5"},{"nr":11594,"navn":"Moldegata"},{"nr":31712,"navn":"Moss Stasjon (banenor) Avgift"},{"nr":31723,"navn":"Moss Stasjon Oblatparkering"},{"nr":11552,"navn":"Munkedamsveien 62"},{"nr":11778,"navn":"Munkelia T-banestasjon"},{"nr":10473,"navn":"Myrens Verksted"},{"nr":11701,"navn":"Myrvoll Stasjon"},{"nr":31709,"navn":"Mysen Stasjon (banenor) Avgift"},{"nr":31720,"navn":"Mysen Stasjon Oblatparkering"},{"nr":10174,"navn":"Mølla Fyrhus"},{"nr":11585,"navn":"Mølla P-hus"},{"nr":50018,"navn":"Møllendalsveien 61 (KMD)"},{"nr":10176,"navn":"Mølleparken 2, Oslo"},{"nr":11503,"navn":"Mølleparken 4"},{"nr":10950,"navn":"Nedre Kallbakkvei 2-4"},{"nr":11690,"navn":"Nedre Rommen Anleggsområdet"},{"nr":11580,"navn":"Nedre Strandgata 80"},{"nr":99008,"navn":"Nerstranda Senter"},{"nr":11390,"navn":"Nesbruveien 75"},{"nr":11606,"navn":"Nils Hansens Vei 5"},{"nr":10670,"navn":"Nils Hansensvei 2, 8 og 10 & 14"},{"nr":10376,"navn":"Njårdhallen (P-forbudt)"},{"nr":10377,"navn":"Njårdhallen Nedre Plan"},{"nr":10379,"navn":"Njårdhallen Vest"},{"nr":10378,"navn":"Njårdhallen Øvre"},{"nr":11494,"navn":"Nordbyveien 70&72, Ski"},{"nr":99025,"navn":"Nordlysobservatoriet"},{"nr":43130,"navn":"Nordre Jarlsberg Brygge"},{"nr":11830,"navn":"Nordseterveien"},{"nr":31722,"navn":"Nordstrand Stasjon Oblatparkering"},{"nr":90007,"navn":"Nordøya Tannklinikk"},{"nr":11633,"navn":"Norges idrettshøgskole"},{"nr":50010,"navn":"Nygård Skole"},{"nr":11652,"navn":"Nøsted Brygge P-hus"},{"nr":11763,"navn":"Observatoriet"},{"nr":11823,"navn":"Odden Drammen,"},{"nr":11635,"navn":"Olavsgaard, pendleparkering"},{"nr":10657,"navn":"Ole Deviks Vei 18"},{"nr":10658,"navn":"Ole Deviks Vei 26-28"},{"nr":11683,"navn":"Ollebukta 2, Tønsberg"},{"nr":11812,"navn":"Oluf Onsums Vei Sporveien"},{"nr":11801,"navn":"Oppsal T-banestasjon"},{"nr":28001,"navn":"Parkgata 12, Gjøvik"},{"nr":11740,"navn":"Parkgata 8-10 P-hus"},{"nr":11490,"navn":"Parkveien 21 Oslo"},{"nr":11604,"navn":"Parkveien 27-31"},{"nr":50006,"navn":"Parkveien 9"},{"nr":10372,"navn":"Plantasjen Vindern"},{"nr":99024,"navn":"Polarmuseet"},{"nr":90015,"navn":"Politihuset i Tromsø"},{"nr":11603,"navn":"Pollenkvartalet"},{"nr":11612,"navn":"Pottemakerveien 10-14"},{"nr":11654,"navn":"Prestegata 2B, Horten"},{"nr":11578,"navn":"Prinsekvartalet, Larvik"},{"nr":11575,"navn":"Problemveien 11"},{"nr":11660,"navn":"Radisson Blu Park Hotel Fornebu"},{"nr":11709,"navn":"Rauland Skisenter"},{"nr":11618,"navn":"Refstadveien 102"},{"nr":11714,"navn":"Refstadveien 50"},{"nr":11719,"navn":"Reinane 30, Indre Arna"},{"nr":11601,"navn":"Rema 1000 Aslakveien"},{"nr":12050,"navn":"Rema 1000 Gystadparken Jessheim"},{"nr":31501,"navn":"Rema 1000 Kanalen"},{"nr":43102,"navn":"Rema 1000 Spikkestadveien"},{"nr":11620,"navn":"Rema 1000 Vinderen P-hus"},{"nr":10651,"navn":"Rema 1000, Gladengveien"},{"nr":11626,"navn":"Ringeriksveien 1"},{"nr":11609,"navn":"Ringkollen 13-24, Sandefjord"},{"nr":10006,"navn":"Ringnes Park P-hus"},{"nr":315222,"navn":"Ringvegen 26 / Valdresvegen 4-6"},{"nr":11802,"navn":"Rommen T-banestasjon"},{"nr":50003,"navn":"Rosenbergsgaten 35"},{"nr":11811,"navn":"Rosenbergveien 1"},{"nr":10964,"navn":"Rosenbergveien 15"},{"nr":11548,"navn":"Rosenbergveien 15, garasje"},{"nr":10965,"navn":"Rosenbergveien 15, Stikkveg"},{"nr":11661,"navn":"Rosenkrantz Gate 13 P-hus"},{"nr":11825,"navn":"Roseveien 1"},{"nr":11475,"navn":"Ryensvingen 3, Oslo"},{"nr":31704,"navn":"Rygge Stasjon (banenor) Avgift"},{"nr":31715,"navn":"Rygge Stasjon Oblatparkering"},{"nr":31514,"navn":"Ryggeveien 96"},{"nr":11736,"navn":"Råde Stasjon"},{"nr":11536,"navn":"Rådhusgata 1"},{"nr":11617,"navn":"Rådmann Siras vei 8"},{"nr":11482,"navn":"Saga Apartments, Eilert Sundts gt. 39"},{"nr":10352,"navn":"Saga Hotell Oslo AS"},{"nr":11556,"navn":"Sagaveien 102-122"},{"nr":10458,"navn":"Sagveien 23 Oslo"},{"nr":11705,"navn":"Sagveien 31 Hamar"},{"nr":11759,"navn":"Sandakerveien 130"},{"nr":11599,"navn":"Sandakerveien 16"},{"nr":30008,"navn":"Sande stasjon (banenor) Avgift"},{"nr":30021,"navn":"Sande Stasjon Oblatparkering"},{"nr":30013,"navn":"Sandefjord stasjon (banenor) Avgift"},{"nr":30026,"navn":"Sandefjord Stasjon Oblatparkering"},{"nr":11708,"navn":"Sandefjordsveien 7, Sandefjord"},{"nr":11632,"navn":"Sanderveien 2-4"},{"nr":11715,"navn":"Sandslimarka 260, Bergen"},{"nr":11731,"navn":"Sannergata 2"},{"nr":10558,"navn":"Sannergata 3, Oslo"},{"nr":31705,"navn":"Sarpsborg Stasjon (banenor) Avgift"},{"nr":31716,"navn":"Sarpsborg Stasjon Oblatparkering"},{"nr":10469,"navn":"Sarpsborggt. 2"},{"nr":43050,"navn":"Schultzgt. 40"},{"nr":11513,"navn":"Seiersten Sentrum 1,2 og 3"},{"nr":11486,"navn":"Seljeveien 1,3,5,7,9,11 og 13"},{"nr":11634,"navn":"Seljeveien 6"},{"nr":11547,"navn":"Selma Ellefsens vei 6"},{"nr":31622,"navn":"Selma Nygrens vei 2"},{"nr":11680,"navn":"Sentralbadet P-hus"},{"nr":90014,"navn":"Sentrum Terrasse P-hus"},{"nr":11519,"navn":"Sentrumsveien 6, Ski"},{"nr":11758,"navn":"Silurveien 2"},{"nr":11498,"navn":"Ski Stasjon"},{"nr":11614,"navn":"Skien Stasjon (banenor) Avgift"},{"nr":11615,"navn":"Skien Stasjon (banenor) Reservert"},{"nr":12013,"navn":"Skjetten Nærsenter"},{"nr":30010,"navn":"Skoppum stasjon (banenor) Avgift"},{"nr":30023,"navn":"Skoppum Stasjon Oblatparkering"},{"nr":11804,"navn":"Skullerud base"},{"nr":11805,"navn":"Skullerud T-banestasjon"},{"nr":11726,"navn":"Skullerud Torg, Olaf Helsets vei 1"},{"nr":11678,"navn":"Skytterdalen 5"},{"nr":11569,"navn":"Skådalsveien 33 A-F"},{"nr":10272,"navn":"Skøyen Atrium, Oslo"},{"nr":11803,"navn":"Skøyen Trikkeholdeplass"},{"nr":11779,"navn":"Skøyenåsen T-banestasjon"},{"nr":10777,"navn":"Slemdal Senter Nedre"},{"nr":10776,"navn":"Slemdal senter Øvre"},{"nr":11765,"navn":"Slemdalsveien 15"},{"nr":10373,"navn":"Slemdalsveien 70"},{"nr":11492,"navn":"Sofienberggata 9-11, Oslo"},{"nr":11762,"navn":"Sogn Arena"},{"nr":11780,"navn":"Sognsvann T-banestasjon"},{"nr":11751,"navn":"Sognsvannsveien 9"},{"nr":11658,"navn":"Solheimveien 21"},{"nr":31556,"navn":"Solsiden 1, Son"},{"nr":31557,"navn":"Solsiden 2"},{"nr":31718,"navn":"Son Stasjon"},{"nr":11517,"navn":"Spar, Råholt"},{"nr":11558,"navn":"St. Hallvards Vei 1, Burger King"},{"nr":11754,"navn":"St. Olavsgate 29"},{"nr":90001,"navn":"Stakkevollveien 27, Tromsø"},{"nr":99001,"navn":"Stakkevollveien 29"},{"nr":11600,"navn":"Stallgata 3"},{"nr":90017,"navn":"Stangnes VGS"},{"nr":11706,"navn":"Stasjonsgata 30, Hokksund"},{"nr":11703,"navn":"Stasjonsgata 30-32"},{"nr":11821,"navn":"Stockfleths Gate P-hus"},{"nr":30012,"navn":"Stokke stasjon (banenor) Avgift"},{"nr":30025,"navn":"Stokke Stasjon Oblatparkering"},{"nr":11768,"navn":"Stolvstadvegen 9 og 11"},{"nr":11638,"navn":"Storengveien 8"},{"nr":11691,"navn":"Storgata 100, Lillehammer"},{"nr":26002,"navn":"Storgata 106, Lillehammer"},{"nr":11766,"navn":"Storgata 131"},{"nr":11702,"navn":"Storgata 136-138, Lillehammer"},{"nr":28007,"navn":"Storgata 23 Gjøvik"},{"nr":11687,"navn":"Storgata 25, Gjøvik"},{"nr":11593,"navn":"Storgata 26, Horten"},{"nr":31558,"navn":"Storgata 30 A&B,SON"},{"nr":11692,"navn":"Storgata 35, Horten"},{"nr":11509,"navn":"Storgata 48, Horten"},{"nr":26001,"navn":"Storgata 56/58 Lillehammer"},{"nr":11642,"navn":"Storgata 61,Lillehammer"},{"nr":11646,"navn":"Storgata 72, Horten"},{"nr":11643,"navn":"Storgata 73-75, Lillehammer"},{"nr":11712,"navn":"Storgaten 2A, Tønsberg"},{"nr":11589,"navn":"Stortingsgata 10"},{"nr":28005,"navn":"Strandgata 13, Gjøvik Nedre plan"},{"nr":28004,"navn":"Strandgata 13, Gjøvik Øvre plan"},{"nr":28006,"navn":"Strandgata 38 Gjøvik"},{"nr":99004,"navn":"Strandvegen 114, Tromsø"},{"nr":12010,"navn":"Strømsveien 54"},{"nr":11651,"navn":"Strømsveien 58-62"},{"nr":11650,"navn":"Strømsveien 70"},{"nr":11734,"navn":"Strømsø Senter"},{"nr":28009,"navn":"Studievegen 2, Gjøvik"},{"nr":11686,"navn":"Sundretunet"},{"nr":43060,"navn":"Svelvik Nærsenter"},{"nr":11495,"navn":"Sykehuset Telemark, Porsgrunn"},{"nr":11684,"navn":"Sæter Torg Garasje Utleie"},{"nr":11541,"navn":"Sætreskogveien 4, Kiwi"},{"nr":11769,"navn":"Sætreskogveien 4, Sameiet"},{"nr":11657,"navn":"Sønsterudveien 26"},{"nr":11410,"navn":"Sønsterudveien 32"},{"nr":11412,"navn":"Sønsterudveien 32 Rema 1000"},{"nr":11767,"navn":"Søren Bulls Vei 2, Oslo"},{"nr":43001,"navn":"Søren Lemmichsgt 4"},{"nr":11637,"navn":"Sørkedalsveien 10 P-hus"},{"nr":90013,"navn":"Tannbygget"},{"nr":11666,"navn":"Tevlingveien 23"},{"nr":10003,"navn":"Thorvald Meyers gate 7-11 Nedre plan"},{"nr":10001,"navn":"Thorvald Meyers gate 7-11 Øvre plan"},{"nr":10552,"navn":"Thorvald Meyersgt. 68"},{"nr":10002,"navn":"Thorvalds Meyers gate 7-11 P-kjeller"},{"nr":11514,"navn":"Thuegata 2, Horten"},{"nr":10274,"navn":"Thunes vei 2"},{"nr":43005,"navn":"Tollbugata 13"},{"nr":43098,"navn":"Tollbugata 26 Kampanje"},{"nr":11727,"navn":"Tollbugata 49-51"},{"nr":43044,"navn":"Tollbugt. 26"},{"nr":11504,"navn":"Tordenskiolds gate 22"},{"nr":11710,"navn":"Tordenskiolds Gate 87/89, Drammen"},{"nr":11668,"navn":"Tordenskioldsgate 6"},{"nr":11693,"navn":"Torggata 24, Horten"},{"nr":11460,"navn":"Torggata 3, Drøbak"},{"nr":90010,"navn":"Troms Fylkeskultursenter"},{"nr":90003,"navn":"Tromsdalen Tannklinikk"},{"nr":90002,"navn":"Tromsdalen VGS"},{"nr":99023,"navn":"Tromsø Museum"},{"nr":10565,"navn":"Trondheimsveien 102"},{"nr":11627,"navn":"Trysilfjellet Leilighetshotell"},{"nr":10164,"navn":"Tulinnløkka, Oslo"},{"nr":10654,"navn":"Tvetenveien 32"},{"nr":30011,"navn":"Tønsberg stasjon (banenor) Avgift"},{"nr":30024,"navn":"Tønsberg Stasjon Oblatparkering"},{"nr":11781,"navn":"Tøyen Base"},{"nr":11755,"navn":"Tøyen, Monrads gate"},{"nr":99029,"navn":"UiT Alta"},{"nr":99027,"navn":"UiT Harstad"},{"nr":99028,"navn":"UiT Narvik"},{"nr":11806,"navn":"Ullevål T-banestasjon"},{"nr":11716,"navn":"Underlia 45, Drammen"},{"nr":11530,"navn":"Underlia 51, Drammen"},{"nr":99050,"navn":"UNN Narvik"},{"nr":99051,"navn":"UNN Narvik, Ansatt"},{"nr":99052,"navn":"UNN Narvik, Bolig"},{"nr":99053,"navn":"UNN Narvik, Hovedinngang"},{"nr":11605,"navn":"Uranienborgveien 5"},{"nr":11631,"navn":"Valhallaveien 70"},{"nr":11588,"navn":"Vardegrenda Borettslag, Sandefjord"},{"nr":11676,"navn":"Varnaveien 30"},{"nr":11537,"navn":"Varnaveien 33-35"},{"nr":11473,"navn":"Varnaveien 39A-N"},{"nr":11502,"navn":"Veitvet Senter, Avgift"},{"nr":11497,"navn":"Veitvet Senteret"},{"nr":11807,"navn":"Veitvet T-bane"},{"nr":11560,"navn":"Verven 11"},{"nr":11742,"navn":"Vestby Stasjon"},{"nr":31711,"navn":"Vestby Stasjon Oblatparkering"},{"nr":11782,"navn":"Vestli Torg Sporveien"},{"nr":10013,"navn":"Vestli Torvet, Oslo"},{"nr":11808,"navn":"Vettakollen T-banestasjon"},{"nr":11404,"navn":"Vevelstadveien 109"},{"nr":10356,"navn":"Vibesgate 8"},{"nr":11694,"navn":"Vikasenteret, Hamar"},{"nr":50005,"navn":"Villaveien 10"},{"nr":50007,"navn":"Villaveien 1A"},{"nr":31520,"navn":"Vingparken 1"},{"nr":31521,"navn":"Vingparken 2 Ansattparkering"},{"nr":50001,"navn":"Vinjesgate / Sydneshaugen skole"},{"nr":11625,"navn":"Vinklgården P-hus"},{"nr":11722,"navn":"Vintergata 19"},{"nr":11628,"navn":"Vitaminveien 1A"},{"nr":11809,"navn":"Voksenlia T-banestasjon"},{"nr":11818,"navn":"Vollebekk T-banestasjon"},{"nr":11385,"navn":"Vollen Marina"},{"nr":11386,"navn":"Vollen Marina Gjestehavn"},{"nr":10014,"navn":"Vossegata 34, Oslo"},{"nr":11540,"navn":"Vågsenteret, Sagstuveien 1"},{"nr":31503,"navn":"Værftsgata 1 C. reservert Moss"},{"nr":31504,"navn":"Værftsgata 3A,Moss"},{"nr":31616,"navn":"Værste P 15"},{"nr":31620,"navn":"Værste P 16"},{"nr":31621,"navn":"Værste P 17"},{"nr":10175,"navn":"Waldemar Thranes gt 84-86"},{"nr":43049,"navn":"Webergs gt 13, Drammen"},{"nr":99002,"navn":"Workintoppen, Tromsø"},{"nr":50014,"navn":"Årstadveien 17"},{"nr":50015,"navn":"Årstadveien 19 Garasje"},{"nr":50016,"navn":"Årstadveien 19 Ute"},{"nr":50017,"navn":"Årstadveien 21"},{"nr":11671,"navn":"Årvoll P-hus"},{"nr":11824,"navn":"Årvollveien 23 Oslo,"},{"nr":11533,"navn":"Åråsen Syd"},{"nr":11532,"navn":"Åråsen Vest"},{"nr":11572,"navn":"Åråsen, Selmer Eiendom"},{"nr":11493,"navn":"Åråssvingen 2-7"},{"nr":31717,"navn":"Ås Stasjon"},{"nr":11406,"navn":"Åsveien 11-13-15"},{"nr":11559,"navn":"Åsveien 3"},{"nr":11476,"navn":"Økernveien 119-121"},{"nr":11516,"navn":"Økernveien 9"},{"nr":11827,"navn":"Økernveien 9 Sporveien"},{"nr":11573,"navn":"Østensjøveien 14"},{"nr":10673,"navn":"Østensjøveien 32-34 (P-huset)"},{"nr":10685,"navn":"Østensjøveien 32-34 Ute"},{"nr":10666,"navn":"Østensjøveien 39/41"},{"nr":11526,"navn":"Østensjøveien 43"},{"nr":11667,"navn":"Østre Aker Vei 33"},{"nr":11577,"navn":"Østre Aker Vei 60"},{"nr":12008,"navn":"Øvre Rælingsvei 176"},{"nr":43018,"navn":"Øvre Storgt. 7, Drammen"}];
+  const ANLEGG_BY_NR = Object.fromEntries(ANLEGG.map(a => [a.nr, a]));
+
+  // ===== BRUKERE =====
+  // MOCKUP: I produksjon må dette flyttes til backend med hashede passord (bcrypt/argon2).
+  const USERS = {
+    'fredrik@parknordic.no':  { navn: 'Fredrik',  initialer: 'FR', rolle: 'Admin' },
+    'sten@parknordic.no':     { navn: 'Sten',     initialer: 'ST', rolle: 'Admin' },
+    'ambjorg@parknordic.no':  { navn: 'Ambjørg',  initialer: 'AM', rolle: 'Admin' },
+    'isabelle@parknordic.no': { navn: 'Isabelle', initialer: 'IS', rolle: 'Admin' },
+    'anders@parknordic.no':   { navn: 'Anders',   initialer: 'AN', rolle: 'Admin' },
+    'kim@parknordic.no':      { navn: 'Kim',      initialer: 'KI', rolle: 'Admin' },
+    'mathias@parknordic.no':  { navn: 'Mathias',  initialer: 'MA', rolle: 'Admin' },
+    'inger@parknordic.no':    { navn: 'Inger',    initialer: 'IN', rolle: 'Admin' },
+    'britt@parknordic.no':    { navn: 'Britt',    initialer: 'BR', rolle: 'Admin' },
+    'heshmat@parknordic.no':  { navn: 'Heshmat',  initialer: 'HE', rolle: 'Admin' },
+  };
+  const DEFAULT_PASSWORD = 'nordic1234';
+  function getStoredPwd(email) {
+    try {
+      const stored = JSON.parse(localStorage.getItem('pn_passwords') || '{}');
+      return stored[email] || DEFAULT_PASSWORD;
+    } catch (e) { return DEFAULT_PASSWORD; }
+  }
+  function setStoredPwd(email, newPwd) {
+    const stored = JSON.parse(localStorage.getItem('pn_passwords') || '{}');
+    stored[email] = newPwd;
+    localStorage.setItem('pn_passwords', JSON.stringify(stored));
+  }
+  let CURRENT_USER = null;
+
+  // ===== ANLEGG SØK (i modal) =====
+  function searchAnlegg(query) {
+    const suggestions = document.getElementById('anleggSuggestions');
+    if (!query || query.length < 2) {
+      suggestions.style.display = 'none';
+      return;
+    }
+    const q = query.toLowerCase();
+    const matches = ANLEGG.filter(a =>
+      a.navn.toLowerCase().includes(q) || String(a.nr).includes(q)
+    ).slice(0, 8);
+    if (matches.length === 0) {
+      suggestions.style.display = 'none';
+      return;
+    }
+    suggestions.innerHTML = matches.map(a => `
+      <div onclick="pickAnlegg(${a.nr}, '${a.navn.replace(/'/g, "\\'")}')"
+           style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--pn-gray1); display: flex; gap: 10px; align-items: center;"
+           onmouseover="this.style.background='var(--pn-bg)'" onmouseout="this.style.background=''">
+        <span class="anlegg-nr">${a.nr}</span>
+        <span style="font-size: 13px;">${a.navn}</span>
+      </div>
+    `).join('');
+    suggestions.style.display = 'block';
+  }
+  function pickAnlegg(nr, navn) {
+    document.getElementById('anleggNrInput').value = nr;
+    document.getElementById('anleggNavnInput').value = navn;
+    document.getElementById('anleggSuggestions').style.display = 'none';
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#anleggNavnInput') && !e.target.closest('#anleggSuggestions')) {
+      const sg = document.getElementById('anleggSuggestions');
+      if (sg) sg.style.display = 'none';
+    }
+  });
+
+  // ===== ANLEGG-SIDE: render og søk =====
+  function renderAnleggTable(filterText) {
+    const tbody = document.getElementById('anleggTableBody');
+    if (!tbody) return;
+    let list = ANLEGG;
+    if (filterText && filterText.length > 0) {
+      const q = filterText.toLowerCase();
+      list = ANLEGG.filter(a =>
+        a.navn.toLowerCase().includes(q) || String(a.nr).includes(q)
+      );
+    }
+    // Mock: legg på sanksjons-statistikk for noen utvalgte
+    const mockStats = {
+      11609: {ytd: 14, trekk: 9240},
+      11720: {ytd: 9, trekk: 5940},
+      11721: {ytd: 4, trekk: 2640},
+      11659: {ytd: 8, trekk: 0},
+      10272: {ytd: 6, trekk: 3960},
+      10166: {ytd: 5, trekk: 0},
+    };
+    const rows = list.slice(0, 60).map(a => {
+      const s = mockStats[a.nr] || {ytd: 0, trekk: 0};
+      return `
+        <tr>
+          <td><span class="anlegg-nr">${a.nr}</span></td>
+          <td style="font-weight: 500;">${a.navn}</td>
+          <td>${s.ytd > 0 ? s.ytd : '–'}</td>
+          <td class="amount">${s.trekk > 0 ? s.trekk.toLocaleString('nb-NO') + ' kr' : '–'}</td>
+          <td><button class="btn-ghost" style="font-size: 11px; padding: 4px 8px;">Detalj</button></td>
+        </tr>
+      `;
+    }).join('');
+    tbody.innerHTML = rows + (list.length > 60
+      ? `<tr><td colspan="5" style="background: var(--pn-bg); text-align: center; padding: 12px; font-size: 12px; color: var(--pn-text-muted);">Viser 60 av ${list.length} treff – avgrens søket for å se flere</td></tr>`
+      : '');
+    document.getElementById('anleggCount').textContent = list.length;
+  }
+  function filterAnlegg(q) { renderAnleggTable(q); }
+
+  // ===== RAPPORT-SKJEMA =====
+  function toggleReportRange() {
+    const val = document.getElementById('reportPeriod').value;
+    document.getElementById('reportRange').style.display = val === 'custom' ? 'grid' : 'none';
+  }
+  function toggleReportAnlegg() {
+    const val = document.getElementById('reportAnleggMode').value;
+    document.getElementById('reportAnleggSingle').style.display = val !== 'all' ? 'block' : 'none';
+  }
+  function searchReportAnlegg(query) {
+    const suggestions = document.getElementById('reportAnleggSuggestions');
+    if (!query || query.length < 2) {
+      suggestions.style.display = 'none';
+      return;
+    }
+    const q = query.toLowerCase();
+    const matches = ANLEGG.filter(a =>
+      a.navn.toLowerCase().includes(q) || String(a.nr).includes(q)
+    ).slice(0, 8);
+    if (matches.length === 0) {
+      suggestions.style.display = 'none';
+      return;
+    }
+    suggestions.innerHTML = matches.map(a => `
+      <div onclick="pickReportAnlegg(${a.nr}, '${a.navn.replace(/'/g, "\\'")}')"
+           style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--pn-gray1); display: flex; gap: 10px; align-items: center;"
+           onmouseover="this.style.background='var(--pn-bg)'" onmouseout="this.style.background=''">
+        <span class="anlegg-nr">${a.nr}</span>
+        <span style="font-size: 13px;">${a.navn}</span>
+      </div>
+    `).join('');
+    suggestions.style.display = 'block';
+  }
+  function pickReportAnlegg(nr, navn) {
+    document.getElementById('reportAnleggSearch').value = '';
+    document.getElementById('reportAnleggSuggestions').style.display = 'none';
+    const sel = document.getElementById('reportAnleggSelected');
+    sel.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 8px; background: var(--pn-turkis2); padding: 5px 10px; border-radius: 14px; font-size: 12px;"><strong>${nr}</strong> ${navn} <span style="cursor: pointer; opacity: 0.6;" onclick="this.parentElement.remove()">✕</span></span>`;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#reportAnleggSearch') && !e.target.closest('#reportAnleggSuggestions')) {
+      const sg = document.getElementById('reportAnleggSuggestions');
+      if (sg) sg.style.display = 'none';
+    }
+  });
+
+  // ===== LOGIN =====
+  function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const pwd = document.getElementById('loginPw').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    if (!USERS[email]) {
+      errEl.textContent = 'Ukjent brukernavn. Kun ansatte med @parknordic.no har tilgang.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (pwd !== getStoredPwd(email)) {
+      errEl.textContent = 'Feil passord. Bruk «Glemt passord» hvis du ikke husker det.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    CURRENT_USER = { email, ...USERS[email] };
+    applyCurrentUser();
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+  }
+  function doLogout() {
+    CURRENT_USER = null;
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginPw').value = '';
+  }
+  function applyCurrentUser() {
+    if (!CURRENT_USER) return;
+
+    // Injiser profil-trigger i alle topbars som mangler den
+    document.querySelectorAll('.topbar .top-actions').forEach(actions => {
+      if (actions.querySelector('.profile-trigger')) return;
+      const trigger = document.createElement('div');
+      trigger.className = 'profile-trigger';
+      trigger.onclick = toggleProfileMenu;
+      trigger.innerHTML = `
+        <div class="profile-avatar" data-user-initialer>${CURRENT_USER.initialer}</div>
+        <svg class="profile-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="profile-menu profile-menu-clone">
+          <div class="profile-menu-head">
+            <div data-user-name style="font-weight: 600; color: var(--pn-darkblue); font-size: 14px;">${CURRENT_USER.navn}</div>
+            <div data-user-email style="color: var(--pn-text-muted); font-size: 12px;">${CURRENT_USER.email}</div>
+          </div>
+          <button class="profile-menu-item" onclick="openChangePwd()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Endre passord
+          </button>
+          <button class="profile-menu-item" onclick="goTo('settings')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Innstillinger
+          </button>
+          <button class="profile-menu-item logout-item" onclick="doLogout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logg ut
+          </button>
+        </div>
+      `;
+      actions.appendChild(trigger);
+    });
+
+    document.querySelectorAll('[data-user-name]').forEach(el => el.textContent = CURRENT_USER.navn);
+    document.querySelectorAll('[data-user-initialer]').forEach(el => el.textContent = CURRENT_USER.initialer);
+    document.querySelectorAll('[data-user-email]').forEach(el => el.textContent = CURRENT_USER.email);
+    document.querySelectorAll('[data-user-rolle]').forEach(el => el.textContent = CURRENT_USER.rolle);
+  }
+
+  // ===== GLEMT PASSORD =====
+  function openForgotPwd() {
+    document.getElementById('forgotModal').classList.add('visible');
+    document.getElementById('forgotResult').style.display = 'none';
+    document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value || '';
+  }
+  function closeForgotPwd() {
+    document.getElementById('forgotModal').classList.remove('visible');
+  }
+  function submitForgotPwd() {
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    const result = document.getElementById('forgotResult');
+    // I produksjon: kall backend som sender e-post med engangslenke
+    // I mockup: vis bekreftelse uansett (av sikkerhetshensyn - aldri røp om e-post finnes)
+    result.style.display = 'block';
+    if (USERS[email]) {
+      result.style.background = '#d1efe1';
+      result.style.color = '#1d6d44';
+      result.innerHTML = '✓ Hvis kontoen finnes har vi sendt en lenke til <strong>' + email + '</strong>. Sjekk innboksen din. <br><br><span style="font-size: 11px; opacity: 0.8;">Mockup: i produksjon sendes faktisk e-post via SendGrid/Postmark.</span>';
+    } else {
+      result.style.background = '#d1efe1';
+      result.style.color = '#1d6d44';
+      result.innerHTML = '✓ Hvis kontoen finnes har vi sendt en lenke til <strong>' + email + '</strong>. Sjekk innboksen din.';
+    }
+  }
+
+  // ===== ENDRE PASSORD =====
+  function openChangePwd() {
+    document.getElementById('changePwdModal').classList.add('visible');
+    document.getElementById('changePwdResult').style.display = 'none';
+    ['cpCurrent', 'cpNew', 'cpConfirm'].forEach(id => document.getElementById(id).value = '');
+  }
+  function closeChangePwd() {
+    document.getElementById('changePwdModal').classList.remove('visible');
+  }
+  function submitChangePwd() {
+    if (!CURRENT_USER) return;
+    const cur = document.getElementById('cpCurrent').value;
+    const newPw = document.getElementById('cpNew').value;
+    const conf = document.getElementById('cpConfirm').value;
+    const result = document.getElementById('changePwdResult');
+    result.style.display = 'block';
+    if (cur !== getStoredPwd(CURRENT_USER.email)) {
+      result.style.background = '#fde8e8'; result.style.color = '#9b1c1c';
+      result.textContent = 'Nåværende passord er feil.';
+      return;
+    }
+    if (newPw.length < 8) {
+      result.style.background = '#fde8e8'; result.style.color = '#9b1c1c';
+      result.textContent = 'Nytt passord må være minst 8 tegn.';
+      return;
+    }
+    if (newPw !== conf) {
+      result.style.background = '#fde8e8'; result.style.color = '#9b1c1c';
+      result.textContent = 'Bekreftelse stemmer ikke med nytt passord.';
+      return;
+    }
+    setStoredPwd(CURRENT_USER.email, newPw);
+    result.style.background = '#d1efe1'; result.style.color = '#1d6d44';
+    result.textContent = '✓ Passord endret. Bruk det nye passordet ved neste innlogging.';
+    setTimeout(closeChangePwd, 1800);
+  }
+
+  // ===== PROFIL DROPDOWN =====
+  function toggleProfileMenu(e) {
+    e = e || window.event;
+    if (e) e.stopPropagation();
+    const trigger = e ? e.currentTarget : document.querySelector('.profile-trigger');
+    if (!trigger) return;
+    const menu = trigger.querySelector('.profile-menu');
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.profile-menu').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.profile-trigger')) {
+      document.querySelectorAll('.profile-menu').forEach(m => m.classList.remove('open'));
+    }
+  });
+
+  // ===== NAV =====
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => goTo(item.dataset.page));
+  });
+  function goTo(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + pageId);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navMatch = document.querySelector('.nav-item[data-page="' + pageId + '"]');
+    if (navMatch) navMatch.classList.add('active');
+    if (pageId === 'anlegg') renderAnleggTable('');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  // ===== FILTER BTNS =====
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // ===== DROPZONE =====
+  const dropzone = document.getElementById('dropzone');
+  const pdfInput = document.getElementById('pdfInput');
+
+  ['dragenter', 'dragover'].forEach(ev => {
+    dropzone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropzone.classList.add('drag-active');
+    });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    dropzone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-active');
+    });
+  });
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files.length) {
+      openModal();
+    }
+  });
+  pdfInput.addEventListener('change', e => {
+    if (e.target.files.length) {
+      openModal();
+    }
+  });
+
+  // ===== MODAL =====
+  function openModal() {
+    document.getElementById('uploadModal').classList.add('visible');
+  }
+  function closeModal() {
+    document.getElementById('uploadModal').classList.remove('visible');
+    pdfInput.value = '';
+  }
+  function openSanctionDetail(id) {
+    openModal();
+  }
+  function selectChoice(el, type) {
+    el.parentElement.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('leieFields').classList.toggle('visible', type === 'leie');
+  }
+  function confirmUpload() {
+    closeModal();
+    // I produksjon: POST til backend
+  }
+
+  // ===== WEEKLY PREVIEW TABS =====
+  function switchPreview(idx, el) {
+    document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const sections = document.querySelectorAll('.preview-section');
+    sections.forEach((s, i) => s.classList.toggle('active', i === idx));
+  }
+
+  // ===== GLOBAL DRAG (anywhere on page = open modal) =====
+  let dragCounter = 0;
+  document.addEventListener('dragenter', e => {
+    e.preventDefault();
+    dragCounter++;
+  });
+  document.addEventListener('dragleave', e => {
+    dragCounter--;
+  });
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (document.getElementById('app').classList.contains('visible') && e.dataTransfer.files.length) {
+      openModal();
+    }
+  });
+</script>
+
+</body>
+</html>
