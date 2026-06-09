@@ -1,0 +1,27 @@
+# Park Nordic – Sanksjon (FastAPI/uvicorn). HERDET mal som erstatter dagens enhet.
+# Lukker: User=thomas → dedikert svc-bruker (#4) + systemd-herding. Binder allerede
+# til 127.0.0.1 (bra). DEBUG=false settes i .env (#1). root_path=/sanksjon.
+#
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin svc-sanksjon
+
+[Unit]
+Description=Park Nordic Sanksjon (FastAPI)
+After=network.target
+
+[Service]
+User=svc-sanksjon
+Group=svc-sanksjon
+WorkingDirectory=/opt/parknordic
+EnvironmentFile=/opt/parknordic/.env
+ExecStart=/opt/parknordic/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --root-path /sanksjon
+Restart=always
+RestartSec=2
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/parknordic
+
+[Install]
+WantedBy=multi-user.target

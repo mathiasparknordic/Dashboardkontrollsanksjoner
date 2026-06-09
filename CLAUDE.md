@@ -12,9 +12,31 @@ Read this fully before making changes.
 
 ## 1. What this repository is
 
-This repo contains **one file**: `parknordic_dashboard.html` — a self-contained,
-single-file **frontend mockup** of the **Sanksjon** (sanction-handling) dashboard
+The core artifact is `parknordic_dashboard.html` — a self-contained, single-file
+**frontend mockup** of the **Sanksjon** (sanction-handling) dashboard / portal shell
 for Park Nordic AS, an internal parking-enforcement company.
+
+The repo also now holds the **felles-auth changeset** (shared login + access control)
+built toward the architecture in §5/§6:
+
+```
+parknordic_dashboard.html   Portal/dashboard. Single login + admin "Brukere og tilganger"
+                            (gated by LAUNCHER_MODUS; mockup still works standalone).
+pn-auth/                    Standalone felles Auth API (FastAPI + SQLite + JWT). Tested
+                            (pytest). Owns users/permissions; bcrypt; secret-or-die; rate-limit.
+  app/  migrate.py  schema.sql  tests/  README.md
+integrasjon/                Drop-in glue for the systems whose source is NOT in this repo:
+  oppdrag-node/pnAuth.js        Express middleware (verifies pn_auth JWT, no npm deps)
+  sanksjon-fastapi/pn_auth.py   FastAPI dependency (requires permissions.sanksjon)
+  nginx/                        security headers + HSTS + auth_request for Datakvalitet
+  systemd/                      hardened service units (dedicated users, 127.0.0.1)
+DEPLOY.md                   Ordered deploy notes; maps acceptance criteria + security findings.
+```
+
+> The **pn-auth token contract** (HS256 JWT in cookie `pn_auth`, payload
+> `{sub,name,email,permissions{oppdrag,sanksjon,datakvalitet,admin},exp}`) is shared
+> across `pn-auth/app/security.py`, the Node middleware and the FastAPI dependency —
+> change them in lockstep. Tests: `pn-auth/tests/`, `integrasjon/*/`. See DEPLOY.md.
 
 - **Pure client-side.** No backend, no build step, no package manager, no
   dependencies installed locally. Everything (HTML, CSS, JS) lives in the one

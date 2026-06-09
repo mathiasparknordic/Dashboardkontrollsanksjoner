@@ -1,0 +1,30 @@
+# Park Nordic – Oppdrag (Node/Express). HERDET mal som erstatter dagens enhet.
+# Lukker: User=thomas → dedikert svc-bruker (#4), 0.0.0.0-binding (#5 – sett HOST),
+# samt systemd-herding. Node 22 LTS (#3). Krever SESSION_SECRET/AUTH_SECRET fra .env.
+#
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin svc-banenor
+
+[Unit]
+Description=Park Nordic Oppdrag (Node)
+After=network.target
+
+[Service]
+User=svc-banenor
+Group=svc-banenor
+WorkingDirectory=/opt/banenor
+EnvironmentFile=/opt/banenor/.env
+# Bind til localhost (#5): server.js bør lese HOST; nginx står foran.
+Environment=HOST=127.0.0.1
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=2
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/banenor/data
+
+[Install]
+WantedBy=multi-user.target

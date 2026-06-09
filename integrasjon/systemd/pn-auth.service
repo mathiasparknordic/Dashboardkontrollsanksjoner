@@ -1,0 +1,31 @@
+# Park Nordic – felles auth-tjeneste (pn-auth).
+# Plasser i /etc/systemd/system/. Dedikert, innloggingsløs servicebruker + herding
+# (SIKKERHETSGJENNOMGANG #4). Binder til 127.0.0.1 i run.sh (#5). Auto-restart for
+# robusthet (felles auth = single point of failure → må holdes i live).
+#
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin svc-pnauth
+#   sudo systemctl daemon-reload && sudo systemctl enable --now pn-auth
+
+[Unit]
+Description=pn-auth (Park Nordic felles auth)
+After=network.target
+
+[Service]
+User=svc-pnauth
+Group=svc-pnauth
+WorkingDirectory=/opt/pn-auth
+EnvironmentFile=/opt/pn-auth/.env
+ExecStart=/opt/pn-auth/.venv/bin/uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8081 --workers 1
+Restart=always
+RestartSec=2
+
+# systemd-herding
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/parknordic
+# (mappa der parknordic.db ligger – pn-auth skriver permissions/access_log dit)
+
+[Install]
+WantedBy=multi-user.target
