@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Nordic · Interne fagsystemer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pn-darkblue:#1a2641; --pn-darkblue-soft:#243152; --pn-darkblue-deep:#131b2f;
+    --pn-turkis1:#83bbba; --pn-turkis2:#bcddde; --pn-turkis3:#519a9c;
+    --pn-yellow:#ffcc00; --pn-gray1:#f0f0f0; --pn-gray2:#e3e3e3; --pn-gray3:#dadad9;
+    --pn-gray4:#bcbcbc; --pn-text-muted:#6b7280; --pn-white:#fff; --pn-bg:#eaf3f3;
+    --radius:6px; --radius-lg:12px; --shadow-soft:0 2px 12px rgba(26,38,65,.06);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { font-family:'Saira',sans-serif; background:var(--pn-bg); color:var(--pn-darkblue); letter-spacing:.01em; min-height:100vh; }
+  button { font-family:inherit; cursor:pointer; }
+  .hidden { display:none !important; }
+
+  /* ---------- LOGIN ---------- */
+  .login { min-height:100vh; display:flex; }
+  .login-left { flex:1; background:linear-gradient(135deg,var(--pn-darkblue-deep),var(--pn-darkblue-soft)); color:#fff; padding:64px 56px; display:flex; flex-direction:column; justify-content:space-between; }
+  .brand { font-size:30px; font-weight:700; letter-spacing:.04em; }
+  .brand .park { color:var(--pn-turkis1); }
+  .brand-sub { color:var(--pn-turkis2); letter-spacing:.32em; font-size:13px; margin-top:6px; text-transform:uppercase; }
+  .login-hero h1 { font-size:54px; line-height:1.05; font-weight:700; }
+  .login-hero h1 .y { color:var(--pn-yellow); }
+  .login-hero p { color:#c4d2e0; margin-top:18px; font-size:17px; max-width:30ch; }
+  .login-foot { color:#7f8ba0; font-size:13px; }
+  .login-right { width:min(46%,560px); background:var(--pn-bg); padding:64px 56px; display:flex; flex-direction:column; justify-content:center; }
+  .login-card h2 { font-size:30px; font-weight:700; }
+  .login-card .lead { color:var(--pn-text-muted); margin:6px 0 28px; }
+  .field-lbl { display:block; text-transform:uppercase; letter-spacing:.12em; font-size:12px; color:var(--pn-text-muted); margin:16px 0 6px; }
+  .field-input { width:100%; padding:14px 16px; border:1px solid var(--pn-gray3); border-radius:var(--radius); background:#eef4f9; font-size:15px; }
+  .field-input:focus { outline:none; border-color:var(--pn-turkis3); background:#fff; }
+  .btn-primary { background:var(--pn-darkblue); color:#fff; border:none; border-radius:var(--radius); padding:15px 20px; font-size:15px; font-weight:600; width:100%; margin-top:24px; }
+  .btn-primary:hover { background:var(--pn-darkblue-soft); }
+  .login-err { display:none; background:#fde8e8; color:#9b1c1c; padding:10px 14px; border-radius:6px; margin-top:16px; font-size:13px; border-left:3px solid #9b1c1c; }
+  .login-foot-r { color:var(--pn-text-muted); font-size:12px; margin-top:28px; }
+
+  /* ---------- SHELL ---------- */
+  .shell { min-height:100vh; }
+  .topbar { background:var(--pn-darkblue); color:#fff; padding:0 32px; height:64px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar .brand { font-size:20px; }
+  .top-right { display:flex; align-items:center; gap:18px; }
+  .top-user { text-align:right; line-height:1.2; }
+  .top-user .n { font-weight:600; font-size:14px; }
+  .top-user .r { color:var(--pn-turkis2); font-size:12px; }
+  .avatar { width:38px; height:38px; border-radius:50%; background:var(--pn-turkis3); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; }
+  .btn-ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:var(--radius); padding:8px 16px; font-size:13px; }
+  .btn-ghost:hover { background:rgba(255,255,255,.1); }
+  .wrap { max-width:1080px; margin:0 auto; padding:48px 32px; }
+  .eyebrow { text-transform:uppercase; letter-spacing:.2em; font-size:13px; color:var(--pn-turkis3); font-weight:600; }
+  .wrap h1 { font-size:40px; font-weight:700; margin:8px 0 6px; }
+  .wrap .sub { color:var(--pn-text-muted); font-size:17px; margin-bottom:8px; }
+
+  /* ---------- SYSTEM CARDS ---------- */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:24px; margin-top:32px; }
+  .card { background:#fff; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; border:1px solid var(--pn-gray2); }
+  .card-top { height:120px; display:flex; align-items:center; justify-content:center; font-size:40px; }
+  .card-body { padding:22px 24px 24px; display:flex; flex-direction:column; flex:1; }
+  .badge { align-self:flex-start; background:#e7f6ec; color:#1c7a3e; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin-bottom:12px; }
+  .badge.soon { background:var(--pn-gray1); color:var(--pn-text-muted); }
+  .badge.admin { background:#fff4cc; color:#8a6d00; }
+  .card h3 { font-size:22px; font-weight:700; margin-bottom:8px; }
+  .card p { color:var(--pn-text-muted); font-size:14px; line-height:1.5; flex:1; }
+  .card-link { margin-top:18px; font-weight:600; color:var(--pn-darkblue); display:inline-flex; align-items:center; gap:8px; background:none; border:none; padding:0; font-size:15px; }
+  .card-link:hover { gap:12px; }
+  .card.disabled { opacity:.55; }
+  .card.disabled .card-link { color:var(--pn-text-muted); cursor:not-allowed; }
+
+  /* ---------- ADMIN ---------- */
+  .panel { background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow-soft); border:1px solid var(--pn-gray2); padding:24px; margin-top:24px; }
+  .panel h3 { margin-bottom:4px; }
+  .panel .hint { color:var(--pn-text-muted); font-size:13px; margin-bottom:16px; }
+  .back { background:none; border:none; color:var(--pn-turkis3); font-weight:600; font-size:14px; margin-bottom:8px; }
+  table.users { width:100%; border-collapse:collapse; font-size:14px; }
+  table.users th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--pn-text-muted); padding:8px; border-bottom:2px solid var(--pn-gray2); }
+  table.users th.c, table.users td.c { text-align:center; }
+  table.users td { padding:10px 8px; border-bottom:1px solid var(--pn-gray1); }
+  table.users input[type=checkbox] { width:18px; height:18px; accent-color:var(--pn-turkis3); }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .btn-outline { background:#fff; border:1px solid var(--pn-gray3); border-radius:var(--radius); padding:8px 14px; font-size:13px; font-weight:600; color:var(--pn-darkblue); }
+  .btn-outline:hover { border-color:var(--pn-turkis3); }
+  .flash { display:none; padding:12px 14px; border-radius:var(--radius); font-size:14px; margin-top:14px; }
+  .perm-tags { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
+  .perm-tags label { font-size:14px; display:inline-flex; align-items:center; gap:6px; background:var(--pn-bg); padding:8px 12px; border-radius:var(--radius); }
+  @media (max-width:780px){ .login{flex-direction:column} .login-left,.login-right{width:100%;padding:40px 28px} .login-hero h1{font-size:40px} .row2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="login" id="loginScreen">
+  <div class="login-left">
+    <div>
+      <div class="brand"><span class="park">park</span> nordic</div>
+      <div class="brand-sub">Interne fagsystemer</div>
+    </div>
+    <div class="login-hero">
+      <h1>Én inngang.<br><span class="y">Dine systemer.</span></h1>
+      <p>Logg inn for å få tilgang til verktøyene du er gitt tilgang til.</p>
+    </div>
+    <div class="login-foot">© 2026 Park Nordic AS · Kun for autoriserte brukere</div>
+  </div>
+  <div class="login-right">
+    <div class="login-card">
+      <h2>Logg inn</h2>
+      <div class="lead">Bruk din Park Nordic-konto</div>
+      <div class="login-err" id="loginErr"></div>
+      <form onsubmit="doLogin(event)">
+        <label class="field-lbl">E-post</label>
+        <input class="field-input" id="loginEmail" type="text" placeholder="navn@parknordic.no" value="mathias@parknordic.no" autocomplete="username">
+        <label class="field-lbl">Passord</label>
+        <input class="field-input" id="loginPw" type="password" placeholder="••••••••" value="nordic1234" autocomplete="current-password">
+        <button class="btn-primary" type="submit">Logg inn</button>
+      </form>
+      <div class="login-foot-r">Mockup – demo. Standardpassord: <code>nordic1234</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PORTAL HOME (VELG SYSTEM) ===================== -->
+<div class="shell hidden" id="portalHome">
+  <div class="topbar">
+    <div class="brand"><span style="color:var(--pn-turkis1)">PARK</span> NORDIC</div>
+    <div class="top-right">
+      <div class="top-user"><div class="n" data-user-name>—</div><div class="r" data-user-rolle>—</div></div>
+      <div class="avatar" data-user-initialer>–</div>
+      <button class="btn-ghost" onclick="doLogout()">Logg ut</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="eyebrow">Velg system</div>
+    <h1>Hva vil du jobbe med?</h1>
+    <div class="sub">Du ser kun systemene du har tilgang til. Trenger du flere, kontakt en administrator.</div>
+    <div class="cards" id="systemCards"></div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN: BRUKERE OG TILGANGER ===================== -->
+<div class="shell hidden" id="adminView">
+  <div class="topbar">
+    <div class="brand"><span style="color:var(--pn-turkis1)">PARK</span> NORDIC</div>
+    <div class="top-right">
+      <div class="top-user"><div class="n" data-user-name>—</div><div class="r" data-user-rolle>—</div></div>
+      <div class="avatar" data-user-initialer>–</div>
+      <button class="btn-ghost" onclick="doLogout()">Logg ut</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <button class="back" onclick="showHome()">← Tilbake til systemer</button>
+    <div class="eyebrow">Administrasjon</div>
+    <h1>Brukere og tilganger</h1>
+    <div class="sub">Styr hvem som har tilgang til hvilke systemer. Dette bestemmer hvilke kort hver bruker får opp etter innlogging.</div>
+
+    <div class="panel">
+      <h3>Ny bruker</h3>
+      <div class="hint">Opprett konto og sett tilgang per system. Brukeren får et midlertidig passord (på e-post i full drift) og må endre det ved første innlogging.</div>
+      <div class="row2">
+        <div><label class="field-lbl">Fullt navn</label><input class="field-input" id="naNavn" placeholder="Kari Nordmann"></div>
+        <div><label class="field-lbl">E-post</label><input class="field-input" id="naEpost" placeholder="kari@parknordic.no"></div>
+      </div>
+      <div class="row2">
+        <div><label class="field-lbl">Brukernavn</label><input class="field-input" id="naBrukernavn" placeholder="kari"></div>
+        <div><label class="field-lbl">Midlertidig passord</label><input class="field-input" id="naPassord" placeholder="min. 8 tegn"></div>
+      </div>
+      <div class="perm-tags">
+        <label><input type="checkbox" id="naOppdrag"> Oppdrag</label>
+        <label><input type="checkbox" id="naSanksjon" checked> Sanksjon</label>
+        <label><input type="checkbox" id="naDatakvalitet"> Datakvalitet</label>
+        <label><input type="checkbox" id="naAdmin"> Admin</label>
+      </div>
+      <button class="btn-primary" style="width:auto;margin-top:6px;padding:12px 22px" onclick="adminCreateUser()">Opprett bruker</button>
+      <div class="flash" id="adminFlash"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Eksisterende brukere</h3>
+      <div class="hint">Kryss av hvilke systemer brukeren skal få. «Admin» gir tilgang til alt + denne skjermen.</div>
+      <div style="overflow-x:auto">
+      <table class="users">
+        <thead><tr>
+          <th>Navn</th><th>E-post</th>
+          <th class="c">Oppdrag</th><th class="c">Sanksjon</th><th class="c">Datakvalitet</th><th class="c">Admin</th><th></th>
+        </tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  //  Park Nordic portal – launcher + admin-tilgangsstyring (mockup)
+  //  LAUNCHER_MODUS=true  → frittstående demo (localStorage).
+  //  LAUNCHER_MODUS=false → felles innlogging mot pn-auth (/auth/*),
+  //                         viser kun systemene brukeren har tilgang til.
+  // ============================================================
+  const LAUNCHER_MODUS = true;
+
+  // De 10 ansatte (samme som Sanksjon-mockupen). Alle Admin i utgangspunktet.
+  const USERS = {
+    'fredrik@parknordic.no':{navn:'Fredrik',initialer:'FR',rolle:'Admin'},
+    'sten@parknordic.no':{navn:'Sten',initialer:'ST',rolle:'Admin'},
+    'ambjorg@parknordic.no':{navn:'Ambjørg',initialer:'AM',rolle:'Admin'},
+    'isabelle@parknordic.no':{navn:'Isabelle',initialer:'IS',rolle:'Admin'},
+    'anders@parknordic.no':{navn:'Anders',initialer:'AN',rolle:'Admin'},
+    'kim@parknordic.no':{navn:'Kim',initialer:'KI',rolle:'Admin'},
+    'mathias@parknordic.no':{navn:'Mathias',initialer:'MA',rolle:'Admin'},
+    'inger@parknordic.no':{navn:'Inger',initialer:'IN',rolle:'Admin'},
+    'britt@parknordic.no':{navn:'Britt',initialer:'BR',rolle:'Admin'},
+    'heshmat@parknordic.no':{navn:'Heshmat',initialer:'HE',rolle:'Admin'},
+  };
+
+  // Systemkatalog. url = hvor «Åpne system» går (mockup peker Sanksjon på dashboardet).
+  const SYSTEMS = [
+    { id:'oppdrag', navn:'Oppdrag & timer', emoji:'🛠️', status:'drift',
+      desc:'Registrer arbeid, materiell og timer på stasjoner langs Østfold- og Vestfoldbanen. Genererer fakturagrunnlag mot BaneNor.',
+      url:'/oppdrag/' },
+    { id:'sanksjon', navn:'Sanksjonsbehandling', emoji:'📄', status:'drift',
+      desc:'Last opp kontrollsanksjoner, fordel mellom Park Nordic og leieberegning, og send ukentlige rapporter til Riverty og økonomi.',
+      url:'parknordic_dashboard.html' },
+    { id:'datakvalitet', navn:'Datakvalitet', emoji:'📊', status:'drift',
+      desc:'Slipp inn CSV og analyser datakvalitet i nettleseren. Ingenting sendes til server.',
+      url:'/datakvalitet/' },
+  ];
+  const SYS_KEYS = ['oppdrag','sanksjon','datakvalitet','admin'];
+
+  let CURRENT_USER = null;
+
+  // ---- demo-tilganger (delt nøkkel med Sanksjon-mockupen) ----
+  function demoPerms(email){
+    const all = JSON.parse(localStorage.getItem('pn_demo_perms')||'{}');
+    if (all[email]) return all[email];
+    const u = USERS[email]||{};
+    return { oppdrag:true, sanksjon:true, datakvalitet:true, admin:(u.rolle==='Admin') };
+  }
+  function setDemoPerms(email,perms){
+    const all = JSON.parse(localStorage.getItem('pn_demo_perms')||'{}');
+    all[email]=perms; localStorage.setItem('pn_demo_perms',JSON.stringify(all));
+  }
+  function getStoredPwd(email){
+    const s = JSON.parse(localStorage.getItem('pn_passwords')||'{}');
+    return s[email]||'nordic1234';
+  }
+  function setStoredPwd(email,pwd){
+    const s = JSON.parse(localStorage.getItem('pn_passwords')||'{}');
+    s[email]=pwd; localStorage.setItem('pn_passwords',JSON.stringify(s));
+  }
+
+  async function authApi(path,opts={}){
+    return fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});
+  }
+  function permsToUser(data){
+    const p=data.permissions||{}; const navn=data.user.name||data.user.username||data.user.email;
+    const ini=navn.trim().split(/\s+/).map(s=>s[0]).join('').slice(0,2).toUpperCase();
+    return { email:data.user.email, navn, initialer:ini, rolle:p.admin?'Admin':'Bruker', permissions:p };
+  }
+
+  // ---- innlogging ----
+  async function doLogin(ev){
+    if (ev) ev.preventDefault();
+    const err = document.getElementById('loginErr'); err.style.display='none';
+    let email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    if (email && !email.includes('@')) email += '@parknordic.no';
+    const pw = document.getElementById('loginPw').value;
+
+    if (!LAUNCHER_MODUS){
+      try{
+        const res = await authApi('/auth/login',{method:'POST',body:JSON.stringify({brukernavn:email,passord:pw})});
+        if(!res.ok){ err.textContent = res.status===429?'For mange forsøk. Vent litt.':'Feil brukernavn eller passord.'; err.style.display='block'; return; }
+        CURRENT_USER = permsToUser(await res.json());
+      }catch(e){ err.textContent='Fikk ikke kontakt med innloggingstjenesten.'; err.style.display='block'; return; }
+    } else {
+      if(!USERS[email]){ err.textContent='Ukjent bruker. Kun ansatte med @parknordic.no.'; err.style.display='block'; return; }
+      if(pw!==getStoredPwd(email)){ err.textContent='Feil passord. (Standard: nordic1234)'; err.style.display='block'; return; }
+      CURRENT_USER = { email, ...USERS[email], permissions:demoPerms(email) };
+    }
+    applyUser(); showHome();
+  }
+  async function doLogout(){
+    if(!LAUNCHER_MODUS){ try{ await authApi('/auth/logout',{method:'POST'}); }catch(e){} }
+    CURRENT_USER=null;
+    document.getElementById('portalHome').classList.add('hidden');
+    document.getElementById('adminView').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+  function applyUser(){
+    if(!CURRENT_USER) return;
+    document.querySelectorAll('[data-user-name]').forEach(e=>e.textContent=CURRENT_USER.navn);
+    document.querySelectorAll('[data-user-rolle]').forEach(e=>e.textContent=CURRENT_USER.rolle);
+    document.querySelectorAll('[data-user-initialer]').forEach(e=>e.textContent=CURRENT_USER.initialer);
+  }
+
+  // ---- launcher: vis kun systemene brukeren har tilgang til ----
+  function showHome(){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminView').classList.add('hidden');
+    document.getElementById('portalHome').classList.remove('hidden');
+    renderCards();
+    window.scrollTo({top:0});
+  }
+  function renderCards(){
+    const p = (CURRENT_USER&&CURRENT_USER.permissions)||{};
+    const grid = document.getElementById('systemCards');
+    let html = SYSTEMS.filter(s=>p[s.id]||p.admin).map(s=>{
+      const farge = s.id==='sanksjon'?'linear-gradient(135deg,#1a2641,#243152)'
+                  : s.id==='oppdrag'?'linear-gradient(135deg,#519a9c,#83bbba)'
+                  : 'linear-gradient(135deg,#bcddde,#83bbba)';
+      return `<div class="card">
+        <div class="card-top" style="background:${farge}">${s.emoji}</div>
+        <div class="card-body">
+          <span class="badge">I drift</span>
+          <h3>${s.navn}</h3>
+          <p>${s.desc}</p>
+          <button class="card-link" onclick="openSystem('${s.id}')">Åpne system →</button>
+        </div></div>`;
+    }).join('');
+    // Admin-kort
+    if (p.admin){
+      html += `<div class="card">
+        <div class="card-top" style="background:linear-gradient(135deg,#ffcc00,#ffe27a)">👥</div>
+        <div class="card-body">
+          <span class="badge admin">Administrasjon</span>
+          <h3>Brukere og tilganger</h3>
+          <p>Opprett brukere og styr hvem som får tilgang til hvilke systemer. Endringer loggføres.</p>
+          <button class="card-link" onclick="showAdmin()">Åpne →</button>
+        </div></div>`;
+    }
+    grid.innerHTML = html || '<p style="color:var(--pn-text-muted)">Du har ikke tilgang til noen systemer ennå. Kontakt en administrator.</p>';
+  }
+  function openSystem(id){
+    const s = SYSTEMS.find(x=>x.id===id); if(!s) return;
+    if (LAUNCHER_MODUS && id==='sanksjon'){
+      // Mockup: åpne Sanksjon-dashboardet «allerede innlogget» (single sign-on-følelse).
+      location.href = s.url + '?sso=' + encodeURIComponent(CURRENT_USER.email);
+      return;
+    }
+    if (LAUNCHER_MODUS){ alert('Mockup: ' + s.navn + ' åpnes i eget system (' + s.url + ') i full drift.'); return; }
+    location.href = s.url;   // full drift: felles cookie gjelder på tvers
+  }
+
+  // ---- admin: brukere og tilganger ----
+  function flash(msg,ok){
+    const el=document.getElementById('adminFlash');
+    el.textContent=msg; el.style.display='block';
+    el.style.background=ok?'#e7f6ec':'#fde8e8'; el.style.color=ok?'#1c7a3e':'#9b1c1c';
+  }
+  function showAdmin(){
+    if(!(CURRENT_USER&&CURRENT_USER.permissions&&CURRENT_USER.permissions.admin)) return;
+    document.getElementById('portalHome').classList.add('hidden');
+    document.getElementById('adminView').classList.remove('hidden');
+    loadUsers(); window.scrollTo({top:0});
+  }
+  async function loadUsers(){
+    const body=document.getElementById('usersBody');
+    if(LAUNCHER_MODUS){
+      body.innerHTML = Object.keys(USERS).map(email=>{
+        const p=demoPerms(email);
+        const cb=(s)=>`<input type="checkbox" data-uid="${email}" data-sys="${s}"${p[s]?' checked':''}>`;
+        return `<tr>
+          <td>${USERS[email].navn}</td><td>${email}</td>
+          <td class="c">${cb('oppdrag')}</td><td class="c">${cb('sanksjon')}</td>
+          <td class="c">${cb('datakvalitet')}</td><td class="c">${cb('admin')}</td>
+          <td style="text-align:right"><button class="btn-outline" onclick="savePerms('${email}')">Lagre</button></td>
+        </tr>`;
+      }).join('');
+      return;
+    }
+    const res=await authApi('/auth/users');
+    if(!res.ok){ body.innerHTML='<tr><td colspan="7">Kunne ikke hente brukere.</td></tr>'; return; }
+    const users=await res.json();
+    body.innerHTML = users.map(u=>{
+      const cb=(s)=>`<input type="checkbox" data-uid="${u.id}" data-sys="${s}"${u.permissions[s]?' checked':''}>`;
+      return `<tr><td>${u.name}</td><td>${u.email}</td>
+        <td class="c">${cb('oppdrag')}</td><td class="c">${cb('sanksjon')}</td>
+        <td class="c">${cb('datakvalitet')}</td><td class="c">${cb('admin')}</td>
+        <td style="text-align:right"><button class="btn-outline" onclick="savePerms(${u.id})">Lagre</button></td></tr>`;
+    }).join('');
+  }
+  async function savePerms(uid){
+    const perms={};
+    SYS_KEYS.forEach(s=>{ const cb=document.querySelector(`input[data-uid="${uid}"][data-sys="${s}"]`); perms[s]=!!(cb&&cb.checked); });
+    if(LAUNCHER_MODUS){
+      setDemoPerms(uid,perms);
+      if(CURRENT_USER&&CURRENT_USER.email===uid){ CURRENT_USER.permissions=perms; }
+      flash('Tilgang lagret for '+uid+' (demo, lokalt).',true);
+      return;
+    }
+    const res=await authApi(`/auth/users/${uid}/permissions`,{method:'PUT',body:JSON.stringify(perms)});
+    flash(res.ok?'Tilgang lagret.':'Kunne ikke lagre tilgang.',res.ok);
+  }
+  async function adminCreateUser(){
+    const payload={
+      name:document.getElementById('naNavn').value.trim(),
+      username:document.getElementById('naBrukernavn').value.trim(),
+      email:document.getElementById('naEpost').value.trim().toLowerCase(),
+      passord:document.getElementById('naPassord').value,
+      permissions:{ oppdrag:document.getElementById('naOppdrag').checked, sanksjon:document.getElementById('naSanksjon').checked,
+        datakvalitet:document.getElementById('naDatakvalitet').checked, admin:document.getElementById('naAdmin').checked },
+    };
+    if(!payload.email||!payload.username||payload.passord.length<8){ flash('Fyll inn navn, e-post, brukernavn og passord (min 8 tegn).',false); return; }
+    if(LAUNCHER_MODUS){
+      if(USERS[payload.email]){ flash('E-post finnes allerede.',false); return; }
+      const ini=(payload.name||payload.username).trim().slice(0,2).toUpperCase();
+      USERS[payload.email]={navn:payload.name||payload.username,initialer:ini,rolle:payload.permissions.admin?'Admin':'Bruker'};
+      setStoredPwd(payload.email,payload.passord); setDemoPerms(payload.email,payload.permissions);
+      flash('Bruker opprettet (demo). I full drift får brukeren innlogging på e-post.',true);
+      ['naNavn','naBrukernavn','naEpost','naPassord'].forEach(id=>document.getElementById(id).value='');
+      loadUsers(); return;
+    }
+    const res=await authApi('/auth/users',{method:'POST',body:JSON.stringify(payload)});
+    if(res.status===201){ const d=await res.json().catch(()=>({}));
+      flash('Bruker opprettet.'+(d.epost==='sendt'?' Innlogging sendt på e-post.':d.epost==='dry-run'?' (E-postrelay ikke aktivt ennå.)':''),true);
+      ['naNavn','naBrukernavn','naEpost','naPassord'].forEach(id=>document.getElementById(id).value=''); loadUsers();
+    } else if(res.status===409){ flash('Brukernavn eller e-post finnes allerede.',false); }
+    else flash('Kunne ikke opprette bruker.',false);
+  }
+
+  // Full drift: gjenopprett sesjon fra cookie ved last (ingen loop).
+  (async function init(){
+    if(!LAUNCHER_MODUS){
+      try{ const res=await authApi('/auth/me'); if(res.ok){ CURRENT_USER=permsToUser(await res.json()); applyUser(); showHome(); } }catch(e){}
+    }
+  })();
+</script>
+</body>
+</html>

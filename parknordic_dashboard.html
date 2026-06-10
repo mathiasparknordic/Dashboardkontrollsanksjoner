@@ -2635,7 +2635,20 @@
   // I full modus (felles innlogging): ikke forhåndsfyll demo-innlogging, og forsøk å
   // gjenopprette en eksisterende sesjon fra cookien slik at «tilbake» ikke gir loop.
   (function initAuth() {
-    if (LAUNCHER_MODUS) return;
+    if (LAUNCHER_MODUS) {
+      // Mockup: kommer man fra portalen (portal.html → «Åpne system») med ?sso=<e-post>,
+      // gå rett inn «allerede innlogget» – simulerer felles innlogging på tvers.
+      const sso = new URLSearchParams(location.search).get('sso');
+      const email = sso && sso.toLowerCase();
+      if (email && USERS[email]) {
+        CURRENT_USER = { email, ...USERS[email], permissions: demoPerms(email) };
+        applyCurrentUser();
+        applySystemAccess();
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('app').classList.add('visible');
+      }
+      return;
+    }
     const emailEl = document.getElementById('loginEmail');
     const pwEl = document.getElementById('loginPw');
     if (emailEl) emailEl.value = '';
