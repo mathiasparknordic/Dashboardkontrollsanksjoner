@@ -1378,10 +1378,11 @@
           <div class="topp-liste" id="toppAnleggListe"></div>
         </div>
         <div class="panel">
-          <div class="table-header-bar" style="margin-bottom: 16px;">
-            <div class="panel-title"><span class="accent-bar"></span>Årsak til innbetaling</div>
-            <button class="btn-ghost" style="font-size: 12px;" onclick="alert('Mockup: rapport tas ut som Excel/PDF for valgt periode.')">Last ned rapport</button>
+          <div class="table-header-bar" style="margin-bottom: 6px;">
+            <div class="panel-title"><span class="accent-bar"></span>Årsak til sanksjon</div>
+            <button class="btn-ghost" style="font-size: 12px;" onclick="alert('Mockup: rapport tas ut som Excel/PDF for valgt periode/anlegg.')">Last ned rapport</button>
           </div>
+          <div style="font-size: 12px; color: var(--pn-text-muted); margin-bottom: 16px;">Grunnlag for å redusere antall sanksjoner per anlegg.</div>
           <div id="arsakFordeling"></div>
         </div>
       </div>
@@ -1978,36 +1979,21 @@
       <div class="divider"></div>
 
       <div class="choice-block">
-        <div class="choice-title"><span class="accent-bar"></span>Årsak til innbetaling</div>
+        <div class="choice-title"><span class="accent-bar"></span>Hvordan skal sanksjonen betales?</div>
 
-        <div class="choice-options arsak-grid" id="arsakOptions">
-          <div class="choice selected" data-arsak="leietaker" onclick="velgArsak(this, 'leietaker')">
-            <div class="ch-title">Leietaker som ikke har registrert</div>
-            <div class="ch-desc">Viderefaktureres gårdeier · trekkes fra leieberegning.</div>
+        <div class="choice-options">
+          <div class="choice" data-beh="pn" onclick="velgBehandling(this, 'pn')">
+            <div class="ch-title">Park Nordic betaler i sin helhet</div>
+            <div class="ch-desc">PN dekker hele beløpet.</div>
           </div>
-          <div class="choice" data-arsak="gardeier" onclick="velgArsak(this, 'gardeier')">
-            <div class="ch-title">Fra gårdeier</div>
-            <div class="ch-desc">Viderefaktureres gårdeier · trekkes fra leieberegning.</div>
-          </div>
-          <div class="choice" data-arsak="feilpn" onclick="velgArsak(this, 'feilpn')">
-            <div class="ch-title">Feil av Park Nordic</div>
-            <div class="ch-desc">PN bærer kostnaden selv. Ingen viderefakturering.</div>
-          </div>
-          <div class="choice" data-arsak="annen" onclick="velgArsak(this, 'annen')">
-            <div class="ch-title">Annen årsak</div>
-            <div class="ch-desc">Skriv egen begrunnelse for innbetaling.</div>
+          <div class="choice selected" data-beh="leie" onclick="velgBehandling(this, 'leie')">
+            <div class="ch-title">Trekk i leie – gårdeier faktureres</div>
+            <div class="ch-desc">Beløpet viderefaktureres gårdeier.</div>
           </div>
         </div>
-        <div class="routing-note" id="routingNote">→ Sendes til <strong>Økonomi (Hong)</strong>. Viderefaktureres gårdeier (velg anlegg + begrunnelse under).</div>
       </div>
 
       <div class="leie-fields visible" id="leieFields">
-        <div class="form-row full" id="annenArsakRad" style="display: none;">
-          <div>
-            <label class="field-lbl">Egen årsak</label>
-            <input class="field-input" id="annenArsakInput" placeholder="Skriv årsak til innbetaling">
-          </div>
-        </div>
         <div class="form-row">
           <div>
             <label class="field-lbl">Anleggsnr.</label>
@@ -2021,10 +2007,38 @@
         </div>
         <div class="form-row full">
           <div>
-            <label class="field-lbl">Begrunnelse for fradrag</label>
+            <label class="field-lbl">Begrunnelse for gårdeier-fakturering</label>
             <textarea class="field-input" placeholder="F.eks. «Leietaker glemte å registrere bil – avtale med gårdeier»">Leietaker hos gårdeier glemte å registrere kjennemerke. Sanksjon kunne ikke makuleres jf. avtale.</textarea>
           </div>
         </div>
+      </div>
+
+      <div class="choice-block" style="margin-top: 6px;">
+        <div class="choice-title"><span class="accent-bar"></span>Årsak til sanksjon
+          <span style="text-transform: none; letter-spacing: 0; color: var(--pn-text-muted); font-weight: 400; font-size: 12px;">– registreres for rapport, påvirker ikke betalingen</span>
+        </div>
+
+        <div class="choice-options arsak-grid" id="arsakOptions">
+          <div class="choice selected" data-arsak="leietaker" onclick="velgArsak(this, 'leietaker')">
+            <div class="ch-title">Leietaker som ikke har registrert</div>
+          </div>
+          <div class="choice" data-arsak="gardeier" onclick="velgArsak(this, 'gardeier')">
+            <div class="ch-title">Fra gårdeier</div>
+          </div>
+          <div class="choice" data-arsak="feilpn" onclick="velgArsak(this, 'feilpn')">
+            <div class="ch-title">Feil av Park Nordic</div>
+          </div>
+          <div class="choice" data-arsak="annen" onclick="velgArsak(this, 'annen')">
+            <div class="ch-title">Annen årsak</div>
+          </div>
+        </div>
+        <div class="form-row full" id="annenArsakRad" style="display: none; margin-top: 10px;">
+          <div>
+            <label class="field-lbl">Egen årsak</label>
+            <input class="field-input" id="annenArsakInput" placeholder="Skriv årsak til sanksjonen">
+          </div>
+        </div>
+        <div class="routing-note" id="routingNote">→ Sendes til <strong>Økonomi (Hong)</strong>. Gårdeier faktureres (trekk i leie).</div>
       </div>
     </div>
 
@@ -2401,27 +2415,29 @@
   // ===== SANKSJONSDATA (mock) – topp-anlegg, årsaksrapport, anleggshistorikk =====
   const ARSAK_NAVN = { leietaker: 'Leietaker ikke registrert', gardeier: 'Fra gårdeier', feilpn: 'Feil av PN', annen: 'Annen årsak' };
   const ARSAK_FARGE = { leietaker: 'var(--pn-turkis3)', gardeier: 'var(--pn-turkis1)', feilpn: 'var(--pn-yellow)', annen: 'var(--pn-gray4)' };
+  // behandling: 'leie' = trekk i leie / gårdeier faktureres · 'pn' = PN betaler i sin helhet.
+  // arsak: uavhengig av behandling – kun for rapport/forbedring.
   const SANKSJONER = [
-    {blankett:'6000659', dato:'05.03.2026', regnr:'NF78345', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
-    {blankett:'6000655', dato:'08.05.2026', regnr:'HM52910', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
-    {blankett:'6000653', dato:'06.05.2026', regnr:'CK77104', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'gardeier'},
-    {blankett:'6000650', dato:'02.05.2026', regnr:'PV34902', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
-    {blankett:'6000644', dato:'24.04.2026', regnr:'BY10093', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:330, arsak:'feilpn'},
-    {blankett:'6000641', dato:'18.04.2026', regnr:'TR55218', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
-    {blankett:'6000658', dato:'10.05.2026', regnr:'EK29104', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker'},
-    {blankett:'6000652', dato:'05.05.2026', regnr:'JR12440', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'gardeier'},
-    {blankett:'6000648', dato:'29.04.2026', regnr:'LM88321', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker'},
-    {blankett:'6000640', dato:'15.04.2026', regnr:'OS40192', nr:11720, navn:'Brynsengveien 2 Garasje', belop:330, arsak:'annen'},
-    {blankett:'6000656', dato:'09.05.2026', regnr:'DT19283', nr:10272, navn:'Skøyen Atrium, Oslo', belop:330, arsak:'leietaker'},
-    {blankett:'6000647', dato:'28.04.2026', regnr:'AG72610', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'feilpn'},
-    {blankett:'6000639', dato:'14.04.2026', regnr:'KE31845', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'leietaker'},
-    {blankett:'6000657', dato:'10.05.2026', regnr:'SB44782', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'gardeier'},
-    {blankett:'6000645', dato:'25.04.2026', regnr:'NV60338', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'leietaker'},
-    {blankett:'6000654', dato:'07.05.2026', regnr:'PV34877', nr:11721, navn:'Brynsengveien 2 Ute', belop:660, arsak:'leietaker'},
-    {blankett:'6000643', dato:'22.04.2026', regnr:'RM90122', nr:11721, navn:'Brynsengveien 2 Ute', belop:330, arsak:'annen'},
-    {blankett:'6000651', dato:'04.05.2026', regnr:'NV60111', nr:10166, navn:'Holberg P-Hus', belop:660, arsak:'leietaker'},
+    {blankett:'6000659', dato:'05.03.2026', regnr:'NF78345', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000655', dato:'08.05.2026', regnr:'HM52910', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000653', dato:'06.05.2026', regnr:'CK77104', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'gardeier', behandling:'leie'},
+    {blankett:'6000650', dato:'02.05.2026', regnr:'PV34902', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker', behandling:'pn'},
+    {blankett:'6000644', dato:'24.04.2026', regnr:'BY10093', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:330, arsak:'feilpn', behandling:'leie'},
+    {blankett:'6000641', dato:'18.04.2026', regnr:'TR55218', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker', behandling:'pn'},
+    {blankett:'6000658', dato:'10.05.2026', regnr:'EK29104', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000652', dato:'05.05.2026', regnr:'JR12440', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'gardeier', behandling:'leie'},
+    {blankett:'6000648', dato:'29.04.2026', regnr:'LM88321', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker', behandling:'pn'},
+    {blankett:'6000640', dato:'15.04.2026', regnr:'OS40192', nr:11720, navn:'Brynsengveien 2 Garasje', belop:330, arsak:'annen', behandling:'leie'},
+    {blankett:'6000656', dato:'09.05.2026', regnr:'DT19283', nr:10272, navn:'Skøyen Atrium, Oslo', belop:330, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000647', dato:'28.04.2026', regnr:'AG72610', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'feilpn', behandling:'pn'},
+    {blankett:'6000639', dato:'14.04.2026', regnr:'KE31845', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000657', dato:'10.05.2026', regnr:'SB44782', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'gardeier', behandling:'leie'},
+    {blankett:'6000645', dato:'25.04.2026', regnr:'NV60338', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000654', dato:'07.05.2026', regnr:'PV34877', nr:11721, navn:'Brynsengveien 2 Ute', belop:660, arsak:'leietaker', behandling:'leie'},
+    {blankett:'6000643', dato:'22.04.2026', regnr:'RM90122', nr:11721, navn:'Brynsengveien 2 Ute', belop:330, arsak:'annen', behandling:'pn'},
+    {blankett:'6000651', dato:'04.05.2026', regnr:'NV60111', nr:10166, navn:'Holberg P-Hus', belop:660, arsak:'leietaker', behandling:'leie'},
   ];
-  function erViderefakt(s) { return s.arsak === 'leietaker' || s.arsak === 'gardeier'; }
+  function erViderefakt(s) { return s.behandling === 'leie'; }
 
   function renderToppAnlegg() {
     const el = document.getElementById('toppAnleggListe'); if (!el) return;
@@ -2469,23 +2485,28 @@
           <td><span class="regnr">${s.regnr}</span></td>
           <td class="amount">${s.belop} kr</td>
           <td>${ARSAK_NAVN[s.arsak]}</td>
-          <td>${erViderefakt(s) ? '<span class="pill leie">Viderefaktureres gårdeier</span>' : '<span class="pill pn">PN dekker</span>'}</td>
+          <td>${erViderefakt(s) ? '<span class="pill leie">Trekk i leie · gårdeier</span>' : '<span class="pill pn">PN betaler</span>'}</td>
         </tr>`).join('')
       : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--pn-text-muted)">Ingen registrerte sanksjoner på dette anlegget ennå.</td></tr>';
     document.getElementById('anleggHistModal').classList.add('visible');
   }
   function lukkAnleggHist() { document.getElementById('anleggHistModal').classList.remove('visible'); }
 
-  // Årsak-valg i opplastingsmodalen
+  // Behandling (betaling) – uavhengig av årsak. Styrer om gårdeier faktureres.
+  function velgBehandling(el, type) {
+    el.parentElement.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const leie = type === 'leie';
+    document.getElementById('leieFields').classList.toggle('visible', leie);
+    document.getElementById('routingNote').innerHTML = leie
+      ? '→ Sendes til <strong>Økonomi (Hong)</strong>. Gårdeier faktureres (trekk i leie).'
+      : '→ Sendes til <strong>Økonomi (Hong)</strong>. Park Nordic betaler i sin helhet.';
+  }
+  // Årsak – kun registrering for rapport, påvirker ikke betalingen.
   function velgArsak(el, type) {
     el.parentElement.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    const feilpn = type === 'feilpn';
-    document.getElementById('leieFields').classList.toggle('visible', !feilpn);
     document.getElementById('annenArsakRad').style.display = (type === 'annen') ? '' : 'none';
-    document.getElementById('routingNote').innerHTML = feilpn
-      ? '→ Sendes til <strong>Økonomi (Hong)</strong>. PN bærer kostnaden – ingen viderefakturering.'
-      : '→ Sendes til <strong>Økonomi (Hong)</strong>. Viderefaktureres gårdeier (velg anlegg + begrunnelse under).';
   }
 
   // Render dashboard-panelene ved oppstart.
