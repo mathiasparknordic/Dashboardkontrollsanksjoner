@@ -972,6 +972,24 @@
   .field-input:focus { outline: 2px solid var(--pn-turkis3); border-color: var(--pn-turkis3); }
   .leie-fields { display: none; padding-top: 4px; }
   .leie-fields.visible { display: block; animation: fadeIn 0.25s; }
+  .arsak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .routing-note { margin-top: 12px; padding: 10px 14px; background: var(--pn-bg); border-left: 3px solid var(--pn-turkis3); border-radius: var(--radius); font-size: 13px; color: var(--pn-darkblue); }
+  .dash-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+  .topp-liste { display: flex; flex-direction: column; gap: 12px; }
+  .topp-rad { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 12px; cursor: pointer; }
+  .topp-rad:hover .navn { color: var(--pn-turkis3); }
+  .topp-rad .rank { width: 28px; height: 28px; border-radius: 50%; background: var(--pn-darkblue); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; }
+  .topp-rad .navn { font-weight: 600; font-size: 14px; }
+  .topp-rad .meta { font-size: 12px; color: var(--pn-text-muted); }
+  .topp-rad .tall { text-align: right; font-weight: 700; }
+  .topp-bar { height: 6px; border-radius: 3px; background: var(--pn-gray2); overflow: hidden; margin-top: 5px; }
+  .topp-bar > span { display: block; height: 100%; background: var(--pn-turkis3); }
+  .arsak-rad { margin-bottom: 14px; }
+  .arsak-rad .top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .arsak-rad .top .ant { font-weight: 700; }
+  .arsak-rad .bar { height: 8px; border-radius: 4px; background: var(--pn-gray2); overflow: hidden; }
+  .arsak-rad .bar > span { display: block; height: 100%; }
+  @media (max-width: 900px) { .dash-2col, .arsak-grid { grid-template-columns: 1fr; } }
 
   /* ====== BATCH PREVIEW PAGE ====== */
   .preview-tabs {
@@ -1323,16 +1341,16 @@
           <div class="head">
             <div class="title-block">
               <div class="lbl">Ukens batch · 2</div>
-              <div class="name">Til Økonomi (intern)</div>
-              <div class="sub">Sanksjoner som trekkes fra leieberegning per anlegg</div>
+              <div class="name">Til Økonomi (Hong)</div>
+              <div class="sub">Alle sanksjoner – innbetaling + viderefakturering gårdeier</div>
             </div>
             <span class="status-tag" style="background: #fff4cc; color: #8a6500;">Klar</span>
           </div>
 
           <div class="batch-stats">
-            <div class="batch-stat"><div class="num">9</div><div class="lbl">Sanksjoner</div></div>
-            <div class="batch-stat"><div class="num">5 940</div><div class="lbl">Beløp (kr)</div></div>
-            <div class="batch-stat"><div class="num">3</div><div class="lbl">Anlegg</div></div>
+            <div class="batch-stat"><div class="num">12</div><div class="lbl">Sanksjoner</div></div>
+            <div class="batch-stat"><div class="num">7 920</div><div class="lbl">Beløp (kr)</div></div>
+            <div class="batch-stat"><div class="num">4</div><div class="lbl">Anlegg</div></div>
           </div>
 
           <div class="send-info">
@@ -1341,8 +1359,8 @@
           </div>
 
           <div class="batch-recipient">
-            Mottaker: <strong>okonomi@parknordic.no</strong><br>
-            Format: Excel med beløp, anleggsnr. og navn
+            Mottaker: <strong>Hong · okonomi@parknordic.no</strong><br>
+            Format: Excel med beløp, anleggsnr., årsak og navn
           </div>
 
           <div class="batch-actions">
@@ -1351,6 +1369,21 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- TOPP ANLEGG + ÅRSAKSFORDELING -->
+      <div class="dash-2col">
+        <div class="panel">
+          <div class="panel-title" style="margin-bottom: 16px;"><span class="accent-bar"></span>Topp anlegg · flest sanksjoner (YTD)</div>
+          <div class="topp-liste" id="toppAnleggListe"></div>
+        </div>
+        <div class="panel">
+          <div class="table-header-bar" style="margin-bottom: 16px;">
+            <div class="panel-title"><span class="accent-bar"></span>Årsak til innbetaling</div>
+            <button class="btn-ghost" style="font-size: 12px;" onclick="alert('Mockup: rapport tas ut som Excel/PDF for valgt periode.')">Last ned rapport</button>
+          </div>
+          <div id="arsakFordeling"></div>
+        </div>
       </div>
 
       <!-- TABLE -->
@@ -1945,24 +1978,36 @@
       <div class="divider"></div>
 
       <div class="choice-block">
-        <div class="choice-title"><span class="accent-bar"></span>Hvordan skal denne sanksjonen behandles?</div>
+        <div class="choice-title"><span class="accent-bar"></span>Årsak til innbetaling</div>
 
-        <div class="choice-options">
-          <div class="choice" data-choice="pn" onclick="selectChoice(this, 'pn')">
-            <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7a2 2 0 0 1 2-2h4l2-3h2l2 3h4a2 2 0 0 1 2 2v14"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="12" cy="13" r="3"/></svg>
-            <div class="ch-title">Park Nordic dekker</div>
-            <div class="ch-desc">Full kostnad bæres av PN. Inngår kun i Riverty-utsendelse.</div>
+        <div class="choice-options arsak-grid" id="arsakOptions">
+          <div class="choice selected" data-arsak="leietaker" onclick="velgArsak(this, 'leietaker')">
+            <div class="ch-title">Leietaker som ikke har registrert</div>
+            <div class="ch-desc">Viderefaktureres gårdeier · trekkes fra leieberegning.</div>
           </div>
-
-          <div class="choice selected" data-choice="leie" onclick="selectChoice(this, 'leie')">
-            <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <div class="ch-title">Trekkes fra leieberegning</div>
-            <div class="ch-desc">Kostnad fordeles via bruttoomsetning på anlegget. Inngår også i økonomi-rapport.</div>
+          <div class="choice" data-arsak="gardeier" onclick="velgArsak(this, 'gardeier')">
+            <div class="ch-title">Fra gårdeier</div>
+            <div class="ch-desc">Viderefaktureres gårdeier · trekkes fra leieberegning.</div>
+          </div>
+          <div class="choice" data-arsak="feilpn" onclick="velgArsak(this, 'feilpn')">
+            <div class="ch-title">Feil av Park Nordic</div>
+            <div class="ch-desc">PN bærer kostnaden selv. Ingen viderefakturering.</div>
+          </div>
+          <div class="choice" data-arsak="annen" onclick="velgArsak(this, 'annen')">
+            <div class="ch-title">Annen årsak</div>
+            <div class="ch-desc">Skriv egen begrunnelse for innbetaling.</div>
           </div>
         </div>
+        <div class="routing-note" id="routingNote">→ Sendes til <strong>Økonomi (Hong)</strong>. Viderefaktureres gårdeier (velg anlegg + begrunnelse under).</div>
       </div>
 
       <div class="leie-fields visible" id="leieFields">
+        <div class="form-row full" id="annenArsakRad" style="display: none;">
+          <div>
+            <label class="field-lbl">Egen årsak</label>
+            <input class="field-input" id="annenArsakInput" placeholder="Skriv årsak til innbetaling">
+          </div>
+        </div>
         <div class="form-row">
           <div>
             <label class="field-lbl">Anleggsnr.</label>
@@ -1991,6 +2036,41 @@
         <button class="btn-ghost" onclick="closeModal()">Avbryt</button>
         <button class="btn-primary" onclick="confirmUpload()">Lagre sanksjon</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ANLEGG-HISTORIKK (modal) ============ -->
+<div class="modal-overlay" id="anleggHistModal" role="dialog" aria-modal="true" aria-labelledby="anleggHistTittel">
+  <div class="modal" style="max-width: 760px;">
+    <div class="modal-head">
+      <div class="head-text">
+        <div class="lbl" id="anleggHistSub">Historikk · registrerte sanksjoner</div>
+        <h3 id="anleggHistTittel">Anlegg</h3>
+      </div>
+      <button class="modal-close" onclick="lukkAnleggHist()" aria-label="Lukk">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+        <div class="kpi"><div class="kpi-label">Sanksjoner</div><div class="kpi-value" id="ahAnt">0</div></div>
+        <div class="kpi"><div class="kpi-label">Beløp totalt</div><div class="kpi-value" id="ahSum">0<span class="kpi-unit">kr</span></div></div>
+        <div class="kpi"><div class="kpi-label">Viderefaktureres gårdeier</div><div class="kpi-value" id="ahVfakt">0</div></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th scope="col">Blankett</th><th scope="col">Dato</th><th scope="col">Reg.nr.</th>
+              <th scope="col">Beløp</th><th scope="col">Årsak</th><th scope="col">Behandling</th>
+            </tr>
+          </thead>
+          <tbody id="anleggHistBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div style="font-size: 12px; color: var(--pn-text-muted)">Mockup-data for demonstrasjon.</div>
+      <button class="btn-ghost" onclick="lukkAnleggHist()">Lukk</button>
     </div>
   </div>
 </div>
@@ -2307,7 +2387,7 @@
           <td style="font-weight: 500;">${a.navn}</td>
           <td>${s.ytd > 0 ? s.ytd : '–'}</td>
           <td class="amount">${s.trekk > 0 ? s.trekk.toLocaleString('nb-NO') + ' kr' : '–'}</td>
-          <td><button class="btn-ghost" style="font-size: 11px; padding: 4px 8px;">Detalj</button></td>
+          <td><button class="btn-ghost" style="font-size: 11px; padding: 4px 8px;" onclick="openAnleggHist(${a.nr})">Historikk</button></td>
         </tr>
       `;
     }).join('');
@@ -2317,6 +2397,100 @@
     document.getElementById('anleggCount').textContent = list.length;
   }
   function filterAnlegg(q) { renderAnleggTable(q); }
+
+  // ===== SANKSJONSDATA (mock) – topp-anlegg, årsaksrapport, anleggshistorikk =====
+  const ARSAK_NAVN = { leietaker: 'Leietaker ikke registrert', gardeier: 'Fra gårdeier', feilpn: 'Feil av PN', annen: 'Annen årsak' };
+  const ARSAK_FARGE = { leietaker: 'var(--pn-turkis3)', gardeier: 'var(--pn-turkis1)', feilpn: 'var(--pn-yellow)', annen: 'var(--pn-gray4)' };
+  const SANKSJONER = [
+    {blankett:'6000659', dato:'05.03.2026', regnr:'NF78345', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
+    {blankett:'6000655', dato:'08.05.2026', regnr:'HM52910', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
+    {blankett:'6000653', dato:'06.05.2026', regnr:'CK77104', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'gardeier'},
+    {blankett:'6000650', dato:'02.05.2026', regnr:'PV34902', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
+    {blankett:'6000644', dato:'24.04.2026', regnr:'BY10093', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:330, arsak:'feilpn'},
+    {blankett:'6000641', dato:'18.04.2026', regnr:'TR55218', nr:11609, navn:'Ringkollen 13-24, Sandefjord', belop:660, arsak:'leietaker'},
+    {blankett:'6000658', dato:'10.05.2026', regnr:'EK29104', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker'},
+    {blankett:'6000652', dato:'05.05.2026', regnr:'JR12440', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'gardeier'},
+    {blankett:'6000648', dato:'29.04.2026', regnr:'LM88321', nr:11720, navn:'Brynsengveien 2 Garasje', belop:660, arsak:'leietaker'},
+    {blankett:'6000640', dato:'15.04.2026', regnr:'OS40192', nr:11720, navn:'Brynsengveien 2 Garasje', belop:330, arsak:'annen'},
+    {blankett:'6000656', dato:'09.05.2026', regnr:'DT19283', nr:10272, navn:'Skøyen Atrium, Oslo', belop:330, arsak:'leietaker'},
+    {blankett:'6000647', dato:'28.04.2026', regnr:'AG72610', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'feilpn'},
+    {blankett:'6000639', dato:'14.04.2026', regnr:'KE31845', nr:10272, navn:'Skøyen Atrium, Oslo', belop:660, arsak:'leietaker'},
+    {blankett:'6000657', dato:'10.05.2026', regnr:'SB44782', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'gardeier'},
+    {blankett:'6000645', dato:'25.04.2026', regnr:'NV60338', nr:11659, navn:'Holbergsgate 21', belop:660, arsak:'leietaker'},
+    {blankett:'6000654', dato:'07.05.2026', regnr:'PV34877', nr:11721, navn:'Brynsengveien 2 Ute', belop:660, arsak:'leietaker'},
+    {blankett:'6000643', dato:'22.04.2026', regnr:'RM90122', nr:11721, navn:'Brynsengveien 2 Ute', belop:330, arsak:'annen'},
+    {blankett:'6000651', dato:'04.05.2026', regnr:'NV60111', nr:10166, navn:'Holberg P-Hus', belop:660, arsak:'leietaker'},
+  ];
+  function erViderefakt(s) { return s.arsak === 'leietaker' || s.arsak === 'gardeier'; }
+
+  function renderToppAnlegg() {
+    const el = document.getElementById('toppAnleggListe'); if (!el) return;
+    const m = {};
+    SANKSJONER.forEach(s => { (m[s.nr] = m[s.nr] || {nr: s.nr, navn: s.navn, ant: 0, sum: 0}); m[s.nr].ant++; m[s.nr].sum += s.belop; });
+    const liste = Object.values(m).sort((a, b) => b.ant - a.ant).slice(0, 5);
+    const maks = Math.max(1, ...liste.map(a => a.ant));
+    el.innerHTML = liste.map((a, i) => `
+      <div class="topp-rad" role="button" tabindex="0" onclick="openAnleggHist(${a.nr})" onkeydown="if(event.key==='Enter')openAnleggHist(${a.nr})">
+        <div class="rank">${i + 1}</div>
+        <div>
+          <div class="navn">${a.navn}</div>
+          <div class="meta"><span class="anlegg-nr">${a.nr}</span> · ${a.sum.toLocaleString('nb-NO')} kr</div>
+          <div class="topp-bar"><span style="width:${Math.round(a.ant / maks * 100)}%"></span></div>
+        </div>
+        <div class="tall">${a.ant}</div>
+      </div>`).join('');
+  }
+  function renderArsak() {
+    const el = document.getElementById('arsakFordeling'); if (!el) return;
+    const tot = SANKSJONER.length || 1;
+    const teller = {leietaker: 0, gardeier: 0, feilpn: 0, annen: 0};
+    SANKSJONER.forEach(s => { teller[s.arsak] = (teller[s.arsak] || 0) + 1; });
+    el.innerHTML = Object.keys(ARSAK_NAVN).map(k => {
+      const ant = teller[k] || 0; const pst = Math.round(ant / tot * 100);
+      return `<div class="arsak-rad">
+        <div class="top"><span>${ARSAK_NAVN[k]}</span><span class="ant">${ant} · ${pst}%</span></div>
+        <div class="bar"><span style="width:${pst}%; background:${ARSAK_FARGE[k]}"></span></div>
+      </div>`;
+    }).join('');
+  }
+
+  function openAnleggHist(nr) {
+    const treff = SANKSJONER.filter(s => s.nr === nr);
+    const navn = (ANLEGG.find(a => a.nr === nr) || {}).navn || (treff[0] && treff[0].navn) || ('Anlegg ' + nr);
+    document.getElementById('anleggHistTittel').textContent = navn;
+    document.getElementById('anleggHistSub').textContent = 'Historikk · anlegg ' + nr;
+    const sum = treff.reduce((a, s) => a + s.belop, 0);
+    document.getElementById('ahAnt').textContent = treff.length;
+    document.getElementById('ahSum').innerHTML = sum.toLocaleString('nb-NO') + '<span class="kpi-unit">kr</span>';
+    document.getElementById('ahVfakt').textContent = treff.filter(erViderefakt).length;
+    document.getElementById('anleggHistBody').innerHTML = treff.length
+      ? treff.map(s => `<tr>
+          <td class="blanket">${s.blankett}</td><td>${s.dato}</td>
+          <td><span class="regnr">${s.regnr}</span></td>
+          <td class="amount">${s.belop} kr</td>
+          <td>${ARSAK_NAVN[s.arsak]}</td>
+          <td>${erViderefakt(s) ? '<span class="pill leie">Viderefaktureres gårdeier</span>' : '<span class="pill pn">PN dekker</span>'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--pn-text-muted)">Ingen registrerte sanksjoner på dette anlegget ennå.</td></tr>';
+    document.getElementById('anleggHistModal').classList.add('visible');
+  }
+  function lukkAnleggHist() { document.getElementById('anleggHistModal').classList.remove('visible'); }
+
+  // Årsak-valg i opplastingsmodalen
+  function velgArsak(el, type) {
+    el.parentElement.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const feilpn = type === 'feilpn';
+    document.getElementById('leieFields').classList.toggle('visible', !feilpn);
+    document.getElementById('annenArsakRad').style.display = (type === 'annen') ? '' : 'none';
+    document.getElementById('routingNote').innerHTML = feilpn
+      ? '→ Sendes til <strong>Økonomi (Hong)</strong>. PN bærer kostnaden – ingen viderefakturering.'
+      : '→ Sendes til <strong>Økonomi (Hong)</strong>. Viderefaktureres gårdeier (velg anlegg + begrunnelse under).';
+  }
+
+  // Render dashboard-panelene ved oppstart.
+  renderToppAnlegg();
+  renderArsak();
 
   // ===== RAPPORT-SKJEMA =====
   function toggleReportRange() {
@@ -2568,6 +2742,7 @@
     if (navMatch) navMatch.classList.add('active');
     if (pageId === 'anlegg') renderAnleggTable('');
     if (pageId === 'admin') adminLoadUsers();
+    if (pageId === 'dashboard') { renderToppAnlegg(); renderArsak(); }
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
 
