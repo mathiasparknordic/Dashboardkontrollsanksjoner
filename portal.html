@@ -12,13 +12,14 @@
     --pn-darkblue:#1a2641; --pn-darkblue-soft:#243152; --pn-darkblue-deep:#131b2f;
     --pn-turkis1:#83bbba; --pn-turkis2:#bcddde; --pn-turkis3:#519a9c;
     --pn-yellow:#ffcc00; --pn-gray1:#f0f0f0; --pn-gray2:#e3e3e3; --pn-gray3:#dadad9;
-    --pn-gray4:#bcbcbc; --pn-text-muted:#6b7280; --pn-white:#fff; --pn-bg:#eaf3f3;
+    --pn-gray4:#bcbcbc; --pn-text-muted:#5b626e; --pn-white:#fff; --pn-bg:#eaf3f3;
     --radius:6px; --radius-lg:12px; --shadow-soft:0 2px 12px rgba(26,38,65,.06);
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   html, body { font-family:'Saira',sans-serif; background:var(--pn-bg); color:var(--pn-darkblue); letter-spacing:.01em; min-height:100vh; }
   button { font-family:inherit; cursor:pointer; }
   .hidden { display:none !important; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 
   /* ---------- LOGIN ---------- */
   .login { min-height:100vh; display:flex; }
@@ -53,13 +54,16 @@
   .btn-ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:var(--radius); padding:8px 16px; font-size:13px; }
   .btn-ghost:hover { background:rgba(255,255,255,.1); }
   .wrap { max-width:1080px; margin:0 auto; padding:48px 32px; }
-  .eyebrow { text-transform:uppercase; letter-spacing:.2em; font-size:13px; color:var(--pn-turkis3); font-weight:600; }
+  .eyebrow { text-transform:uppercase; letter-spacing:.2em; font-size:13px; color:#2f6264; font-weight:600; }
   .wrap h1 { font-size:40px; font-weight:700; margin:8px 0 6px; }
   .wrap .sub { color:var(--pn-text-muted); font-size:17px; margin-bottom:8px; }
 
   /* ---------- SYSTEM CARDS ---------- */
   .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:24px; margin-top:32px; }
-  .card { background:#fff; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; border:1px solid var(--pn-gray2); }
+  .card { background:#fff; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; border:1px solid var(--pn-gray2); transition:transform .15s, box-shadow .15s; }
+  .card.clickable { cursor:pointer; }
+  .card.clickable:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(26,38,65,.14); }
+  .card.admin-card { border:1px solid var(--pn-yellow); }
   .card-top { height:120px; display:flex; align-items:center; justify-content:center; font-size:40px; }
   .card-body { padding:22px 24px 24px; display:flex; flex-direction:column; flex:1; }
   .badge { align-self:flex-start; background:#e7f6ec; color:#1c7a3e; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin-bottom:12px; }
@@ -83,12 +87,23 @@
   table.users td { padding:10px 8px; border-bottom:1px solid var(--pn-gray1); }
   table.users input[type=checkbox] { width:18px; height:18px; accent-color:var(--pn-turkis3); }
   .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .btn-outline { background:#fff; border:1px solid var(--pn-gray3); border-radius:var(--radius); padding:8px 14px; font-size:13px; font-weight:600; color:var(--pn-darkblue); }
-  .btn-outline:hover { border-color:var(--pn-turkis3); }
+  .btn-outline { background:#fff; border:1px solid var(--pn-darkblue); border-radius:var(--radius); padding:8px 14px; font-size:13px; font-weight:600; color:var(--pn-darkblue); }
+  .btn-outline:hover { background:var(--pn-darkblue); color:#fff; }
+  .btn-outline.danger { border-color:var(--pn-gray4); color:var(--pn-text-muted); }
+  .btn-outline.danger:hover { background:#9b1c1c; border-color:#9b1c1c; color:#fff; }
   .flash { display:none; padding:12px 14px; border-radius:var(--radius); font-size:14px; margin-top:14px; }
+  /* synlig tastatur-fokus overalt */
+  button:focus-visible, a:focus-visible, .field-input:focus-visible, input[type=checkbox]:focus-visible {
+    outline:2px solid var(--pn-yellow); outline-offset:2px; }
+  tr.ny-rad { animation:nyrad 1.6s ease-out; }
+  @keyframes nyrad { from { background:#fff7d6; } to { background:transparent; } }
   .perm-tags { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
   .perm-tags label { font-size:14px; display:inline-flex; align-items:center; gap:6px; background:var(--pn-bg); padding:8px 12px; border-radius:var(--radius); }
-  @media (max-width:780px){ .login{flex-direction:column} .login-left,.login-right{width:100%;padding:40px 28px} .login-hero h1{font-size:40px} .row2{grid-template-columns:1fr} }
+  @media (max-width:780px){
+    .login{flex-direction:column} .login-left,.login-right{width:100%;padding:40px 28px}
+    .login-hero h1{font-size:40px} .row2{grid-template-columns:1fr}
+    .topbar{padding:0 16px; gap:12px} .top-user{display:none} .wrap{padding:32px 20px} .wrap h1{font-size:30px}
+  }
 </style>
 </head>
 <body>
@@ -110,11 +125,11 @@
     <div class="login-card">
       <h2>Logg inn</h2>
       <div class="lead">Bruk din Park Nordic-konto</div>
-      <div class="login-err" id="loginErr"></div>
+      <div class="login-err" id="loginErr" role="alert"></div>
       <form onsubmit="doLogin(event)">
-        <label class="field-lbl">E-post</label>
-        <input class="field-input" id="loginEmail" type="text" placeholder="navn@parknordic.no" value="mathias@parknordic.no" autocomplete="username">
-        <label class="field-lbl">Passord</label>
+        <label class="field-lbl" for="loginEmail">E-post</label>
+        <input class="field-input" id="loginEmail" type="text" placeholder="navn@parknordic.no" value="mathias@parknordic.no" autocomplete="username" autofocus>
+        <label class="field-lbl" for="loginPw">Passord</label>
         <input class="field-input" id="loginPw" type="password" placeholder="••••••••" value="nordic1234" autocomplete="current-password">
         <button class="btn-primary" type="submit">Logg inn</button>
       </form>
@@ -161,12 +176,12 @@
       <h3>Ny bruker</h3>
       <div class="hint">Opprett konto og sett tilgang per system. Brukeren får et midlertidig passord (på e-post i full drift) og må endre det ved første innlogging.</div>
       <div class="row2">
-        <div><label class="field-lbl">Fullt navn</label><input class="field-input" id="naNavn" placeholder="Kari Nordmann"></div>
-        <div><label class="field-lbl">E-post</label><input class="field-input" id="naEpost" placeholder="kari@parknordic.no"></div>
+        <div><label class="field-lbl" for="naNavn">Fullt navn</label><input class="field-input" id="naNavn" placeholder="Kari Nordmann"></div>
+        <div><label class="field-lbl" for="naEpost">E-post</label><input class="field-input" id="naEpost" placeholder="kari@parknordic.no"></div>
       </div>
       <div class="row2">
-        <div><label class="field-lbl">Brukernavn</label><input class="field-input" id="naBrukernavn" placeholder="kari"></div>
-        <div><label class="field-lbl">Midlertidig passord</label><input class="field-input" id="naPassord" placeholder="min. 8 tegn"></div>
+        <div><label class="field-lbl" for="naBrukernavn">Brukernavn</label><input class="field-input" id="naBrukernavn" placeholder="kari"></div>
+        <div><label class="field-lbl" for="naPassord">Midlertidig passord</label><input class="field-input" id="naPassord" placeholder="min. 8 tegn"></div>
       </div>
       <div class="perm-tags">
         <label><input type="checkbox" id="naOppdrag"> Oppdrag</label>
@@ -175,7 +190,7 @@
         <label><input type="checkbox" id="naAdmin"> Admin</label>
       </div>
       <button class="btn-primary" style="width:auto;margin-top:6px;padding:12px 22px" onclick="adminCreateUser()">Opprett bruker</button>
-      <div class="flash" id="adminFlash"></div>
+      <div class="flash" id="adminFlash" role="status" aria-live="polite"></div>
     </div>
 
     <div class="panel">
@@ -184,8 +199,10 @@
       <div style="overflow-x:auto">
       <table class="users">
         <thead><tr>
-          <th>Navn</th><th>E-post</th>
-          <th class="c">Oppdrag</th><th class="c">Sanksjon</th><th class="c">Datakvalitet</th><th class="c">Admin</th><th></th>
+          <th scope="col">Navn</th><th scope="col">E-post</th>
+          <th scope="col" class="c">Oppdrag</th><th scope="col" class="c">Sanksjon</th>
+          <th scope="col" class="c">Datakvalitet</th><th scope="col" class="c">Admin</th>
+          <th scope="col"><span class="sr-only">Handling</span></th>
         </tr></thead>
         <tbody id="usersBody"></tbody>
       </table>
@@ -252,6 +269,16 @@
     const s = JSON.parse(localStorage.getItem('pn_passwords')||'{}');
     s[email]=pwd; localStorage.setItem('pn_passwords',JSON.stringify(s));
   }
+  function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  // demo: deaktiverte brukere (kun mockup)
+  function demoInactive(){ return JSON.parse(localStorage.getItem('pn_demo_inactive')||'[]'); }
+  function isActive(email){ return !demoInactive().includes(email); }
+  function setDemoActive(email,active){
+    const s=new Set(demoInactive()); active?s.delete(email):s.add(email);
+    localStorage.setItem('pn_demo_inactive',JSON.stringify([...s]));
+  }
+  function flashBtn(btn,txt){ if(!btn) return; const t=btn.textContent; btn.textContent=txt; setTimeout(()=>{btn.textContent=t;},1500); }
+  function scrollToUsers(){ const b=document.getElementById('usersBody'); if(b&&b.closest('.panel')) b.closest('.panel').scrollIntoView({behavior:'smooth',block:'center'}); }
 
   async function authApi(path,opts={}){
     return fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});
@@ -265,23 +292,30 @@
   // ---- innlogging ----
   async function doLogin(ev){
     if (ev) ev.preventDefault();
+    const btn = ev && ev.target.querySelector('button[type=submit]');
+    if (btn) btn.disabled = true;
     const err = document.getElementById('loginErr'); err.style.display='none';
-    let email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    if (email && !email.includes('@')) email += '@parknordic.no';
-    const pw = document.getElementById('loginPw').value;
+    try {
+      let email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      if (email && !email.includes('@')) email += '@parknordic.no';
+      const pw = document.getElementById('loginPw').value;
 
-    if (!LAUNCHER_MODUS){
-      try{
-        const res = await authApi('/auth/login',{method:'POST',body:JSON.stringify({brukernavn:email,passord:pw})});
-        if(!res.ok){ err.textContent = res.status===429?'For mange forsøk. Vent litt.':'Feil brukernavn eller passord.'; err.style.display='block'; return; }
-        CURRENT_USER = permsToUser(await res.json());
-      }catch(e){ err.textContent='Fikk ikke kontakt med innloggingstjenesten.'; err.style.display='block'; return; }
-    } else {
-      if(!USERS[email]){ err.textContent='Ukjent bruker. Kun ansatte med @parknordic.no.'; err.style.display='block'; return; }
-      if(pw!==getStoredPwd(email)){ err.textContent='Feil passord. (Standard: nordic1234)'; err.style.display='block'; return; }
-      CURRENT_USER = { email, ...USERS[email], permissions:demoPerms(email) };
+      if (!LAUNCHER_MODUS){
+        try{
+          const res = await authApi('/auth/login',{method:'POST',body:JSON.stringify({brukernavn:email,passord:pw})});
+          if(!res.ok){ err.textContent = res.status===429?'For mange forsøk. Vent litt.':'Feil brukernavn eller passord.'; err.style.display='block'; return; }
+          CURRENT_USER = permsToUser(await res.json());
+        }catch(e){ err.textContent='Fikk ikke kontakt med innloggingstjenesten.'; err.style.display='block'; return; }
+      } else {
+        if(!USERS[email]){ err.textContent='Ukjent bruker. Kun ansatte med @parknordic.no.'; err.style.display='block'; return; }
+        if(pw!==getStoredPwd(email)){ err.textContent='Feil passord. (Standard: nordic1234)'; err.style.display='block'; return; }
+        if(!isActive(email)){ err.textContent='Brukeren er deaktivert. Kontakt en administrator.'; err.style.display='block'; return; }
+        CURRENT_USER = { email, ...USERS[email], permissions:demoPerms(email) };
+      }
+      applyUser(); showHome();
+    } finally {
+      if (btn) btn.disabled = false;
     }
-    applyUser(); showHome();
   }
   async function doLogout(){
     if(!LAUNCHER_MODUS){ try{ await authApi('/auth/logout',{method:'POST'}); }catch(e){} }
@@ -312,27 +346,32 @@
       const farge = s.id==='sanksjon'?'linear-gradient(135deg,#1a2641,#243152)'
                   : s.id==='oppdrag'?'linear-gradient(135deg,#519a9c,#83bbba)'
                   : 'linear-gradient(135deg,#bcddde,#83bbba)';
-      return `<div class="card">
-        <div class="card-top" style="background:${farge}">${s.emoji}</div>
+      const soon = s.status!=='drift';
+      const badge = soon?'<span class="badge soon">Kommer snart</span>':'<span class="badge">I drift</span>';
+      const åpne = soon
+        ? '<button class="card-link" disabled style="opacity:.5;cursor:not-allowed">Kommer snart</button>'
+        : `<button class="card-link" onclick="event.stopPropagation();openSystem('${s.id}')">Åpne system →</button>`;
+      return `<div class="card${soon?'':' clickable'}"${soon?'':` onclick="openSystem('${s.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openSystem('${s.id}')"`}>
+        <div class="card-top" style="background:${farge}"><span aria-hidden="true">${s.emoji}</span></div>
         <div class="card-body">
-          <span class="badge">I drift</span>
-          <h3>${s.navn}</h3>
-          <p>${s.desc}</p>
-          <button class="card-link" onclick="openSystem('${s.id}')">Åpne system →</button>
+          ${badge}
+          <h3>${esc(s.navn)}</h3>
+          <p>${esc(s.desc)}</p>
+          ${åpne}
         </div></div>`;
     }).join('');
     // Admin-kort
     if (p.admin){
-      html += `<div class="card">
-        <div class="card-top" style="background:linear-gradient(135deg,#ffcc00,#ffe27a)">👥</div>
+      html += `<div class="card admin-card clickable" onclick="showAdmin()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showAdmin()">
+        <div class="card-top" style="background:linear-gradient(135deg,#ffcc00,#ffe27a)"><span aria-hidden="true">👥</span></div>
         <div class="card-body">
           <span class="badge admin">Administrasjon</span>
           <h3>Brukere og tilganger</h3>
           <p>Opprett brukere og styr hvem som får tilgang til hvilke systemer. Endringer loggføres.</p>
-          <button class="card-link" onclick="showAdmin()">Åpne →</button>
+          <button class="card-link" onclick="event.stopPropagation();showAdmin()">Åpne →</button>
         </div></div>`;
     }
-    grid.innerHTML = html || '<p style="color:var(--pn-text-muted)">Du har ikke tilgang til noen systemer ennå. Kontakt en administrator.</p>';
+    grid.innerHTML = html || '<div class="panel" style="grid-column:1/-1;text-align:center;color:var(--pn-text-muted)">Du har ikke tilgang til noen systemer ennå. Kontakt en administrator.</div>';
   }
   function openSystem(id){
     const s = SYSTEMS.find(x=>x.id===id); if(!s) return;
@@ -357,18 +396,20 @@
     document.getElementById('adminView').classList.remove('hidden');
     loadUsers(); window.scrollTo({top:0});
   }
-  async function loadUsers(){
+  async function loadUsers(highlight){
     const body=document.getElementById('usersBody');
     if(LAUNCHER_MODUS){
       body.innerHTML = Object.keys(USERS).map(email=>{
-        const p=demoPerms(email);
-        const cb=(s)=>`<input type="checkbox" data-uid="${email}" data-sys="${s}"${p[s]?' checked':''}>`;
-        return `<tr>
-          <td>${USERS[email].navn}</td><td>${email}</td>
+        const p=demoPerms(email); const aktiv=isActive(email);
+        const cb=(s)=>`<input type="checkbox" data-uid="${email}" data-sys="${s}" aria-label="${s} for ${esc(email)}"${p[s]?' checked':''}${aktiv?'':' disabled'}>`;
+        return `<tr${email===highlight?' class="ny-rad"':''}${aktiv?'':' style="opacity:.55"'}>
+          <td>${esc(USERS[email].navn)}</td><td>${esc(email)}</td>
           <td class="c">${cb('oppdrag')}</td><td class="c">${cb('sanksjon')}</td>
           <td class="c">${cb('datakvalitet')}</td><td class="c">${cb('admin')}</td>
-          <td style="text-align:right"><button class="btn-outline" onclick="savePerms('${email}')">Lagre</button></td>
-        </tr>`;
+          <td style="text-align:right;white-space:nowrap">
+            <button class="btn-outline" onclick="savePerms('${email}',this)"${aktiv?'':' disabled'}>Lagre</button>
+            <button class="btn-outline danger" onclick="demoToggleActive('${email}')">${aktiv?'Deaktiver':'Aktiver'}</button>
+          </td></tr>`;
       }).join('');
       return;
     }
@@ -376,24 +417,36 @@
     if(!res.ok){ body.innerHTML='<tr><td colspan="7">Kunne ikke hente brukere.</td></tr>'; return; }
     const users=await res.json();
     body.innerHTML = users.map(u=>{
-      const cb=(s)=>`<input type="checkbox" data-uid="${u.id}" data-sys="${s}"${u.permissions[s]?' checked':''}>`;
-      return `<tr><td>${u.name}</td><td>${u.email}</td>
+      const cb=(s)=>`<input type="checkbox" data-uid="${u.id}" data-sys="${s}" aria-label="${s} for ${esc(u.email)}"${u.permissions[s]?' checked':''}${u.active?'':' disabled'}>`;
+      return `<tr${u.active?'':' style="opacity:.55"'}><td>${esc(u.name)}</td><td>${esc(u.email)}</td>
         <td class="c">${cb('oppdrag')}</td><td class="c">${cb('sanksjon')}</td>
         <td class="c">${cb('datakvalitet')}</td><td class="c">${cb('admin')}</td>
-        <td style="text-align:right"><button class="btn-outline" onclick="savePerms(${u.id})">Lagre</button></td></tr>`;
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn-outline" onclick="savePerms(${u.id},this)"${u.active?'':' disabled'}>Lagre</button>
+          <button class="btn-outline danger" onclick="apiToggleActive(${u.id},${u.active?1:0})">${u.active?'Deaktiver':'Aktiver'}</button>
+        </td></tr>`;
     }).join('');
   }
-  async function savePerms(uid){
+  async function savePerms(uid,btn){
     const perms={};
     SYS_KEYS.forEach(s=>{ const cb=document.querySelector(`input[data-uid="${uid}"][data-sys="${s}"]`); perms[s]=!!(cb&&cb.checked); });
     if(LAUNCHER_MODUS){
       setDemoPerms(uid,perms);
       if(CURRENT_USER&&CURRENT_USER.email===uid){ CURRENT_USER.permissions=perms; }
-      flash('Tilgang lagret for '+uid+' (demo, lokalt).',true);
+      flashBtn(btn,'Lagret ✓'); flash('Tilgang lagret for '+uid+' (demo, lokalt).',true);
       return;
     }
     const res=await authApi(`/auth/users/${uid}/permissions`,{method:'PUT',body:JSON.stringify(perms)});
+    if(res.ok) flashBtn(btn,'Lagret ✓');
     flash(res.ok?'Tilgang lagret.':'Kunne ikke lagre tilgang.',res.ok);
+  }
+  function demoToggleActive(email){
+    setDemoActive(email,!isActive(email));
+    loadUsers(); flash((isActive(email)?'Aktivert ':'Deaktivert ')+email+' (demo).',true);
+  }
+  async function apiToggleActive(id,active){
+    const res=await authApi(`/auth/users/${id}/active`,{method:'PUT',body:JSON.stringify({active:!active})});
+    flash(res.ok?'Status oppdatert.':'Kunne ikke endre status.',res.ok); if(res.ok) loadUsers();
   }
   async function adminCreateUser(){
     const payload={
@@ -412,12 +465,12 @@
       setStoredPwd(payload.email,payload.passord); setDemoPerms(payload.email,payload.permissions);
       flash('Bruker opprettet (demo). I full drift får brukeren innlogging på e-post.',true);
       ['naNavn','naBrukernavn','naEpost','naPassord'].forEach(id=>document.getElementById(id).value='');
-      loadUsers(); return;
+      loadUsers(payload.email); scrollToUsers(); return;
     }
     const res=await authApi('/auth/users',{method:'POST',body:JSON.stringify(payload)});
     if(res.status===201){ const d=await res.json().catch(()=>({}));
       flash('Bruker opprettet.'+(d.epost==='sendt'?' Innlogging sendt på e-post.':d.epost==='dry-run'?' (E-postrelay ikke aktivt ennå.)':''),true);
-      ['naNavn','naBrukernavn','naEpost','naPassord'].forEach(id=>document.getElementById(id).value=''); loadUsers();
+      ['naNavn','naBrukernavn','naEpost','naPassord'].forEach(id=>document.getElementById(id).value=''); loadUsers(); scrollToUsers();
     } else if(res.status===409){ flash('Brukernavn eller e-post finnes allerede.',false); }
     else flash('Kunne ikke opprette bruker.',false);
   }
