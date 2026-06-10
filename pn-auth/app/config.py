@@ -33,6 +33,20 @@ class Settings:
     login_rate_window_s: int
     # CORS kun i DEBUG (utvikling). I produksjon er portalen same-origin via nginx.
     dev_cors_origin: str | None
+    # E-post (SMTP2GO-relay, ikke direkte mot M365 – jf. BYGGESTANDARD §5).
+    # Mangler host/bruker => dry-run: meldingen skrives til EPOST_OUTBOX, ingenting sendes.
+    smtp_host: str | None
+    smtp_port: int
+    smtp_user: str | None
+    smtp_pass: str | None
+    smtp_from: str
+    smtp_starttls: bool
+    portal_url: str
+    epost_outbox: str | None
+
+    @property
+    def epost_aktiv(self) -> bool:
+        return bool(self.smtp_host and self.smtp_user)
 
 
 def load_settings() -> Settings:
@@ -60,4 +74,12 @@ def load_settings() -> Settings:
         login_rate_max=int(os.environ.get("LOGIN_RATE_MAX", "5")),
         login_rate_window_s=int(os.environ.get("LOGIN_RATE_WINDOW_S", str(15 * 60))),
         dev_cors_origin=(os.environ.get("DEV_CORS_ORIGIN") or None),
+        smtp_host=(os.environ.get("SMTP_HOST") or None),
+        smtp_port=int(os.environ.get("SMTP_PORT", "587")),
+        smtp_user=(os.environ.get("SMTP_USER") or None),
+        smtp_pass=(os.environ.get("SMTP_PASS") or None),
+        smtp_from=os.environ.get("SMTP_FROM", "no-reply@parknordic.no"),
+        smtp_starttls=_bool("SMTP_STARTTLS", True),
+        portal_url=os.environ.get("PORTAL_URL", "https://kontrollverktoy.parknordic.no/"),
+        epost_outbox=(os.environ.get("EPOST_OUTBOX") or None),
     )

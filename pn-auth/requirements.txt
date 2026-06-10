@@ -6,3 +6,4 @@ PyJWT>=2.7,<3
 # Test:
 httpx>=0.27
 pytest>=8
+email-validator>=2,<3

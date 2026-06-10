@@ -2092,11 +2092,7 @@
   async function adminLoadUsers() {
     const body = document.getElementById('adminUsersBody');
     if (!body) return;
-    if (LAUNCHER_MODUS) {
-      body.innerHTML = '<tr><td colspan="8" style="padding:16px;color:var(--pn-text-muted);">'
-        + 'Tilgangsstyring er aktiv når felles innlogging er på (LAUNCHER_MODUS=false).</td></tr>';
-      return;
-    }
+    if (LAUNCHER_MODUS) { adminRenderDemo(body); return; }
     const res = await authApi('/auth/users');
     if (!res.ok) { body.innerHTML = '<tr><td colspan="8">Kunne ikke hente brukere.</td></tr>'; return; }
     const users = await res.json();
@@ -2118,12 +2114,51 @@
     }).join('');
   }
 
+  // ---- Demo-tilgangsstyring i mockup (LAUNCHER_MODUS) ----
+  // Endringer lagres i localStorage slik at admin-skjermen kan testes uten backend.
+  // Ekte håndheving skjer server-side i pn-auth når felles innlogging er på.
+  function demoPerms(email) {
+    const all = JSON.parse(localStorage.getItem('pn_demo_perms') || '{}');
+    if (all[email]) return all[email];
+    const u = USERS[email] || {};
+    return { oppdrag: true, sanksjon: true, datakvalitet: true, admin: (u.rolle === 'Admin') };
+  }
+  function setDemoPerms(email, perms) {
+    const all = JSON.parse(localStorage.getItem('pn_demo_perms') || '{}');
+    all[email] = perms;
+    localStorage.setItem('pn_demo_perms', JSON.stringify(all));
+  }
+  function adminRenderDemo(body) {
+    body.innerHTML = Object.keys(USERS).map(email => {
+      const p = demoPerms(email);
+      const cb = (sys) => `<input type="checkbox" data-uid="${email}" data-sys="${sys}"${p[sys] ? ' checked' : ''}>`;
+      return `<tr style="border-top:1px solid var(--pn-gray2);">
+        <td style="padding:8px;">${USERS[email].navn}</td><td>${email}</td>
+        <td style="text-align:center;">${cb('oppdrag')}</td>
+        <td style="text-align:center;">${cb('sanksjon')}</td>
+        <td style="text-align:center;">${cb('datakvalitet')}</td>
+        <td style="text-align:center;">${cb('admin')}</td>
+        <td style="text-align:center;">Ja</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button class="btn-outline" onclick="adminSavePerms('${email}')">Lagre tilgang</button>
+          <button class="btn-outline" onclick="adminResetPwd('${email}')">Nullstill passord</button>
+        </td></tr>`;
+    }).join('');
+    adminFlash('Demo: endringer lagres lokalt i nettleseren. Ekte tilgangsstyring skjer i pn-auth når LAUNCHER_MODUS=false.', true);
+  }
+
   async function adminSavePerms(uid) {
     const body = {};
     SYS_KEYS.forEach(sys => {
       const cb = document.querySelector(`input[data-uid="${uid}"][data-sys="${sys}"]`);
       body[sys] = !!(cb && cb.checked);
     });
+    if (LAUNCHER_MODUS) {
+      setDemoPerms(uid, body);
+      if (CURRENT_USER && CURRENT_USER.email === uid) { CURRENT_USER.permissions = body; applySystemAccess(); }
+      adminFlash('Tilgang lagret (demo, lokalt).', true);
+      return;
+    }
     const res = await authApi(`/auth/users/${uid}/permissions`, { method: 'PUT', body: JSON.stringify(body) });
     adminFlash(res.ok ? 'Tilgang lagret.' : 'Kunne ikke lagre tilgang.', res.ok);
   }
@@ -2135,12 +2170,20 @@
   }
 
   async function adminResetPwd(uid) {
+    if (LAUNCHER_MODUS) {
+      const temp = 'pn-' + Math.random().toString(36).slice(2, 8);
+      if (typeof uid === 'string') setStoredPwd(uid, temp);
+      adminFlash(`Midlertidig passord (demo): ${temp} – gi til brukeren.`, true);
+      return;
+    }
     const res = await authApi(`/auth/users/${uid}/reset-password`, { method: 'POST', body: JSON.stringify({}) });
     if (!res.ok) { adminFlash('Kunne ikke nullstille passord.', false); return; }
     const data = await res.json();
+    const epostInfo = data.epost === 'sendt' ? ' Nytt passord er sendt på e-post.'
+      : data.epost === 'dry-run' ? ' (E-postrelay ikke aktivt ennå.)' : '';
     adminFlash(data.temp_passord
-      ? `Midlertidig passord: ${data.temp_passord} (gi til brukeren – må endres ved innlogging).`
-      : 'Passord nullstilt.', true);
+      ? `Midlertidig passord: ${data.temp_passord} (gi til brukeren – må endres ved innlogging).${epostInfo}`
+      : 'Passord nullstilt.' + epostInfo, true);
   }
 
   async function adminCreateUser() {
@@ -2160,9 +2203,25 @@
       adminFlash('Fyll inn brukernavn, e-post og et passord på minst 8 tegn.', false);
       return;
     }
+    if (LAUNCHER_MODUS) {
+      if (USERS[payload.email]) { adminFlash('E-post finnes allerede.', false); return; }
+      const ini = (payload.name || payload.username).trim().slice(0, 2).toUpperCase();
+      USERS[payload.email] = { navn: payload.name || payload.username, initialer: ini,
+        rolle: payload.permissions.admin ? 'Admin' : 'Bruker' };
+      setStoredPwd(payload.email, payload.passord);
+      setDemoPerms(payload.email, payload.permissions);
+      adminFlash('Bruker opprettet (demo, lokalt). Brukeren får e-post med innlogging i full modus.', true);
+      ['naNavn', 'naBrukernavn', 'naEpost', 'naPassord'].forEach(id => document.getElementById(id).value = '');
+      adminLoadUsers();
+      return;
+    }
     const res = await authApi('/auth/users', { method: 'POST', body: JSON.stringify(payload) });
     if (res.status === 201) {
-      adminFlash('Bruker opprettet.', true);
+      const d = await res.json().catch(() => ({}));
+      const ekstra = d.epost === 'sendt' ? ' Innlogging er sendt på e-post.'
+        : d.epost === 'dry-run' ? ' (E-postrelay ikke aktivt ennå – gi passordet manuelt.)'
+        : d.epost === 'feil' ? ' (E-post feilet – gi passordet manuelt.)' : '';
+      adminFlash('Bruker opprettet.' + ekstra, true);
       ['naNavn', 'naBrukernavn', 'naEpost', 'naPassord'].forEach(id => document.getElementById(id).value = '');
       adminLoadUsers();
     } else if (res.status === 409) {
@@ -2337,8 +2396,9 @@
       return;
     }
 
-    CURRENT_USER = { email, ...USERS[email] };
+    CURRENT_USER = { email, ...USERS[email], permissions: demoPerms(email) };
     applyCurrentUser();
+    applySystemAccess();
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('app').classList.add('visible');
   }

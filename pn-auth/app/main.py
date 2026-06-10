@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field
 
-from . import db, security
+from . import db, epost, security
 from .config import Settings, load_settings
 
 SYSTEMS = ("oppdrag", "sanksjon", "datakvalitet", "admin")
@@ -223,7 +223,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             conn.commit()
         finally:
             conn.close()
-        return {"id": uid}
+        # Best effort: send innloggingsinfo. Velter aldri opprettelsen.
+        epost_status = epost.send_velkomst(
+            cfg, til=str(body.email), navn=body.name, brukernavn=body.username,
+            temp_passord=body.passord)
+        return {"id": uid, "epost": epost_status}
 
     @app.put("/auth/users/{uid}/permissions")
     def set_permissions(uid: int, body: PermissionsBody, admin: Admin):
@@ -279,10 +283,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 (security.hash_password(temp), uid))
             db.log_change(conn, actor, uid, "passord nullstilt")
             conn.commit()
+            navn, til = row["name"], row["email"]
         finally:
             conn.close()
+        # Best effort: varsle brukeren om nytt midlertidig passord.
+        epost_status = epost.send_nullstilt(cfg, til=til, navn=navn, temp_passord=temp)
         # Returner det temporære passordet KUN når admin ikke selv satte ett.
-        return {"ok": True, "temp_passord": None if body.passord else temp}
+        return {"ok": True, "temp_passord": None if body.passord else temp,
+                "epost": epost_status}
 
     # ---- Helse (robusthet/overvåking, lekker ikke brukerantall) ---------
     @app.get("/auth/health")

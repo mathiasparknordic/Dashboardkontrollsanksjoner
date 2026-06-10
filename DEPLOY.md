@@ -1,10 +1,12 @@
 # Park Nordic – felles innlogging og tilgangsstyring: utrulling
 
 **Til:** Thomas (deploy) · **Fra:** changeset bygget og testet mot en kopi.
-**Status:** `pn-auth` + migrasjon er ferdig og testet (33 tester grønt: 23 pytest, 5
-node:test, 5 FastAPI-dep). Integrasjonsmodulene (Node/FastAPI/nginx/systemd) er
-drop-in, kontrakt-testet mot samme JWT. Portalen (`parknordic_dashboard.html`) har
-felles innlogging + admin-skjerm bak `LAUNCHER_MODUS`.
+**Status:** `pn-auth` + migrasjon er ferdig og testet (**44 tester grønt**: 25 pytest
+auth/admin/migrasjon/e-post, 9 pytest Riverty-leveranse, 5 node:test, 5 FastAPI-dep).
+Integrasjonsmodulene (Node/FastAPI/nginx/systemd) er drop-in, kontrakt-testet mot samme
+JWT. Portalen (`parknordic_dashboard.html`) har felles innlogging + admin-skjerm bak
+`LAUNCHER_MODUS`. E-postvarsel til nye/nullstilte brukere (SMTP2GO, dry-run til relayet er
+klart) og Riverty daglig SFTP-leveranse er bygget som egne, valgfrie spor (se nederst).
 
 > **Hvorfor drop-in og ikke direkte i Oppdrag/Sanksjon:** kildekoden til Oppdrag
 > (`/opt/banenor`) og Sanksjon (`/opt/parknordic`) er ikke i dette repoet. Modulene
@@ -25,7 +27,11 @@ integrasjon/
   sanksjon-fastapi/pn_auth.py  FastAPI-avhengighet (krever permissions.sanksjon)
   nginx/kontrollverktoy.parknordic.no.conf  Headere/HSTS/TLS + auth_request for Datakvalitet
   systemd/                  pn-auth.service + herdet banenor.service / parknordic.service
+  app/epost.py              Velkomst/nullstilling-e-post via SMTP2GO (dry-run uten SMTP_*)
 parknordic_dashboard.html   Portal: felles innlogging + «Brukere og tilganger» (LAUNCHER_MODUS)
+riverty-leveranse/          Daglig «Paid by PN»-SFTP-leveranse. FERDIG + dummy-testet. Eget spor.
+ROYKTEST.md                 Nettleser-sjekkliste før LAUNCHER_MODUS=false
+scripts/verifiser-sikkerhetsfunn.sh   Read-only sjekk av sikkerhetsfunn mot live host
 DEPLOY.md                   Dette dokumentet
 ```
 
@@ -108,12 +114,35 @@ Bruk `location /datakvalitet/` + `/_pn_auth_dk` fra nginx-confen (peker på
 ### Steg 6 – Admin-skjerm «Brukere og tilganger»
 Ligger i portalen (`parknordic_dashboard.html`, nav «Brukere og tilganger», kun admin).
 Oppretter brukere og gir/fjerner tilgang per system mot pn-auths admin-endepunkter;
-endringer loggføres i `access_log` (testet).
+endringer loggføres i `access_log` (testet). Ved opprettelse/nullstilling sendes
+innloggingsinfo til brukeren på e-post (se «E-post» under) – admin får uansett det
+midlertidige passordet i retursvaret som reserve.
 
 ### Steg 7 – Aktiver felles innlogging
 Sett `LAUNCHER_MODUS = false` i `parknordic_dashboard.html` når steg 1–6 er verifisert.
 Da bruker portalen `/auth/*`, forhåndsutfyller ikke demo-innlogging, og gjenoppretter
 sesjon fra cookien ved lasting (ingen loop).
+
+---
+
+## Parallelle spor (ikke blokkerende for auth)
+
+### E-post til brukere (SMTP2GO)
+`pn-auth/app/epost.py` sender velkomst (nytt bruker) og varsel ved passord-nullstilling,
+via **SMTP2GO-relay** – ikke direkte mot M365 (BYGGESTANDARD §5). Uten `SMTP_HOST`/`SMTP_USER`
+kjører den i **dry-run**: meldingen skrives til `EPOST_OUTBOX` og ingenting sendes (riktig
+nå, mens relayet venter på Digiflow). Slå på ved å sette `SMTP_*` i `.env` (se `.env.example`).
+Best effort: e-post velter aldri opprettelse/nullstilling. *Herding senere:* vurder
+engangslenke i stedet for midlertidig passord i klartekst.
+
+### Riverty daglig leveranse (`riverty-leveranse/`)
+Bygger `PaidByPN_YYYYMMDD_HHMM.txt` (ett sanksjonsnummer per linje, ingen header) og
+laster opp via SFTP. Forretningsregler innbakt: **kun fil på dager med saker**, feil →
+`FEILET` + varsle-hook (sikkerhetsventil), hver kjøring loggføres i `leveranse_logg`
+(kvittering for rapport). Dummy-testet mot loopback-SFTP (9 tester). Settes i drift
+**etter** testfase + auth. Thomas kobler på: faktisk SQL mot `parknordic.db`, Riverty
+host/SSH-nøkkel + `known_hosts`, og systemd timer/cron (`Europe/Oslo`). Se
+`riverty-leveranse/README.md`. Avklar fortsatt tidspunkt + kvittering/feilretur med Riverty.
 
 ---
 
@@ -146,6 +175,8 @@ node --test integrasjon/oppdrag-node/pnAuth.test.js
 # FastAPI-avhengighet
 PYTHONPATH=pn-auth:integrasjon/sanksjon-fastapi AUTH_SECRET=$(python3 -c "print('x'*40)") \
   pn-auth/.venv/bin/python -m pytest integrasjon/sanksjon-fastapi/ -q
+# Riverty daglig leveranse (dummy mot loopback-SFTP)
+cd riverty-leveranse && pip install -r requirements.txt && python -m pytest -q
 ```
 
 ## Husk: felles auth = single point of failure

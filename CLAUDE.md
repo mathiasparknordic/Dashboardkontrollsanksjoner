@@ -25,12 +25,17 @@ parknordic_dashboard.html   Portal/dashboard. Single login + admin "Brukere og t
 pn-auth/                    Standalone felles Auth API (FastAPI + SQLite + JWT). Tested
                             (pytest). Owns users/permissions; bcrypt; secret-or-die; rate-limit.
   app/  migrate.py  schema.sql  tests/  README.md
+  app/epost.py                  Welcome / reset e-mail via SMTP2GO (dry-run until relay live)
 integrasjon/                Drop-in glue for the systems whose source is NOT in this repo:
   oppdrag-node/pnAuth.js        Express middleware (verifies pn_auth JWT, no npm deps)
   sanksjon-fastapi/pn_auth.py   FastAPI dependency (requires permissions.sanksjon)
   nginx/                        security headers + HSTS + auth_request for Datakvalitet
   systemd/                      hardened service units (dedicated users, 127.0.0.1)
+riverty-leveranse/          Daily "Paid by PN" SFTP delivery. Tested (dummy loopback SFTP).
+                            Separate track; goes live after test phase + auth.
 DEPLOY.md                   Ordered deploy notes; maps acceptance criteria + security findings.
+ROYKTEST.md                 Browser smoke-test checklist before LAUNCHER_MODUS=false.
+scripts/                    verifiser-sikkerhetsfunn.sh – read-only security-finding check.
 ```
 
 > The **pn-auth token contract** (HS256 JWT in cookie `pn_auth`, payload
