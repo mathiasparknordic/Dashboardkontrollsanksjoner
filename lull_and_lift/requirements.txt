@@ -1,0 +1,5 @@
+numpy
+# optional but recommended for audio work:
+soundfile
+scipy
+# ffmpeg must be installed separately and on PATH

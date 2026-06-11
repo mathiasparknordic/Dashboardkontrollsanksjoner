@@ -1,0 +1,4 @@
+# Generated demo/preview audio is reproducible from the scripts; don't commit heavy binaries.
+audio_research/clips/
+*.mp3
+audio/*.wav
