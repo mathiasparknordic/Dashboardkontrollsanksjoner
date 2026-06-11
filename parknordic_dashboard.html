@@ -690,7 +690,7 @@
   .table-wrap {
     background: var(--pn-white);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: var(--shadow-soft);
   }
   .table-header-bar {
@@ -1232,10 +1232,6 @@
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Innstillinger
     </a>
-    <a class="nav-item" data-page="admin" id="navAdmin" style="display: none;">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Brukere og tilganger
-    </a>
   </nav>
   <div class="sidebar-user">
     <div class="avatar" data-user-initialer>MF</div>
@@ -1776,55 +1772,6 @@
     </div>
   </div>
 
-  <!-- ============ BRUKERE OG TILGANGER (admin) ============ -->
-  <div class="page" id="page-admin">
-    <div class="topbar">
-      <h1><span class="accent">Brukere</span> og tilganger</h1>
-      <div class="top-actions"></div>
-    </div>
-
-    <div class="panel" style="margin-bottom: 18px;">
-      <h3 style="margin-bottom: 4px;">Ny bruker</h3>
-      <p style="color: var(--pn-text-muted); font-size: 13px; margin-bottom: 14px;">
-        Opprett konto og sett tilgang per system. Brukeren får et midlertidig passord og må
-        endre det ved første innlogging.</p>
-      <div class="form-row">
-        <div><label class="field-lbl" for="naNavn">Fullt navn</label><input class="field-input" id="naNavn" placeholder="Kari Nordmann"></div>
-        <div><label class="field-lbl" for="naBrukernavn">Brukernavn</label><input class="field-input" id="naBrukernavn" placeholder="kari"></div>
-      </div>
-      <div class="form-row">
-        <div><label class="field-lbl" for="naEpost">E-post</label><input class="field-input" id="naEpost" placeholder="kari@parknordic.no"></div>
-        <div><label class="field-lbl" for="naPassord">Midlertidig passord</label><input class="field-input" id="naPassord" placeholder="min. 8 tegn"></div>
-      </div>
-      <div style="display: flex; gap: 18px; flex-wrap: wrap; margin: 12px 0;">
-        <label><input type="checkbox" id="naOppdrag"> Oppdrag</label>
-        <label><input type="checkbox" id="naSanksjon" checked> Sanksjon</label>
-        <label><input type="checkbox" id="naDatakvalitet"> Datakvalitet</label>
-        <label><input type="checkbox" id="naAdmin"> Admin</label>
-      </div>
-      <button class="btn-primary" onclick="adminCreateUser()">Opprett bruker</button>
-      <div id="adminMsg" role="status" aria-live="polite" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px;"></div>
-    </div>
-
-    <div class="panel">
-      <h3 style="margin-bottom: 14px;">Brukere</h3>
-      <div class="table-wrap">
-      <table class="data" style="width: 100%;">
-        <thead>
-          <tr>
-            <th scope="col">Navn</th><th scope="col">E-post</th>
-            <th scope="col" class="c">Oppdrag</th><th scope="col" class="c">Sanksjon</th>
-            <th scope="col" class="c">Datakvalitet</th><th scope="col" class="c">Admin</th>
-            <th scope="col" class="c">Aktiv</th><th scope="col"><span class="sr-only">Handling</span></th>
-          </tr>
-        </thead>
-        <tbody id="adminUsersBody">
-          <tr><td colspan="8" style="padding: 16px; color: var(--pn-text-muted);">Laster …</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-  </div>
 
 </main>
 </div>
@@ -2608,7 +2555,7 @@
     if (body) {
       const rad = s => `<tr><td class="blanket">${s.blankett}</td><td>${s.dato}</td><td><span class="regnr">${s.regnr}</span></td><td><span class="anlegg-nr">${s.nr}</span> ${s.navn}</td><td class="amount">${s.belop} kr</td><td>${ARSAK_NAVN[s.arsak]}</td><td class="c"><input type="checkbox" aria-label="Behandlet ${s.blankett}"${erBehandlet(s.blankett) ? ' checked' : ''} onchange="toggleBehandlet('${s.blankett}', this.checked)"></td></tr>`;
       const grp = (tittel, arr, farge) => arr.length
-        ? `<tr style="background:${farge};color:#fff;"><td colspan="7" style="font-weight:600;padding:10px 14px;letter-spacing:.04em;">${tittel} · ${arr.length} sanksjoner · ${kr(arr.reduce((a, s) => a + s.belop, 0))} kr</td></tr>` + arr.map(rad).join('')
+        ? `<tr style="background:${farge};"><td colspan="7" style="color:#fff;font-weight:600;padding:10px 14px;letter-spacing:.04em;">${tittel} · ${arr.length} sanksjoner · ${kr(arr.reduce((a, s) => a + s.belop, 0))} kr</td></tr>` + arr.map(rad).join('')
         : '';
       body.innerHTML = grp('PN BETALER I SIN HELHET', pn, 'var(--pn-darkblue)')
         + grp('TREKK I LEIE – VIDEREFAKTURERES GÅRDEIER', leie, 'var(--pn-turkis3)');
@@ -2719,14 +2666,9 @@
     document.getElementById('app').classList.add('visible');
   }
   async function doLogout() {
-    if (!LAUNCHER_MODUS) {
-      try { await authApi('/auth/logout', { method: 'POST' }); } catch (e) { /* uansett ut */ }
-    }
-    CURRENT_USER = null;
-    SESSION = null;
-    document.getElementById('app').classList.remove('visible');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('loginPw').value = '';
+    // Innlogging er felles (portalen). Logg ut → tilbake til portalen.
+    try { if (!LAUNCHER_MODUS) await authApi('/auth/logout', { method: 'POST' }); } catch (e) { /* uansett ut */ }
+    location.href = 'portal.html';
   }
   function applyCurrentUser() {
     if (!CURRENT_USER) return;
@@ -2872,7 +2814,6 @@
     const navMatch = document.querySelector('.nav-item[data-page="' + pageId + '"]');
     if (navMatch) navMatch.classList.add('active');
     if (pageId === 'anlegg') renderAnleggTable('');
-    if (pageId === 'admin') adminLoadUsers();
     if (pageId === 'dashboard') { renderKpi(); renderToppAnlegg(); renderArsak(); renderSiste(); renderArsakChart(); }
     if (pageId === 'rapport') oppdaterRapport();
     if (pageId === 'weekly') renderEksport();
@@ -2966,23 +2907,18 @@
   // gjenopprette en eksisterende sesjon fra cookien slik at «tilbake» ikke gir loop.
   (function initAuth() {
     if (LAUNCHER_MODUS) {
-      // Mockup: kommer man fra portalen (portal.html → «Åpne system») med ?sso=<e-post>,
-      // gå rett inn «allerede innlogget» – simulerer felles innlogging på tvers.
+      // Innlogging er KODET VEKK: Sanksjon har ingen egen innlogging. Brukeren kommer alltid
+      // fra felles innlogging (portalen) – her simulert med ?sso=<e-post>, ellers demobruker.
       const sso = new URLSearchParams(location.search).get('sso');
-      const email = sso && sso.toLowerCase();
-      if (email && USERS[email]) {
-        CURRENT_USER = { email, ...USERS[email], permissions: demoPerms(email) };
-        applyCurrentUser();
-        applySystemAccess();
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('app').classList.add('visible');
-      }
+      const valgt = sso && sso.toLowerCase();
+      const email = (valgt && USERS[valgt]) ? valgt : 'mathias@parknordic.no';
+      CURRENT_USER = { email, ...USERS[email], permissions: demoPerms(email) };
+      applyCurrentUser();
+      applySystemAccess();
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
       return;
     }
-    const emailEl = document.getElementById('loginEmail');
-    const pwEl = document.getElementById('loginPw');
-    if (emailEl) emailEl.value = '';
-    if (pwEl) pwEl.value = '';
     bootstrapSession();
   })();
 </script>
