@@ -52,6 +52,11 @@
   .top-user .r { color:var(--pn-turkis2); font-size:12px; }
   .avatar { width:38px; height:38px; border-radius:50%; background:var(--pn-turkis3); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; }
   .btn-ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:var(--radius); padding:8px 16px; font-size:13px; }
+  .topbar-mid { display:flex; gap:8px; }
+  .topbar-link { background:transparent; color:#fff; border:1px solid transparent; border-radius:var(--radius); padding:8px 14px; font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:8px; }
+  .topbar-link:hover { background:rgba(255,255,255,.12); }
+  .topbar-link.active { background:rgba(255,255,255,.16); }
+  @media (max-width:780px){ .topbar-mid .topbar-link span[aria-hidden] { display:none; } }
   .btn-ghost:hover { background:rgba(255,255,255,.1); }
   .wrap { max-width:1080px; margin:0 auto; padding:48px 32px; }
   .eyebrow { text-transform:uppercase; letter-spacing:.2em; font-size:13px; color:#2f6264; font-weight:600; }
@@ -142,6 +147,11 @@
 <div class="shell hidden" id="portalHome">
   <div class="topbar">
     <div class="brand"><span style="color:var(--pn-turkis1)">PARK</span> NORDIC</div>
+    <nav class="topbar-mid">
+      <button class="topbar-link js-admin-link" onclick="showAdmin()" style="display:none">
+        <span aria-hidden="true">👥</span> Brukere og tilganger
+      </button>
+    </nav>
     <div class="top-right">
       <div class="top-user"><div class="n" data-user-name>—</div><div class="r" data-user-rolle>—</div></div>
       <div class="avatar" data-user-initialer>–</div>
@@ -160,6 +170,11 @@
 <div class="shell hidden" id="adminView">
   <div class="topbar">
     <div class="brand"><span style="color:var(--pn-turkis1)">PARK</span> NORDIC</div>
+    <nav class="topbar-mid">
+      <button class="topbar-link js-admin-link active" onclick="showAdmin()" style="display:none">
+        <span aria-hidden="true">👥</span> Brukere og tilganger
+      </button>
+    </nav>
     <div class="top-right">
       <div class="top-user"><div class="n" data-user-name>—</div><div class="r" data-user-rolle>—</div></div>
       <div class="avatar" data-user-initialer>–</div>
@@ -329,6 +344,8 @@
     document.querySelectorAll('[data-user-name]').forEach(e=>e.textContent=CURRENT_USER.navn);
     document.querySelectorAll('[data-user-rolle]').forEach(e=>e.textContent=CURRENT_USER.rolle);
     document.querySelectorAll('[data-user-initialer]').forEach(e=>e.textContent=CURRENT_USER.initialer);
+    const erAdmin = !!(CURRENT_USER.permissions && CURRENT_USER.permissions.admin);
+    document.querySelectorAll('.js-admin-link').forEach(e=>e.style.display = erAdmin ? '' : 'none');
   }
 
   // ---- launcher: vis kun systemene brukeren har tilgang til ----
@@ -360,17 +377,7 @@
           ${åpne}
         </div></div>`;
     }).join('');
-    // Admin-kort
-    if (p.admin){
-      html += `<div class="card admin-card clickable" onclick="showAdmin()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showAdmin()">
-        <div class="card-top" style="background:linear-gradient(135deg,#ffcc00,#ffe27a)"><span aria-hidden="true">👥</span></div>
-        <div class="card-body">
-          <span class="badge admin">Administrasjon</span>
-          <h3>Brukere og tilganger</h3>
-          <p>Opprett brukere og styr hvem som får tilgang til hvilke systemer. Endringer loggføres.</p>
-          <button class="card-link" onclick="event.stopPropagation();showAdmin()">Åpne →</button>
-        </div></div>`;
-    }
+    // Admin «Brukere og tilganger» ligger i topplinjen, ikke som systemkort.
     grid.innerHTML = html || '<div class="panel" style="grid-column:1/-1;text-align:center;color:var(--pn-text-muted)">Du har ikke tilgang til noen systemer ennå. Kontakt en administrator.</div>';
   }
   function openSystem(id){

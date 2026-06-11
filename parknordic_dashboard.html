@@ -989,7 +989,7 @@
   .arsak-rad .top .ant { font-weight: 700; }
   .arsak-rad .bar { height: 8px; border-radius: 4px; background: var(--pn-gray2); overflow: hidden; }
   .arsak-rad .bar > span { display: block; height: 100%; }
-  .rap-filter { display: grid; grid-template-columns: 1.3fr 1.3fr 1fr 1fr; gap: 16px; align-items: end; }
+  .rap-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: end; }
   @media (max-width: 900px) { .dash-2col, .arsak-grid, .rap-filter { grid-template-columns: 1fr; } }
 
   /* ====== BATCH PREVIEW PAGE ====== */
@@ -1393,168 +1393,65 @@
 
       <div class="preview-tabs">
         <button class="preview-tab active" onclick="switchPreview(0, this)">
-          Til Riverty <span class="badge">12</span>
+          Til Riverty <span class="badge" id="tabRivAnt">0</span>
         </button>
         <button class="preview-tab" onclick="switchPreview(1, this)">
-          Til Økonomi (intern) <span class="badge">9</span>
+          Til Økonomi (Hong) <span class="badge" id="tabHongAnt">0</span>
         </button>
       </div>
 
       <!-- RIVERTY PREVIEW -->
       <div class="preview-section active">
         <div class="preview-summary">
-          <div class="item">
-            <div class="lbl">Mottaker</div>
-            <div class="val email">parkering@riverty.no</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sanksjoner</div>
-            <div class="val">12</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sum beløp</div>
-            <div class="val">7 920 kr</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sendes</div>
-            <div class="val">fre 15.05 · 08:00</div>
-          </div>
+          <div class="item"><div class="lbl">Mottaker</div><div class="val email">parkering@riverty.no</div></div>
+          <div class="item"><div class="lbl">Sanksjonsnumre</div><div class="val" id="rivAnt">0</div></div>
+          <div class="item"><div class="lbl">Format</div><div class="val">Kun sanksjonsnr · én per linje</div></div>
+          <div class="item"><div class="lbl">Sendes</div><div class="val">fre 08:00</div></div>
           <button class="send-btn">Send nå</button>
         </div>
-
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning av Excel-fil</div>
-            <div class="panel-meta">riverty_uke20_2026.xlsx</div>
+            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning – fil til Riverty</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="panel-meta" id="rivFilnavn">PaidByPN.txt</span>
+              <button class="btn-outline" style="font-size:12px;" onclick="lastNedRiverty()">Last ned .txt</button>
+            </div>
           </div>
-          <table class="data">
-            <thead>
-              <tr>
-                <th>Sanksjonsnr.</th>
-                <th>Ileggelsesdato</th>
-                <th>Reg.nr.</th>
-                <th>Anlegg</th>
-                <th>Avvik</th>
-                <th>Beløp</th>
-                <th>KID</th>
-                <th>Forfall</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td class="blanket">6000659</td><td>05.03.2026</td><td><span class="regnr">NF78345</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert for MC</td><td class="amount">660</td><td>311200060006590</td><td>26.03.26</td></tr>
-              <tr><td class="blanket">6000658</td><td>10.05.2026</td><td><span class="regnr">EK29104</span></td><td><span class="anlegg-nr">11720</span> Brynsengveien 2</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006580</td><td>31.05.26</td></tr>
-              <tr><td class="blanket">6000657</td><td>10.05.2026</td><td><span class="regnr">SB44782</span></td><td><span class="anlegg-nr">11659</span> Holbergsgate 21</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006570</td><td>31.05.26</td></tr>
-              <tr><td class="blanket">6000653</td><td>06.05.2026</td><td><span class="regnr">CK77104</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert plass</td><td class="amount">660</td><td>311200060006530</td><td>27.05.26</td></tr>
-              <tr><td class="blanket">6000652</td><td>05.05.2026</td><td><span class="regnr">JR12440</span></td><td><span class="anlegg-nr">11720</span> Brynsengveien 2</td><td>Manglende reg.</td><td class="amount">660</td><td>311200060006520</td><td>26.05.26</td></tr>
-              <tr><td class="blanket">6000651</td><td>04.05.2026</td><td><span class="regnr">NV60338</span></td><td><span class="anlegg-nr">10272</span> Skøyen Atrium</td><td>Utenfor oppmerket</td><td class="amount">660</td><td>311200060006510</td><td>25.05.26</td></tr>
-              <tr><td class="blanket">6000650</td><td>02.05.2026</td><td><span class="regnr">PV34902</span></td><td><span class="anlegg-nr">11609</span> Ringkollen 13-24</td><td>Reservert plass</td><td class="amount">660</td><td>311200060006500</td><td>23.05.26</td></tr>
-              <tr><td colspan="8" style="background: var(--pn-bg); padding: 12px 24px; font-size: 12px; color: var(--pn-text-muted); text-align: center;">+ 5 sanksjoner til</td></tr>
-            </tbody>
-          </table>
+          <div style="font-size:13px;color:var(--pn-text-muted);margin-bottom:12px;">
+            Riverty får <strong>kun sanksjonsnummeret</strong>. Om vi viderefakturerer gårdeier i ettertid er irrelevant for Riverty.
+          </div>
+          <div id="rivertyListe" style="font-family:monospace;font-size:14px;line-height:1.9;background:var(--pn-bg);border-radius:var(--radius);padding:14px 18px;max-height:340px;overflow:auto;"></div>
         </div>
       </div>
 
-      <!-- ECONOMY PREVIEW -->
+      <!-- ECONOMY PREVIEW (Hong) -->
       <div class="preview-section">
         <div class="preview-summary">
-          <div class="item">
-            <div class="lbl">Mottaker</div>
-            <div class="val email">okonomi@parknordic.no</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sanksjoner</div>
-            <div class="val">9</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sum beløp</div>
-            <div class="val">5 940 kr</div>
-          </div>
-          <div class="item">
-            <div class="lbl">Sendes</div>
-            <div class="val">fre 15.05 · 08:00</div>
-          </div>
+          <div class="item"><div class="lbl">Mottaker</div><div class="val email">Hong · okonomi@parknordic.no</div></div>
+          <div class="item"><div class="lbl">Sanksjoner</div><div class="val" id="hongAnt">0</div></div>
+          <div class="item"><div class="lbl">Herav trekk i leie</div><div class="val" id="hongLeie">0</div></div>
+          <div class="item"><div class="lbl">Sendes</div><div class="val">fre 08:00</div></div>
           <button class="send-btn">Send nå</button>
         </div>
-
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning av Excel-fil</div>
-            <div class="panel-meta">leiefradrag_uke20_2026.xlsx</div>
+            <div class="panel-title"><span class="accent-bar"></span>Forhåndsvisning – Excel til Hong (økonomi)</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="panel-meta" id="hongBehandlet">0 av 0 behandlet</span>
+              <button class="btn-outline" style="font-size:12px;" onclick="lastNedHong()">Last ned .csv</button>
+            </div>
           </div>
-          <table class="data">
-            <thead>
-              <tr>
-                <th>Anleggsnr.</th>
-                <th>Anleggsnavn</th>
-                <th>Sanksjonsnr.</th>
-                <th>Dato</th>
-                <th>Reg.nr.</th>
-                <th>Beløp</th>
-                <th>Begrunnelse</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="blanket">11609</td>
-                <td>Ringkollen 13-24, Sandefjord</td>
-                <td>6000659</td>
-                <td>05.03.26</td>
-                <td><span class="regnr">NF78345</span></td>
-                <td class="amount">660</td>
-                <td>Leietaker glemte reg.</td>
-              </tr>
-              <tr>
-                <td class="blanket">11609</td>
-                <td>Ringkollen 13-24, Sandefjord</td>
-                <td>6000653</td>
-                <td>06.05.26</td>
-                <td><span class="regnr">CK77104</span></td>
-                <td class="amount">660</td>
-                <td>Avtale med gårdeier</td>
-              </tr>
-              <tr>
-                <td class="blanket">11609</td>
-                <td>Ringkollen 13-24, Sandefjord</td>
-                <td>6000650</td>
-                <td>02.05.26</td>
-                <td><span class="regnr">PV34902</span></td>
-                <td class="amount">660</td>
-                <td>Leietaker glemte reg.</td>
-              </tr>
-              <tr>
-                <td class="blanket">11720</td>
-                <td>Brynsengveien 2 Garasje</td>
-                <td>6000658</td>
-                <td>10.05.26</td>
-                <td><span class="regnr">EK29104</span></td>
-                <td class="amount">660</td>
-                <td>Leietaker glemte reg.</td>
-              </tr>
-              <tr>
-                <td class="blanket">11720</td>
-                <td>Brynsengveien 2 Garasje</td>
-                <td>6000652</td>
-                <td>05.05.26</td>
-                <td><span class="regnr">JR12440</span></td>
-                <td class="amount">660</td>
-                <td>Leietaker glemte reg.</td>
-              </tr>
-              <tr>
-                <td class="blanket">10272</td>
-                <td>Skøyen Atrium, Oslo</td>
-                <td>6000651</td>
-                <td>04.05.26</td>
-                <td><span class="regnr">NV60338</span></td>
-                <td class="amount">660</td>
-                <td>Avtale med gårdeier</td>
-              </tr>
-              <tr style="background: var(--pn-bg); font-weight: 600;">
-                <td colspan="5" style="text-align: right;">Sum:</td>
-                <td class="amount">5 940 kr</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
+          <div style="font-size:13px;color:var(--pn-text-muted);margin-bottom:12px;">
+            Tydelig skille i fila: <strong>PN betaler i sin helhet</strong> vs <strong>Trekk i leie – viderefaktureres gårdeier</strong>. Hong huker av <strong>Behandlet</strong> når posten er ført.
+          </div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr>
+                <th>Sanksjonsnr.</th><th>Dato</th><th>Reg.nr.</th><th>Anlegg</th><th>Beløp</th><th>Årsak</th><th class="c">Behandlet</th>
+              </tr></thead>
+              <tbody id="hongBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -1648,6 +1545,14 @@
             <label class="field-lbl">Anlegg (nr. eller navn)</label>
             <input class="field-input" id="rapAnlegg" placeholder="Søk anlegg…" oninput="oppdaterRapport()">
           </div>
+          <div>
+            <label class="field-lbl">Status</label>
+            <div class="filter-group" id="rapStatus">
+              <button class="filter-btn active" data-st="alle" onclick="settRapFilter('behandlet','alle',this)">Alle</button>
+              <button class="filter-btn" data-st="ja" onclick="settRapFilter('behandlet','ja',this)">Behandlet</button>
+              <button class="filter-btn" data-st="nei" onclick="settRapFilter('behandlet','nei',this)">Ikke behandlet</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1679,7 +1584,7 @@
           <thead>
             <tr>
               <th scope="col">Blankett</th><th scope="col">Dato</th><th scope="col">Reg.nr.</th>
-              <th scope="col">Anlegg</th><th scope="col">Beløp</th><th scope="col">Årsak</th><th scope="col">Behandling</th>
+              <th scope="col">Anlegg</th><th scope="col">Beløp</th><th scope="col">Årsak</th><th scope="col">Behandling</th><th scope="col" class="c">Behandlet</th>
             </tr>
           </thead>
           <tbody id="rapTabellBody"></tbody>
@@ -2578,7 +2483,7 @@
   }
 
   // ===== RAPPORTER =====
-  const rapState = {periode: 'alle', beh: 'alle'};
+  const rapState = {periode: 'alle', beh: 'alle', behandlet: 'alle'};
   function initRapport() {
     const sel = document.getElementById('rapArsak'); if (!sel || sel.dataset.fylt) return;
     Object.keys(ARSAK_NAVN).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = ARSAK_NAVN[k]; sel.appendChild(o); });
@@ -2596,6 +2501,7 @@
     return SANKSJONER.filter(s =>
       (rapState.periode === 'alle' || parseDato(s.dato).ym === rapState.periode) &&
       (rapState.beh === 'alle' || s.behandling === rapState.beh) &&
+      (rapState.behandlet === 'alle' || (rapState.behandlet === 'ja') === erBehandlet(s.blankett)) &&
       (arsak === 'alle' || s.arsak === arsak) &&
       (!sok || String(s.nr).includes(sok) || s.navn.toLowerCase().includes(sok)));
   }
@@ -2639,12 +2545,13 @@
         <td class="blanket">${s.blankett}</td><td>${s.dato}</td><td><span class="regnr">${s.regnr}</span></td>
         <td><span class="anlegg-nr">${s.nr}</span> ${s.navn}</td><td class="amount">${s.belop} kr</td>
         <td>${ARSAK_NAVN[s.arsak]}</td><td>${pill(s.behandling)}</td>
-      </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--pn-text-muted)">Ingen treff. Juster filtrene.</td></tr>';
+        <td class="c">${erBehandlet(s.blankett) ? '<span style="color:#1c7a3e;font-weight:700;">✓</span>' : '<span style="color:var(--pn-gray4);">–</span>'}</td>
+      </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--pn-text-muted)">Ingen treff. Juster filtrene.</td></tr>';
   }
   function lastNedRapport() {
     const r = filtrerRapport();
-    const head = ['Blankett', 'Dato', 'Regnr', 'Anleggsnr', 'Anlegg', 'Belop', 'Arsak', 'Behandling'];
-    const linjer = r.map(s => [s.blankett, s.dato, s.regnr, s.nr, '"' + s.navn + '"', s.belop, '"' + ARSAK_NAVN[s.arsak] + '"', s.behandling === 'leie' ? 'Trekk i leie' : 'PN betaler'].join(';'));
+    const head = ['Blankett', 'Dato', 'Regnr', 'Anleggsnr', 'Anlegg', 'Belop', 'Arsak', 'Behandling', 'Behandlet'];
+    const linjer = r.map(s => [s.blankett, s.dato, s.regnr, s.nr, '"' + s.navn + '"', s.belop, '"' + ARSAK_NAVN[s.arsak] + '"', s.behandling === 'leie' ? 'Trekk i leie' : 'PN betaler', erBehandlet(s.blankett) ? 'Ja' : 'Nei'].join(';'));
     const csv = '﻿' + [head.join(';')].concat(linjer).join('\n');
     try {
       const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
@@ -2654,12 +2561,67 @@
     } catch (e) { alert('Rapport (CSV):\n\n' + csv); }
   }
 
+  // ===== Behandlet-status (Hong fører posten) – lagres lokalt i mockup =====
+  function behandletSett() { return new Set(JSON.parse(localStorage.getItem('pn_behandlet') || '[]')); }
+  function erBehandlet(bl) { return behandletSett().has(String(bl)); }
+  function settBehandlet(bl, p) { const s = behandletSett(); p ? s.add(String(bl)) : s.delete(String(bl)); localStorage.setItem('pn_behandlet', JSON.stringify([...s])); }
+  function toggleBehandlet(bl, p) {
+    settBehandlet(bl, p); renderEksport();
+    const rap = document.getElementById('page-rapport');
+    if (rap && rap.classList.contains('active')) oppdaterRapport();
+  }
+
+  // Filnedlasting (ekte nedlasting i nettleser).
+  function lastNed(filnavn, innhold, mime) {
+    try {
+      const blob = new Blob([innhold], {type: mime || 'text/plain;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = filnavn;
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { alert(filnavn + ':\n\n' + innhold); }
+  }
+  function lastNedRiverty() {
+    lastNed('PaidByPN_uke20_2026.txt', SANKSJONER.map(s => s.blankett).join('\n') + '\n', 'text/plain;charset=utf-8');
+  }
+  function lastNedHong() {
+    const head = ['Behandling', 'Sanksjonsnr', 'Dato', 'Regnr', 'Anleggsnr', 'Anlegg', 'Belop', 'Arsak', 'Behandlet'];
+    const linje = s => [s.behandling === 'leie' ? 'Trekk i leie - viderefaktureres gardeier' : 'PN betaler i sin helhet',
+      s.blankett, s.dato, s.regnr, s.nr, '"' + s.navn + '"', s.belop, '"' + ARSAK_NAVN[s.arsak] + '"', erBehandlet(s.blankett) ? 'Ja' : 'Nei'].join(';');
+    const pn = SANKSJONER.filter(s => s.behandling === 'pn');
+    const leie = SANKSJONER.filter(s => s.behandling === 'leie');
+    lastNed('Hong_okonomi_uke20_2026.csv', '﻿' + [head.join(';')].concat(pn.map(linje), leie.map(linje)).join('\n'), 'text/csv;charset=utf-8');
+  }
+
+  // Ukens utsendelse: Riverty (kun sanksjonsnr) + Hong (skille + behandlet-avhuking).
+  function renderEksport() {
+    const kr = n => n.toLocaleString('nb-NO');
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    const alle = SANKSJONER.slice().sort((a, b) => parseDato(b.dato).key - parseDato(a.dato).key);
+    const riv = document.getElementById('rivertyListe');
+    if (riv) riv.innerHTML = alle.map(s => s.blankett).join('<br>');
+    set('rivAnt', alle.length); set('tabRivAnt', alle.length);
+    const pn = alle.filter(s => s.behandling === 'pn');
+    const leie = alle.filter(s => s.behandling === 'leie');
+    set('hongAnt', alle.length); set('tabHongAnt', alle.length); set('hongLeie', leie.length);
+    set('hongBehandlet', alle.filter(s => erBehandlet(s.blankett)).length + ' av ' + alle.length + ' behandlet');
+    const body = document.getElementById('hongBody');
+    if (body) {
+      const rad = s => `<tr><td class="blanket">${s.blankett}</td><td>${s.dato}</td><td><span class="regnr">${s.regnr}</span></td><td><span class="anlegg-nr">${s.nr}</span> ${s.navn}</td><td class="amount">${s.belop} kr</td><td>${ARSAK_NAVN[s.arsak]}</td><td class="c"><input type="checkbox" aria-label="Behandlet ${s.blankett}"${erBehandlet(s.blankett) ? ' checked' : ''} onchange="toggleBehandlet('${s.blankett}', this.checked)"></td></tr>`;
+      const grp = (tittel, arr, farge) => arr.length
+        ? `<tr style="background:${farge};color:#fff;"><td colspan="7" style="font-weight:600;padding:10px 14px;letter-spacing:.04em;">${tittel} · ${arr.length} sanksjoner · ${kr(arr.reduce((a, s) => a + s.belop, 0))} kr</td></tr>` + arr.map(rad).join('')
+        : '';
+      body.innerHTML = grp('PN BETALER I SIN HELHET', pn, 'var(--pn-darkblue)')
+        + grp('TREKK I LEIE – VIDEREFAKTURERES GÅRDEIER', leie, 'var(--pn-turkis3)');
+    }
+  }
+
   // Render dashboard-panelene ved oppstart.
   renderKpi();
   renderToppAnlegg();
   renderArsak();
   renderSiste();
   renderArsakChart();
+  renderEksport();
 
   // ===== RAPPORT-SKJEMA =====
   function toggleReportRange() {
@@ -2913,6 +2875,7 @@
     if (pageId === 'admin') adminLoadUsers();
     if (pageId === 'dashboard') { renderKpi(); renderToppAnlegg(); renderArsak(); renderSiste(); renderArsakChart(); }
     if (pageId === 'rapport') oppdaterRapport();
+    if (pageId === 'weekly') renderEksport();
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
 
