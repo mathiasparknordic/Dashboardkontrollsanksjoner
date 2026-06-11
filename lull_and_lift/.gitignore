@@ -2,3 +2,5 @@
 audio_research/clips/
 *.mp3
 audio/*.wav
+__pycache__/
+*.pyc
