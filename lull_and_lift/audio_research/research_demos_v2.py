@@ -121,7 +121,7 @@ def build_combined():
     # rain audibly lower. rain_gain 1.0 was the round-1 1:1 mix.
     pmix = np.vstack([piano[0] * pbase, piano[1] * pbase])
     rmix = np.vstack([rain[0] * rbase, rain[1] * rbase])
-    variants = {"balanceA": 0.72, "balanceB": 0.55}     # rain gain vs piano
+    variants = {"balanceE": 0.18, "balanceF": 0.10}     # rain as soft background (+3 / -2 dB vs piano)
     mixes = {tag: fade(pmix + rmix * rg) for tag, rg in variants.items()}
     master = 0.92 / (max(np.max(np.abs(m)) for m in mixes.values()) + 1e-9)
     for tag, m in mixes.items():
