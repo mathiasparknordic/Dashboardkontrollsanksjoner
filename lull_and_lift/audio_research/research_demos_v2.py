@@ -26,10 +26,13 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clips")
 os.makedirs(OUT, exist_ok=True)
 
 
-def write_wav(name, stereo, peak=0.92):
+def write_wav(name, stereo, peak=0.92, normalize=True, master=1.0):
     import wave
     mix = np.asarray(stereo, dtype=np.float64)
-    mix = mix / (np.max(np.abs(mix)) + 1e-9) * peak
+    if normalize:                       # scale to peak (good for single-element clips)
+        mix = mix / (np.max(np.abs(mix)) + 1e-9) * peak
+    else:                               # fixed gain: PRESERVES relative balance
+        mix = mix * master
     mix = np.tanh(mix * 1.08) / np.tanh(1.08) * peak
     ints = (mix.T * 32767.0).astype("<i2")
     path = os.path.join(OUT, name)
@@ -100,19 +103,29 @@ def build_piano():
 
 
 def build_combined():
-    """Time-compressed night arc with a MILDER end-lift (per feedback)."""
+    """Time-compressed night arc with a MILDER end-lift (per feedback).
+    Renders base layers once, then emits two rain/piano BALANCE options
+    (rain a notch lower than round 1, per feedback)."""
     dur = 40.0; N = int(dur * SR); t = np.arange(N) / SR
     z1, z2 = 10.0, 30.0
     notes = schedule_notes(dur, seed=13, density=2.4)
     piano = render_piano(notes, N)
     rain = render_rain(dur, seed=11, preset="steady", sr=SR)
-    rlvl = np.interp(t, [0, z1, (z1 + z2) / 2, z2, dur], [0.42, 0.55, 0.80, 0.70, 0.46])
-    # MILDER lift: zone-3 piano returns only gently (was 0.95 peak -> now 0.70),
-    # and stays low under the rain.
-    plvl = np.interp(t, [0, z1, (z1 + z2) / 2, z2, dur], [0.80, 0.60, 0.30, 0.50, 0.70])
-    L = piano[0] * plvl + rain[0] * rlvl
-    R = piano[1] * plvl + rain[1] * rlvl
-    write_wav("combined_v2_milder_arc.wav", fade(np.vstack([L, R])))
+    # base contours (same shapes as before)
+    rbase = np.interp(t, [0, z1, (z1 + z2) / 2, z2, dur], [0.42, 0.55, 0.80, 0.70, 0.46])
+    # MILDER lift: zone-3 piano returns only gently, stays low under the rain
+    pbase = np.interp(t, [0, z1, (z1 + z2) / 2, z2, dur], [0.80, 0.60, 0.30, 0.50, 0.70])
+    # Better balance: keep PIANO FIXED, only lower the rain (per feedback "rain a
+    # bit lower"). One shared fixed master (no per-file peak-norm, which would
+    # re-pin loudness and cancel the change) -> piano identical across variants,
+    # rain audibly lower. rain_gain 1.0 was the round-1 1:1 mix.
+    pmix = np.vstack([piano[0] * pbase, piano[1] * pbase])
+    rmix = np.vstack([rain[0] * rbase, rain[1] * rbase])
+    variants = {"balanceA": 0.72, "balanceB": 0.55}     # rain gain vs piano
+    mixes = {tag: fade(pmix + rmix * rg) for tag, rg in variants.items()}
+    master = 0.92 / (max(np.max(np.abs(m)) for m in mixes.values()) + 1e-9)
+    for tag, m in mixes.items():
+        write_wav("combined_v2_%s.wav" % tag, m, normalize=False, master=master)
 
 
 if __name__ == "__main__":
