@@ -19,8 +19,23 @@ Examples:
 
 Requires: ffmpeg on PATH, pip install pillow numpy
 """
-import argparse, subprocess, numpy as np
+import argparse, shutil, subprocess, numpy as np
 from PIL import Image, ImageDraw
+
+
+def resolve_ffmpeg():
+    """Use ffmpeg from PATH, else fall back to the binary bundled with imageio-ffmpeg."""
+    exe = shutil.which('ffmpeg')
+    if exe:
+        return exe
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        raise SystemExit('ffmpeg not found: install ffmpeg or `pip install imageio-ffmpeg`')
+
+
+FFMPEG = resolve_ffmpeg()
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--image', required=True)
@@ -67,7 +82,7 @@ if a.firexy:
     fd = np.sqrt((xx - fx * W) ** 2 + (yy - fy * H) ** 2)
     fire = (np.clip(1.0 - fd / (W * 0.30), 0, 1) ** 2)[..., None]
 
-ff = ['ffmpeg', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-']
+ff = [FFMPEG, '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-']
 if a.audio:
     ff += ['-stream_loop', '-1', '-i', a.audio, '-shortest', '-c:a', 'aac', '-b:a', '160k']
 ff += ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'veryfast', a.out]

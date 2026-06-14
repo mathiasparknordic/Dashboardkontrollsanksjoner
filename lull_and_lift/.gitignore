@@ -4,3 +4,6 @@ audio_research/clips/
 audio/*.wav
 __pycache__/
 *.pyc
+# Rendered video is reproducible from render_video.py + the still; don't commit heavy MP4s.
+video/work/
+*.mp4
