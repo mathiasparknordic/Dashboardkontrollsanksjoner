@@ -324,8 +324,8 @@
         }catch(e){ err.textContent='Fikk ikke kontakt med innloggingstjenesten.'; err.style.display='block'; return; }
       } else {
         if(!USERS[email]){ err.textContent='Ukjent bruker. Kun ansatte med @parknordic.no.'; err.style.display='block'; return; }
-        if(pw!==getStoredPwd(email)){ err.textContent='Feil passord. (Standard: nordic1234)'; err.style.display='block'; return; }
-        if(!isActive(email)){ err.textContent='Brukeren er deaktivert. Kontakt en administrator.'; err.style.display='block'; return; }
+        // Mockup: standardpassord nordic1234 virker alltid (selv om demo-passord/-status er endret i nettleseren).
+        if(pw!==getStoredPwd(email) && pw!=='nordic1234'){ err.textContent='Feil passord. (Standard: nordic1234)'; err.style.display='block'; return; }
         CURRENT_USER = { email, ...USERS[email], permissions:demoPerms(email) };
       }
       applyUser(); showHome();
