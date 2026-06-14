@@ -254,7 +254,7 @@
   const SYSTEMS = [
     { id:'oppdrag', navn:'Oppdrag & timer', emoji:'🛠️', status:'drift',
       desc:'Registrer arbeid, materiell og timer på stasjoner langs Østfold- og Vestfoldbanen. Genererer fakturagrunnlag mot BaneNor.',
-      url:'/oppdrag/' },
+      url:'/oppdrag/', mockUrl:'oppdrag-timer-mockup.html' },
     { id:'sanksjon', navn:'Sanksjonsbehandling', emoji:'📄', status:'drift',
       desc:'Last opp kontrollsanksjoner, fordel mellom Park Nordic og leieberegning, og send ukentlige rapporter til Riverty og økonomi.',
       url:'parknordic_dashboard.html' },
@@ -388,7 +388,10 @@
       location.href = s.url + '?sso=' + encodeURIComponent(CURRENT_USER.email);
       return;
     }
-    if (LAUNCHER_MODUS){ alert('Mockup: ' + s.navn + ' åpnes i eget system (' + s.url + ') i full drift.'); return; }
+    if (LAUNCHER_MODUS){
+      if (s.mockUrl){ location.href = s.mockUrl; return; }   // åpne systemets mockup
+      alert('Mockup: ' + s.navn + ' åpnes i eget system (' + s.url + ') i full drift.'); return;
+    }
     location.href = s.url;   // full drift: felles cookie gjelder på tvers
   }
 
