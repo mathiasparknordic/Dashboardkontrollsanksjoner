@@ -9,8 +9,15 @@ input[type=range]{flex:1;min-width:160px;accent-color:#ffcc00}
 .rc{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
 .lab{font-size:12px;color:var(--tx3);margin:0 0 2px}.val{font-size:15px;font-weight:600;margin:0}
 @media (prefers-reduced-motion: no-preference){
- #breath{transform-box:fill-box;transform-origin:center;animation:br 5.6s ease-in-out infinite}
- @keyframes br{0%,100%{transform:scale(1,1)}50%{transform:scale(1.01,1.03)}}
+ /* Charlie's own rhythm — measured from the sleep clip: ~14 breaths/min (≈4.3s).
+    Natural quick inhale, slower exhale, short rest; belly/ribcage rises (origin low). */
+ #breath{transform-box:fill-box;transform-origin:50% 90%;animation:br 4.3s cubic-bezier(.42,0,.58,1) infinite}
+ @keyframes br{
+  0%{transform:scale(1,1)}                 /* rest, before inhale */
+  33%{transform:scale(1.014,1.032)}        /* inhale peak (chest/belly up) */
+  72%{transform:scale(1,1)}                /* exhale complete */
+  100%{transform:scale(1,1)}               /* brief pause, then next breath */
+ }
  #ear{animation:sw 9s ease-in-out infinite}@keyframes sw{0%,100%{transform:rotate(0deg)}50%{transform:rotate(0.6deg)}}
  #zzz text{animation:zz 4s ease-in-out infinite}#zzz text:nth-child(2){animation-delay:.5s}#zzz text:nth-child(3){animation-delay:1s}
  @keyframes zz{0%,100%{opacity:.2}50%{opacity:.9}}
