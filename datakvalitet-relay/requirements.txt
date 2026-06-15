@@ -1,0 +1,6 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.30,<0.35
+httpx>=0.27
+PyJWT>=2.7,<3
+# Test:
+pytest>=8

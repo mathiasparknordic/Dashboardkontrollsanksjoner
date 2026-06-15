@@ -1,0 +1,29 @@
+# Park Nordic – Datakvalitet AI-relay (server-side Anthropic-kall).
+# Dedikert, innloggingsløs servicebruker + herding. Binder 127.0.0.1:8082 (run.sh).
+#
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin svc-datakvalitet
+#   sudo systemctl daemon-reload && sudo systemctl enable --now datakvalitet-relay
+
+[Unit]
+Description=datakvalitet-relay (Park Nordic – AI-chat relay)
+After=network.target
+
+[Service]
+User=svc-datakvalitet
+Group=svc-datakvalitet
+WorkingDirectory=/opt/datakvalitet-relay
+EnvironmentFile=/opt/datakvalitet-relay/.env
+ExecStart=/opt/datakvalitet-relay/.venv/bin/uvicorn app:create_app --factory --host 127.0.0.1 --port 8082 --workers 1
+Restart=always
+RestartSec=2
+
+# systemd-herding
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# ingen skrivetilgang nødvendig (stateless relay)
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target
