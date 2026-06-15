@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Nordic · Datakvalitet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Park Nordic – lyst tema (samme variabelnavn som Anders' original) */
+    --bg:#eaf3f3; --panel:#ffffff; --panel-2:#f4faf9;
+    --line:#dce8e8; --line-soft:#e8f0f0;
+    --ink:#1a2641; --ink-dim:#5b626e; --ink-faint:#7c8591;
+    --primary:#519a9c; --primary-dim:#83bbba;
+    --ok:#1c7a3e;
+    --misread:#2b7fb0;     /* nullturer */
+    --capped:#d23b3b;      /* tvangsavsluttet */
+    --misread-bg:rgba(43,127,176,.10);
+    --capped-bg:rgba(210,59,59,.10);
+    --ok-bg:rgba(28,122,62,.08);
+    --mono:'Saira',ui-monospace,Menlo,Consolas,monospace;
+    --display:'Saira',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--line-soft) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line-soft) 1px,transparent 1px),
+      radial-gradient(circle at 20% -10%,rgba(81,154,156,.06),transparent 45%);
+    background-size:46px 46px,46px 46px,100% 100%;background-position:center top;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:34px 26px 80px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:26px}
+  .brand{display:flex;flex-direction:column;gap:6px}
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--primary);
+    display:flex;align-items:center;gap:10px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(81,154,156,.5)}70%{box-shadow:0 0 0 9px rgba(81,154,156,0)}100%{box-shadow:0 0 0 0 rgba(81,154,156,0)}}
+  h1{font-family:var(--display);font-weight:700;font-size:38px;letter-spacing:-.02em;line-height:1}
+  h1 span{color:var(--ink-dim)}
+  .wordmark{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:lowercase;color:var(--ink);margin-bottom:2px}
+  .wordmark .park{color:var(--primary)}
+  .backlink{display:inline-block;font-size:12px;color:var(--primary);text-decoration:none;margin-bottom:8px}
+  .backlink:hover{color:var(--ink)}
+  .chat-warn{font-size:11px;color:var(--capped);margin-top:6px;line-height:1.4}
+  .meta{text-align:right;font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px;min-width:200px}
+  .meta b{color:var(--ink);font-weight:500}
+
+  .drop{border:1.5px dashed var(--line);border-radius:14px;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    padding:46px 30px;text-align:center;cursor:pointer;transition:.2s;overflow:hidden}
+  .drop:hover,.drop.over{border-color:var(--primary-dim);background:var(--panel)}
+  .drop.over{transform:scale(.995)}
+  .drop .ic{font-family:var(--display);font-size:30px;color:var(--primary);margin-bottom:12px}
+  .drop h2{font-family:var(--display);font-weight:600;font-size:19px;margin-bottom:6px}
+  .drop p{color:var(--ink-dim);font-size:13px}
+  .drop .hint{margin-top:14px;font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  input[type=file]{display:none}
+  .err{margin-top:14px;color:var(--capped);font-size:13px;border:1px solid rgba(210,59,59,.3);
+    background:var(--capped-bg);border-radius:8px;padding:10px 14px;display:none}
+
+  /* controls */
+  .controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:22px 0 4px;
+    background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 18px}
+  .ctrl{display:flex;align-items:center;gap:10px}
+  .ctrl label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .ctrl input{width:78px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:14px;padding:6px 9px;border-radius:7px;text-align:right}
+  .ctrl input:focus{outline:none;border-color:var(--primary-dim)}
+  .ctrl .u{color:var(--ink-faint);font-size:12px}
+  .ctrl .swatch{width:10px;height:10px;border-radius:3px}
+
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 6px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px}
+  .stat .k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim)}
+  .stat .v{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.1;margin-top:8px}
+  .stat .s{font-size:11px;color:var(--ink-faint);margin-top:2px}
+  .stat.misread .v{color:var(--misread)} .stat.capped .v{color:var(--capped)} .stat.ok .v{color:var(--ok)}
+
+  .section-h{display:flex;align-items:center;gap:12px;margin:32px 0 14px}
+  .section-h h3{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.02em;text-transform:uppercase}
+  .section-h .rule{flex:1;height:1px;background:var(--line)}
+  .section-h .count{font-size:12px;color:var(--ink-dim)}
+  .section-h .swatch{width:11px;height:11px;border-radius:3px}
+
+  .tablewrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .scroll{max-height:420px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:500;font-size:10.5px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);padding:12px 16px;
+    border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap;z-index:1}
+  thead th:hover{color:var(--ink)} thead th.num{text-align:right}
+  thead th .arrow{color:var(--primary);font-size:10px}
+  tbody td{padding:11px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0} tbody tr:hover{background:var(--panel-2)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  td.name{font-family:var(--display);font-weight:500;font-size:14px;white-space:normal}
+  .plate{font-weight:700;letter-spacing:.05em}
+  .dim{color:var(--ink-faint)}
+  .misread-text{color:var(--misread)} .capped-text{color:var(--capped)}
+  .bar{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-left:8px}
+  .bar-split{display:inline-flex;height:6px;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:8px}
+
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .badge.misread{color:var(--misread);background:var(--misread-bg);border:1px solid rgba(43,127,176,.3)}
+  .badge.capped{color:var(--capped);background:var(--capped-bg);border:1px solid rgba(210,59,59,.3)}
+
+  .note{font-size:12px;color:var(--ink-faint);padding:10px 16px;border-top:1px solid var(--line-soft)}
+  footer{margin-top:34px;color:var(--ink-faint);font-size:11.5px;line-height:1.7;border-top:1px solid var(--line);padding-top:18px}
+  footer b{color:var(--ink-dim);font-weight:500}
+  .hidden{display:none}
+
+  /* trend */
+  .section-h .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .section-h .seg button{background:transparent;border:0;color:var(--ink-dim);font-family:var(--mono);
+    font-size:12px;padding:6px 13px;cursor:pointer;transition:.15s}
+  .section-h .seg button.on{background:var(--panel);color:var(--primary)}
+  .section-h .seg button:not(:last-child){border-right:1px solid var(--line)}
+  .trend-callout{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:11px;padding:15px 18px;margin-bottom:14px;flex-wrap:wrap}
+  .trend-callout .big{font-family:var(--display);font-weight:700;font-size:30px;line-height:1}
+  .trend-callout .txt{font-size:13px;color:var(--ink-dim);line-height:1.4}
+  .trend-callout .txt b{color:var(--ink);font-weight:500}
+  .up{color:var(--capped)} .down{color:var(--ok)} .flat{color:var(--ink-dim)}
+  .delta{font-variant-numeric:tabular-nums;font-weight:500}
+  .delta .ar{font-size:11px}
+  .wbar rect.b{transition:opacity .15s}
+  .wbar text{font-family:var(--mono);fill:var(--ink-dim)}
+
+  /* week filter bar in modal */
+  .wk-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:rgba(81,154,156,.08);border:1px solid rgba(81,154,156,.25);border-radius:9px;
+    padding:9px 14px;margin:14px 0 4px;font-size:13px}
+  .wk-clear{background:transparent;border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:7px;cursor:pointer}
+  .wk-clear:hover{color:var(--ink);border-color:var(--primary-dim)}
+
+  /* AI chat */
+  .chat-fab{position:fixed;bottom:28px;right:28px;z-index:40;
+    background:linear-gradient(135deg,var(--primary-dim),#519a9c);
+    border:1px solid var(--primary-dim);color:#fff;
+    height:44px;padding:0 18px;border-radius:22px;cursor:pointer;
+    display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:14px;
+    box-shadow:0 4px 24px rgba(81,154,156,.25);transition:.2s;white-space:nowrap}
+  .chat-fab:hover{transform:scale(1.04);box-shadow:0 6px 30px rgba(81,154,156,.4)}
+  .chat-panel{position:fixed;bottom:90px;right:28px;z-index:40;
+    width:360px;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;
+    transform:scale(.95) translateY(10px);opacity:0;pointer-events:none;
+    transition:transform .2s cubic-bezier(.2,.8,.3,1),opacity .18s}
+  .chat-panel.open{transform:none;opacity:1;pointer-events:auto}
+  .chat-head{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px 13px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--panel),var(--panel-2))}
+  .chat-head .ct{display:flex;flex-direction:column;gap:3px}
+  .chat-head h4{font-family:var(--display);font-weight:700;font-size:16px}
+  .chat-head .cs{font-size:11px;color:var(--ink-dim)}
+  .chat-x{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px}
+  .chat-x:hover{color:var(--ink)}
+  .chat-key{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px}
+  .chat-key input{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:12px;padding:7px 10px;border-radius:8px}
+  .chat-key input:focus{outline:none;border-color:var(--primary-dim)}
+  .chat-msgs{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:220px;max-height:320px}
+  .cmsg{max-width:88%;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.5}
+  .cmsg.user{align-self:flex-end;background:var(--primary-dim);color:var(--ink);border-bottom-right-radius:4px}
+  .cmsg.ai{align-self:flex-start;background:var(--panel-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .cmsg.thinking{color:var(--ink-faint);font-style:italic}
+  .chat-input{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+  .chat-input textarea{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:13px;padding:8px 10px;border-radius:10px;resize:none;height:40px;
+    line-height:1.4;overflow:hidden}
+  .chat-input textarea:focus{outline:none;border-color:var(--primary-dim)}
+  .chat-send{background:var(--primary-dim);border:1px solid rgba(81,154,156,.3);color:#fff;
+    font-family:var(--mono);font-size:14px;padding:0 14px;border-radius:10px;cursor:pointer;height:40px;
+    transition:.15s;white-space:nowrap}
+  .chat-send:hover{background:rgba(81,154,156,.2)}
+  .chat-send:disabled{opacity:.4;cursor:default}
+  .weekbar{display:flex;align-items:center;gap:12px;margin:22px 0 4px;flex-wrap:wrap}
+  .weekbar label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim)}
+  .weekbar select{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:14px;padding:8px 12px;border-radius:9px;cursor:pointer}
+  .weekbar select:focus{outline:none;border-color:var(--primary-dim)}
+  .weekbar .wrange{font-size:12px;color:var(--ink-dim)}
+
+  /* utvikling cell */
+  .util{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+  .util svg{display:block;flex-shrink:0}
+  .spk rect{transition:opacity .15s}
+
+  /* clickable area rows */
+  tr.clickable{cursor:pointer}
+  .chev{display:inline-block;color:var(--ink-faint);margin-right:9px;font-weight:700;transition:.15s}
+  tr.clickable:hover .chev{color:var(--primary);transform:translateX(2px)}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:flex-start;justify-content:center;
+    padding:48px 20px;background:rgba(4,7,6,.72);backdrop-filter:blur(4px);overflow:auto}
+  .modal.open{display:flex}
+  .modal-card{width:100%;max-width:920px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);overflow:hidden;
+    animation:rise .22s cubic-bezier(.2,.7,.3,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+    padding:22px 24px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--panel),var(--panel-2))}
+  .modal-title{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.01em;line-height:1.1}
+  .modal-sub{font-size:12px;color:var(--ink-dim);margin-top:4px}
+  .modal-close{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:15px;flex-shrink:0;transition:.15s}
+  .modal-close:hover{color:var(--ink);border-color:var(--primary-dim)}
+  .modal-stats{display:flex;gap:10px;flex-wrap:wrap;padding:16px 24px;border-bottom:1px solid var(--line-soft)}
+  .mstat{flex:1;min-width:120px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .mstat .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+  .mstat .v{font-family:var(--display);font-weight:700;font-size:22px;margin-top:5px}
+  .mstat.misread .v{color:var(--misread)} .mstat.capped .v{color:var(--capped)}
+  .modal-body{padding:8px 24px 26px;max-height:58vh;overflow:auto}
+  .msec{margin-top:18px}
+  .msec-h{display:flex;align-items:center;gap:9px;margin:14px 0 10px}
+  .msec-h .swatch{width:10px;height:10px;border-radius:3px}
+  .msec-h h4{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+  .msec-h .c{font-size:11.5px;color:var(--ink-dim)}
+  .mtable{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .mtable table{font-size:12.5px}
+  .mtable thead th{position:static;padding:9px 14px;cursor:default}
+  .mtable tbody td{padding:9px 14px}
+  .mempty{color:var(--ink-faint);font-size:12.5px;padding:14px;border:1px dashed var(--line);border-radius:10px}
+  @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:30px}.meta{text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <a href="portal.html" class="backlink">← Dashboard</a>
+      <div class="wordmark"><span class="park">park</span> nordic</div>
+      <div class="eyebrow"><span class="dot"></span>Datakvalitet · transaksjoner</div>
+      <h1>Parkering<span>/feillesninger</span></h1>
+    </div>
+    <div class="meta" id="meta">
+      <div>Ingen data lastet inn</div>
+      <div class="dim">Dra inn en CSV-eksport for å starte</div>
+    </div>
+  </header>
+
+  <label class="drop" id="drop" for="file">
+    <div class="ic">⌖</div>
+    <h2>Slipp CSV-eksporten her</h2>
+    <p>eller klikk for å velge fil</p>
+    <div class="hint">Håndterer semikolon-separert UTF-16/UTF-8 · alt prosesseres lokalt i nettleseren</div>
+    <input type="file" id="file" accept=".csv,text/csv">
+  </label>
+  <div class="err" id="err"></div>
+
+  <div id="report" class="hidden">
+    <div class="controls">
+      <div class="ctrl">
+        <span class="swatch" style="background:var(--misread)"></span>
+        <label>Nullturgrense</label>
+        <input type="number" id="thMisread" value="5" min="0" step="1">
+        <span class="u">sek · lest rett inn og ut</span>
+      </div>
+      <div class="ctrl">
+        <span class="swatch" style="background:var(--capped)"></span>
+        <label>Tvangsavslutning</label>
+        <span class="u">multiplum av 1440 min (24 t) ± </span>
+        <input type="number" id="thCap" value="1" min="0" step="0.5" style="width:60px">
+        <span class="u">min</span>
+      </div>
+    </div>
+
+    <div class="weekbar" id="weekbar">
+      <label>Siste uke</label>
+      <select id="weekSel"></select>
+      <span class="wrange" id="weekRange"></span>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="section-h">
+      <h3 id="feilTitle">Anlegg etter feilandel — siste uke</h3><div class="rule"></div>
+      <div class="count" id="feilCount"></div>
+    </div>
+    <div class="tablewrap">
+      <div class="scroll"><table><thead><tr id="feilHead"></tr></thead><tbody id="feilBody"></tbody></table></div>
+    </div>
+
+    <div class="section-h">
+      <span class="swatch" style="background:var(--misread)"></span>
+      <h3 id="nullTitle">Nullturer</h3><div class="rule"></div>
+      <div class="count" id="nullCount"></div>
+    </div>
+    <div class="tablewrap">
+      <div class="scroll"><table><thead><tr id="nullHead"></tr></thead><tbody id="nullBody"></tbody></table></div>
+    </div>
+
+    <div class="section-h">
+      <span class="swatch" style="background:var(--capped)"></span>
+      <h3 id="capTitle">Tvangsavsluttet</h3><div class="rule"></div>
+      <div class="count" id="capCount"></div>
+    </div>
+    <div class="tablewrap">
+      <div class="scroll"><table><thead><tr id="capHead"></tr></thead><tbody id="capBody"></tbody></table></div>
+    </div>
+
+    <footer id="footer"></footer>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="mTitle"></div>
+        <div class="modal-sub" id="mSub"></div>
+      </div>
+      <button class="modal-close" id="mClose" aria-label="Lukk">✕</button>
+    </div>
+    <div class="modal-stats" id="mStats"></div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<button class="chat-fab" id="chatFab" title="Spør AI om dataen">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+  Spør AI om dataen
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="ct">
+      <h4>AI-assistent</h4>
+      <div class="cs">Spør om anlegg, trender og feil</div>
+    </div>
+    <button class="chat-x" id="chatX">✕</button>
+  </div>
+  <div class="chat-key">
+    <input type="password" id="chatApiKey" placeholder="Anthropic API-nøkkel – kreves for AI-chat">
+    <div class="chat-warn">⚠ AI-chat sender aggregert data til Anthropic (ekstern tjeneste). Av uten nøkkel. Bør gå via intern relay i drift.</div>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-input">
+    <textarea id="chatInput" placeholder="Skriv et spørsmål …" rows="1"></textarea>
+    <button class="chat-send" id="chatSend">Send</button>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const MAXROWS = 300;
+
+/* ---------- decode + parse ---------- */
+function decodeBytes(buf){
+  const b=new Uint8Array(buf);
+  if(b.length>=2&&b[0]===0xFF&&b[1]===0xFE) return new TextDecoder('utf-16le').decode(b.subarray(2));
+  if(b.length>=2&&b[0]===0xFE&&b[1]===0xFF) return new TextDecoder('utf-16be').decode(b.subarray(2));
+  if(b.length>=3&&b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF) return new TextDecoder('utf-8').decode(b.subarray(3));
+  let nul=0,n=Math.min(b.length,400); for(let i=0;i<n;i++) if(b[i]===0) nul++;
+  if(nul>n*0.2) return new TextDecoder('utf-16le').decode(b);
+  return new TextDecoder('utf-8').decode(b);
+}
+function splitLine(line,delim){
+  const res=[];let f='',q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];
+    if(q){ if(c==='"'){ if(line[i+1]==='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else{ if(c==='"')q=true; else if(c===delim){res.push(f);f='';} else f+=c; }
+  }
+  res.push(f);return res;
+}
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split('\n');
+  let hi=0; while(hi<lines.length && lines[hi].trim()==='') hi++;
+  if(hi>=lines.length) return [];
+  const headerLine=lines[hi].replace(/\r$/,'');
+  const delim=(headerLine.split(';').length>=headerLine.split(',').length)?';':',';
+  const headers=splitLine(headerLine,delim).map(s=>s.trim());
+  const out=[];
+  for(let i=hi+1;i<lines.length;i++){
+    let line=lines[i]; if(line.charCodeAt(line.length-1)===13) line=line.slice(0,-1);
+    if(line==='') continue;
+    const cells = line.indexOf('"')<0 ? line.split(delim) : splitLine(line,delim);
+    if(cells.length<2) continue;
+    const o={}; for(let j=0;j<headers.length;j++) o[headers[j]]=(cells[j]!=null?cells[j].trim():'');
+    out.push(o);
+  }
+  return out;
+}
+function findCol(hs,c){const l=hs.map(h=>h.toLowerCase());
+  for(const x of c){const i=l.indexOf(x.toLowerCase());if(i>=0)return hs[i];}
+  for(const x of c){const i=l.findIndex(h=>h.includes(x.toLowerCase()));if(i>=0)return hs[i];}
+  return null;}
+function pDate(s){if(!s)return null;const d=new Date(s.trim().replace(' ','T'));return isNaN(d)?null:d;}
+function pNum(s){if(s==null)return null;const v=parseFloat(String(s).replace(/\s/g,'').replace(',','.'));return isNaN(v)?null:v;}
+
+/* ---------- build transaction list ---------- */
+function buildTx(records){
+  if(!records.length) throw new Error('Fant ingen rader i filen.');
+  const H=Object.keys(records[0]);
+  const cA=findCol(H,['Parking area','anlegg','area']);
+  const cS=findCol(H,['Start date','start']);
+  const cE=findCol(H,['End date','end','slutt']);
+  const cP=findCol(H,['Parking time','varighet','duration']);
+  const cL=findCol(H,['Car license number','license','skilt','plate','regnr']);
+  if(!cA) throw new Error('Fant ikke kolonnen "Parking area".');
+  const tx=[];
+  for(const r of records){
+    const area=r[cA]; if(!area) continue;
+    const start=cS?pDate(r[cS]):null, end=cE?pDate(r[cE]):null;
+    let pt=cP?pNum(r[cP]):null;
+    if(pt==null && start && end) pt=(end-start)/60000;
+    if(pt==null) continue;
+    tx.push({area,start,end,pt,plate:cL?(r[cL]||'–'):'–'});
+  }
+  if(!tx.length) throw new Error('Ingen gyldige transaksjoner (mangler varighet/tidsstempel).');
+  return tx;
+}
+
+/* ---------- classify ---------- */
+function capInfo(pt,tol){
+  if(pt < 1440-tol) return null;
+  const k=Math.round(pt/1440);
+  if(k<1) return null;
+  if(Math.abs(pt-k*1440)<=tol) return k;  // k whole days
+  return null;
+}
+function classify(tx,thMis,thCap){
+  const areas=new Map();
+  const mis=[], cap=[];
+  for(const t of tx){
+    let type='clean', capK=null;
+    if(t.pt<=thMis) type='misread';
+    else { const k=capInfo(t.pt,thCap); if(k){type='capped';capK=k;} }
+    t.type=type; t.capK=capK;
+    if(!areas.has(t.area)) areas.set(t.area,{area:t.area,total:0,misread:0,capped:0});
+    const a=areas.get(t.area); a.total++;
+    if(type==='misread'){a.misread++;mis.push(t);}
+    else if(type==='capped'){a.capped++;cap.push(t);}
+  }
+  const areaArr=[...areas.values()].map(a=>{a.errors=a.misread+a.capped;a.rate=a.errors/a.total;return a;});
+  return {areaArr,mis,cap,total:tx.length,misTotal:mis.length,capTotal:cap.length};
+}
+
+/* ---------- weekly trend ---------- */
+function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x;}
+function isoWeek(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-day+3);const ft=new Date(Date.UTC(x.getUTCFullYear(),0,4));const fd=(ft.getUTCDay()+6)%7;ft.setUTCDate(ft.getUTCDate()-fd+3);return 1+Math.round((x-ft)/(7*864e5));}
+function weeklyAgg(tx,area){
+  let dMin=null,dMax=null;
+  const wk=new Map();
+  for(const t of tx){
+    if(!t.start) continue;
+    if(area && t.area!==area) continue;
+    if(!dMin||t.start<dMin)dMin=t.start; if(!dMax||t.start>dMax)dMax=t.start;
+    const ws=weekStart(t.start); const key=ws.getTime();
+    if(!wk.has(key)) wk.set(key,{start:ws,week:isoWeek(t.start),total:0,misread:0,capped:0});
+    const w=wk.get(key); w.total++;
+    if(t.type==='misread')w.misread++; else if(t.type==='capped')w.capped++;
+  }
+  const arr=[...wk.values()].sort((a,b)=>a.start-b.start);
+  const DAY=864e5;
+  arr.forEach((w,i)=>{
+    w.errors=w.misread+w.capped; w.rate=w.total?w.errors/w.total:0;
+    w.end=new Date(w.start.getTime()+7*DAY);
+    w.partial = (dMin && dMin>w.start.getTime()+DAY*0.5) ? true : false;   // first week may start late
+    if(dMax && dMax < w.end.getTime()-DAY*0.5) w.partial=true;            // last week may end early
+    // only flag partial at the actual edges
+    if(i!==0 && i!==arr.length-1) w.partial=false;
+  });
+  arr.forEach((w,i)=>{
+    const p=arr[i-1];
+    w.dErr = (p&&p.errors)? (w.errors-p.errors)/p.errors : null;
+    w.dRate= (p&&p.rate)? (w.rate-p.rate)/p.rate : null;
+  });
+  return arr;
+}
+function weeklyByArea(tx){
+  const areas=new Map(); const wset=new Set(); let dMin=null,dMax=null;
+  for(const t of tx){
+    if(!t.start) continue;
+    const ts=t.start.getTime(); if(dMin==null||ts<dMin)dMin=ts; if(dMax==null||ts>dMax)dMax=ts;
+    const key=weekStart(t.start).getTime(); wset.add(key);
+    if(!areas.has(t.area)) areas.set(t.area,new Map());
+    const m=areas.get(t.area);
+    if(!m.has(key)) m.set(key,{total:0,misread:0,capped:0});
+    const w=m.get(key); w.total++;
+    if(t.type==='misread')w.misread++; else if(t.type==='capped')w.capped++;
+  }
+  const weekKeys=[...wset].sort((a,b)=>a-b);
+  const DAY=864e5;
+  const weekMeta=weekKeys.map((k,i)=>{
+    let partial=false;
+    if(i===0 && dMin>k+DAY*0.5) partial=true;
+    if(i===weekKeys.length-1 && dMax<k+7*DAY-DAY*0.5) partial=true;
+    return {key:k,start:new Date(k),week:isoWeek(new Date(k+3*DAY)),partial};
+  });
+  return {areas,weekKeys,weekMeta,dMin,dMax};
+}
+
+/* ---------- format ---------- */
+const pad=n=>String(n).padStart(2,'0');
+function fmtDT(d){return d?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`:'–';}
+function fmtDur(m){
+  if(m<1) return (m*60).toFixed(0)+' sek';
+  if(m<120) return m.toFixed(2)+' min';
+  const h=m/60; if(h<48) return h.toFixed(1)+' t';
+  return (h/24).toFixed(1)+' d';
+}
+function capTag(k){return `${k*1440} min · ${k*24} t`;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- state + render ---------- */
+let TX=null, FILE='', LASTC=null, LASTTH={mis:5,cap:1}, WBA=null, selIdx=-1,
+    sortF={k:'rate',d:-1}, sortN={k:'misread',d:-1}, sortC={k:'capped',d:-1};
+
+function recompute(){
+  const thMisSec=Math.max(0,parseFloat($('#thMisread').value)||0);
+  const thCap=Math.max(0,parseFloat($('#thCap').value)||0);
+  const C=classify(TX,thMisSec/60,thCap);
+  LASTC=C; LASTTH={mis:thMisSec,cap:thCap};
+  WBA=weeklyByArea(TX);
+  if(selIdx<0 || selIdx>=WBA.weekMeta.length) selIdx=lastCompleteIdx(WBA.weekMeta);
+  buildWeekSelector();
+  renderWeek();
+
+  $('#footer').innerHTML=`
+    <b>Nulltur</b> = inn og ut lest innen ${thMisSec} sek av hverandre: samme passering registrert to ganger.
+    Reelle korte turer (kunde som kjører gjennom p-huset) tar gjerne flere minutter og flagges <b>ikke</b>.
+    <b>Tvangsavsluttet</b> = varighet ligger på et helt multiplum av 1440 min (24 t) innenfor ±${thCap} min: sesjonen er kuttet automatisk fordi utkjøringen aldri ble lest.
+    Tallene gjelder valgt uke; «utvikling» og Δ sammenligner med uken før. Klikk et anlegg for full historikk og transaksjonsliste. Alt beregnes lokalt.`;
+
+  $('#report').classList.remove('hidden');
+}
+function lastCompleteIdx(meta){for(let i=meta.length-1;i>=0;i--)if(!meta[i].partial)return i;return Math.max(0,meta.length-1);}
+function buildWeekSelector(){
+  $('#weekSel').innerHTML=WBA.weekMeta.map((m,i)=>
+    `<option value="${i}" ${i===selIdx?'selected':''}>Uke ${m.week} (${weekRange(m)})${m.partial?' – ufullstendig':''}</option>`).join('');
+}
+function weekAgg(am,key){const w=am&&key!=null&&am.get(key);return w?{total:w.total,misread:w.misread,capped:w.capped,errors:w.misread+w.capped}:{total:0,misread:0,capped:0,errors:0};}
+function relc(c,p){return p?(c-p)/p:(c>0?null:0);}
+
+function renderWeek(){
+  const m=WBA.weekMeta[selIdx], key=WBA.weekKeys[selIdx], prevKey=WBA.weekKeys[selIdx-1];
+  $('#weekRange').textContent=m.partial?'ufullstendig uke — sammenlignes ikke fullt ut':'';
+
+  let g={total:0,misread:0,capped:0}, gp={total:0,misread:0,capped:0};
+  for(const am of WBA.areas.values()){
+    const c=weekAgg(am,key), p=weekAgg(am,prevKey);
+    g.total+=c.total;g.misread+=c.misread;g.capped+=c.capped;
+    gp.total+=p.total;gp.misread+=p.misread;gp.capped+=p.capped;
+  }
+  const gErr=g.misread+g.capped, rate=g.total?gErr/g.total:0;
+  const prate=gp.total?(gp.misread+gp.capped)/gp.total:0;
+  $('#stats').innerHTML=
+    statD('Transaksjoner',g.total.toLocaleString('no'),relc(g.total,gp.total))+
+    statD('Nullturer',g.misread.toLocaleString('no'),relc(g.misread,gp.misread),'misread')+
+    statD('Tvangsavsluttet',g.capped.toLocaleString('no'),relc(g.capped,gp.capped),'capped')+
+    statD('Feilandel',(rate*100).toFixed(2)+'%',prate?(rate-prate)/prate:null,(rate*100)>5?'capped':'misread');
+
+  renderFeil(); renderNull(); renderCap();
+}
+function statD(k,v,d,cls=''){return `<div class="stat ${cls}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${deltaHTML(d)} vs forrige uke</div></div>`;}
+
+/* ---------- trend ---------- */
+function fmtPct(x){return (x>=0?'+':'')+(x*100).toFixed(0)+'%';}
+function deltaHTML(x){
+  if(x==null) return '<span class="flat">–</span>';
+  const cls=x>0.005?'up':(x<-0.005?'down':'flat');
+  const ar=x>0.005?'▲':(x<-0.005?'▼':'■');
+  return `<span class="delta ${cls}"><span class="ar">${ar}</span> ${fmtPct(x)}</span>`;
+}
+function weekRange(w){return `${pad(w.start.getDate())}.${pad(w.start.getMonth()+1)}–${pad(new Date(w.start.getTime()+6*864e5).getDate())}.${pad(new Date(w.start.getTime()+6*864e5).getMonth()+1)}`;}
+/* ---------- per-area week tables ---------- */
+function deltaPPHTML(pp){
+  if(pp==null||isNaN(pp)) return '<span class="flat">–</span>';
+  const v=pp*100; const cls=v>0.05?'up':(v<-0.05?'down':'flat'); const ar=v>0.05?'▲':(v<-0.05?'▼':'■');
+  return `<span class="delta ${cls}"><span class="ar">${ar}</span> ${(v>=0?'+':'')+v.toFixed(1)} pp</span>`;
+}
+function spark(series,color,w=64,h=22){
+  const n=series.length; if(!n) return '';
+  const max=Math.max(0.0001,...series);
+  const bw=Math.max(2,(w-(n-1)*2)/n); let x=0,b='';
+  series.forEach((v,i)=>{const bh=Math.max(1,(v/max)*(h-2));const last=i===n-1;
+    const col=Array.isArray(color)?color[i]||color[0]:color;
+    b+=`<rect x="${x.toFixed(1)}" y="${(h-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1" fill="${col}" opacity="${last?1:0.4+0.4*(v/max)}"></rect>`;
+    x+=bw+2;});
+  return `<svg class="spk" width="${w}" height="${h}" viewBox="0 0 ${(x-2).toFixed(1)} ${h}"><title>Siste ${n} uker</title>${b}</svg>`;
+}
+function cmpv(a,b,s){let x=a[s.k],y=b[s.k];if(typeof x==='string')return s.d*x.localeCompare(y);if(x==null)x=-Infinity;if(y==null)y=-Infinity;return s.d*((x>y)-(x<y));}
+function toggleSort(s,k){if(k===s.k)s.d*=-1;else{s.k=k;s.d=(k==='area')?1:-1;}}
+function thx(c,s){const a=c.k===s.k?`<span class="arrow">${s.d<0?'▼':'▲'}</span>`:'';return `<th class="${c.n?'num':''}" data-k="${c.k}">${c.l} ${a}</th>`;}
+
+function areaRows(){
+  const key=WBA.weekKeys[selIdx], prevKey=WBA.weekKeys[selIdx-1];
+  const startIdx=Math.max(0,selIdx-9);
+  const rows=[];
+  for(const [area,am] of WBA.areas){
+    const c=weekAgg(am,key); if(c.total===0) continue;
+    const p=weekAgg(am,prevKey);
+    const rate=c.total?c.errors/c.total:0, prate=p.total?p.errors/p.total:0;
+    const sErr=[],sMis=[],sCap=[],sRate=[],sColors=[];
+    for(let i=startIdx;i<=selIdx;i++){const w=weekAgg(am,WBA.weekKeys[i]);sErr.push(w.errors);sMis.push(w.misread);sCap.push(w.capped);sRate.push(w.total?w.errors/w.total:0);sColors.push(w.misread>=w.capped?'var(--misread)':'var(--capped)');}
+    rows.push({area,total:c.total,misread:c.misread,capped:c.capped,errors:c.errors,rate,
+      nrate:c.total?c.misread/c.total:0, crate:c.total?c.capped/c.total:0,
+      dErr:relc(c.errors,p.errors),dMis:relc(c.misread,p.misread),dCap:relc(c.capped,p.capped),dRatePP:rate-prate,
+      sErr,sMis,sCap,sRate,sColors});
+  }
+  return rows;
+}
+
+function renderFeil(){
+  const m=WBA.weekMeta[selIdx];
+  $('#feilTitle').textContent=`Anlegg etter feilandel — uke ${m.week}`;
+  const rows=areaRows(); rows.sort((a,b)=>cmpv(a,b,sortF));
+  $('#feilCount').textContent=rows.length+' anlegg med aktivitet';
+  const cols=[{k:'area',l:'Anlegg'},{k:'total',l:'Turer',n:1},{k:'misread',l:'Nullturer',n:1},{k:'capped',l:'Tvangsavsl.',n:1},{k:'rate',l:'Feilandel',n:1},{k:'dRatePP',l:'Utvikling',n:1}];
+  $('#feilHead').innerHTML=cols.map(c=>thx(c,sortF)).join('');
+  $('#feilHead').querySelectorAll('th').forEach(t=>t.onclick=()=>{toggleSort(sortF,t.dataset.k);renderFeil();});
+  const maxRate=Math.max(0.0001,...rows.map(r=>r.rate));
+  $('#feilBody').innerHTML=rows.map(r=>{
+    const totalW=(r.rate/maxRate*46);
+    const blueW=r.errors?(r.misread/r.errors*totalW).toFixed(1):0;
+    const redW=r.errors?(r.capped/r.errors*totalW).toFixed(1):0;
+    const splitBar=r.errors
+      ?`<span class="bar-split"><span style="flex:0 0 ${blueW}px;background:var(--misread)"></span><span style="flex:0 0 ${redW}px;background:var(--capped)"></span></span>`
+      :`<span class="bar" style="width:2px;background:var(--ink-faint)"></span>`;
+    const spkCol=r.misread>=r.capped?'var(--misread)':'var(--capped)';
+    return `<tr class="clickable" data-area="${esc(r.area)}" title="Klikk for detaljer">
+    <td class="name"><span class="chev">›</span>${esc(r.area)}</td>
+    <td class="num">${r.total}</td>
+    <td class="num misread-text">${r.misread||'<span class="dim">0</span>'}</td>
+    <td class="num capped-text">${r.capped||'<span class="dim">0</span>'}</td>
+    <td class="num">${(r.rate*100).toFixed(1)}%${splitBar}</td>
+    <td class="num"><div class="util">${spark(r.sRate,r.sColors)}${deltaPPHTML(r.dRatePP)}</div></td>
+  </tr>`;}).join('') || emptyRow(6,'Ingen anlegg med aktivitet i valgt uke.');
+  $('#feilBody').querySelectorAll('tr.clickable').forEach(tr=>tr.onclick=()=>openArea(tr.dataset.area));
+}
+
+function renderNull(){
+  const m=WBA.weekMeta[selIdx];
+  $('#nullTitle').textContent=`Nullturer — uke ${m.week}`;
+  const rows=areaRows().sort((a,b)=>cmpv(a,b,sortN));
+  $('#nullCount').textContent=rows.filter(r=>r.misread>0).length+' anlegg med nullturer';
+  const cols=[{k:'area',l:'Anlegg'},{k:'misread',l:'Nullturer',n:1},{k:'nrate',l:'Andel',n:1},{k:'dMis',l:'Utvikling',n:1}];
+  $('#nullHead').innerHTML=cols.map(c=>thx(c,sortN)).join('');
+  $('#nullHead').querySelectorAll('th').forEach(t=>t.onclick=()=>{toggleSort(sortN,t.dataset.k);renderNull();});
+  $('#nullBody').innerHTML=rows.map(r=>`<tr class="clickable" data-area="${esc(r.area)}" title="Klikk for detaljer">
+    <td class="name"><span class="chev">›</span>${esc(r.area)}</td>
+    <td class="num misread-text">${r.misread||'<span class="dim">0</span>'}</td>
+    <td class="num">${(r.nrate*100).toFixed(2)}%</td>
+    <td class="num"><div class="util">${spark(r.sMis,'var(--misread)')}${deltaHTML(r.dMis)}</div></td>
+  </tr>`).join('') || emptyRow(4,'Ingen anlegg med aktivitet i valgt uke.');
+  $('#nullBody').querySelectorAll('tr.clickable').forEach(tr=>tr.onclick=()=>openArea(tr.dataset.area));
+}
+
+function renderCap(){
+  const m=WBA.weekMeta[selIdx];
+  $('#capTitle').textContent=`Tvangsavsluttet — uke ${m.week}`;
+  const rows=areaRows().sort((a,b)=>cmpv(a,b,sortC));
+  $('#capCount').textContent=rows.filter(r=>r.capped>0).length+' anlegg med tvangsavslutninger';
+  const cols=[{k:'area',l:'Anlegg'},{k:'capped',l:'Tvangsavsl.',n:1},{k:'crate',l:'Andel',n:1},{k:'dCap',l:'Utvikling',n:1}];
+  $('#capHead').innerHTML=cols.map(c=>thx(c,sortC)).join('');
+  $('#capHead').querySelectorAll('th').forEach(t=>t.onclick=()=>{toggleSort(sortC,t.dataset.k);renderCap();});
+  $('#capBody').innerHTML=rows.map(r=>`<tr class="clickable" data-area="${esc(r.area)}" title="Klikk for detaljer">
+    <td class="name"><span class="chev">›</span>${esc(r.area)}</td>
+    <td class="num capped-text">${r.capped||'<span class="dim">0</span>'}</td>
+    <td class="num">${(r.crate*100).toFixed(2)}%</td>
+    <td class="num"><div class="util">${spark(r.sCap,'var(--capped)')}${deltaHTML(r.dCap)}</div></td>
+  </tr>`).join('') || emptyRow(4,'Ingen anlegg med aktivitet i valgt uke.');
+  $('#capBody').querySelectorAll('tr.clickable').forEach(tr=>tr.onclick=()=>openArea(tr.dataset.area));
+}
+function emptyRow(n,msg){return `<tr><td colspan="${n}" class="dim" style="text-align:center;padding:22px">${msg}</td></tr>`;}
+
+/* ---------- drill-down modal ---------- */
+let MSTATE={area:null,a:null,wk:null,sel:null};
+
+function openArea(area){
+  if(!LASTC) return;
+  const a=LASTC.areaArr.find(x=>x.area===area); if(!a) return;
+  const wk=weeklyAgg(TX,area);
+  MSTATE={area,a,wk,sel:null};
+  $('#mTitle').textContent=area;
+  $('#mSub').textContent=`Nullturer ≤ ${LASTTH.mis} sek · tvangsavslutning = multiplum av 1440 min ±${LASTTH.cap} min`;
+  $('#mStats').innerHTML=mstat('Transaksjoner',a.total)+mstat('Nullturer',a.misread,'misread')+mstat('Tvangsavsluttet',a.capped,'capped')+mstat('Feilandel',(a.rate*100).toFixed(1)+'%');
+  renderModalBody();
+  $('#modal').classList.add('open');
+}
+
+function setModalWeek(i){MSTATE.sel=(MSTATE.sel===i?null:i); renderModalBody();}
+function clearModalWeek(){MSTATE.sel=null; renderModalBody();}
+
+function renderModalBody(){
+  const {area,a,wk,sel}=MSTATE;
+  let html='';
+
+  // ---- weekly trend chart (clickable) ----
+  if(wk.length>=1){
+    const full=wk.filter(w=>!w.partial);
+    const cur=full[full.length-1],prev=full[full.length-2];
+    let head=cur&&prev?`<span class="c">uke ${cur.week} vs ${prev.week}: ${deltaHTML(prev.errors?(cur.errors-prev.errors)/prev.errors:null)} feil</span>`:'';
+    const max=Math.max(0.0001,...wk.map(w=>w.errors));
+    const Wc=Math.max(420,wk.length*26+20),Hc=68;
+    const step=(Wc-10)/wk.length,bw=Math.min(18,step-4);
+    let bars='';
+    wk.forEach((w,i)=>{
+      const bh=Math.max(1,(w.errors/max)*(Hc-20));
+      const x=5+i*step+(step-bw)/2;
+      const isSel=sel===i;
+      const col=w.partial?'var(--ink-faint)':(w.capped>=w.misread?'var(--capped)':'var(--misread)');
+      const op=isSel?1:(sel!==null?0.35:w.partial?0.5:0.9);
+      bars+=`<rect x="${x.toFixed(1)}" y="${(Hc-16-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5" fill="${col}" opacity="${op}" style="cursor:pointer" onclick="setModalWeek(${i})"><title>Uke ${w.week}: ${w.errors} feil — klikk for detaljer</title></rect>`;
+      if(isSel) bars+=`<rect x="${(x-1).toFixed(1)}" y="${(Hc-16-bh-2).toFixed(1)}" width="${(bw+2).toFixed(1)}" height="${(bh+2).toFixed(1)}" rx="2" fill="none" stroke="${col}" stroke-width="2" pointer-events="none"></rect>`;
+      if(wk.length<=30) bars+=`<text x="${(x+bw/2).toFixed(1)}" y="${Hc-2}" font-size="8" fill="${isSel?'var(--ink)':'var(--ink-faint)'}" font-weight="${isSel?700:400}" text-anchor="middle">${w.week}</text>`;
+    });
+    html+=`<div class="msec"><div class="msec-h"><span class="swatch" style="background:var(--primary)"></span>
+      <h4>Ukentlig trend (feil)</h4>${head}<span class="dim" style="font-size:11px;margin-left:6px">Klikk en stolpe for ukens detaljer</span></div>
+      <div class="mtable" style="padding:10px 12px"><svg viewBox="0 0 ${Wc} ${Hc}" style="width:100%;height:auto;display:block">${bars}</svg></div></div>`;
+  }
+
+  // ---- week filter bar ----
+  let misFilt,capFilt,wkLabel;
+  const mis=LASTC.mis.filter(t=>t.area===area);
+  const cap=LASTC.cap.filter(t=>t.area===area);
+  if(sel!==null&&wk[sel]){
+    const ws=wk[sel].start.getTime(),we=ws+7*864e5;
+    misFilt=mis.filter(t=>t.start&&t.start.getTime()>=ws&&t.start.getTime()<we);
+    capFilt=cap.filter(t=>t.start&&t.start.getTime()>=ws&&t.start.getTime()<we);
+    wkLabel=`Uke ${wk[sel].week} (${weekRange(wk[sel])})`;
+    html+=`<div class="wk-filter-bar"><span>⬤ Filtrerer: <b>${wkLabel}</b></span><button class="wk-clear" onclick="clearModalWeek()">× Alle uker</button></div>`;
+  } else {
+    misFilt=mis; capFilt=cap; wkLabel=null;
+  }
+
+  // ---- nullturer ----
+  const misSort=misFilt.slice().sort((x,y)=>x.pt-y.pt);
+  html+=`<div class="msec"><div class="msec-h"><span class="swatch" style="background:var(--misread)"></span>
+    <h4>Nullturer</h4><span class="c">${misSort.length} stk${wkLabel?' · '+wkLabel:''}</span></div>`;
+  html+=misSort.length?table(['Skilt','Inn','Ut','Varighet'],
+    misSort.map(t=>[`<span class="plate">${esc(t.plate)}</span>`,fmtDT(t.start),fmtDT(t.end),`<span class="misread-text">${fmtDur(t.pt)}</span>`]),[0,0,0,1])
+    :`<div class="mempty">Ingen nullturer${wkLabel?' i '+wkLabel:''}.</div>`;
+  html+=`</div>`;
+
+  // ---- tvangsavsluttet ----
+  const capSort=capFilt.slice().sort((x,y)=>(y.start?y.start.getTime():0)-(x.start?x.start.getTime():0));
+  html+=`<div class="msec"><div class="msec-h"><span class="swatch" style="background:var(--capped)"></span>
+    <h4>Tvangsavsluttet</h4><span class="c">${capSort.length} stk${wkLabel?' · '+wkLabel:''}</span></div>`;
+  html+=capSort.length?table(['Skilt','Inn','Varighet','Terskel'],
+    capSort.map(t=>[`<span class="plate">${esc(t.plate)}</span>`,fmtDT(t.start),`<span class="capped-text">${t.pt.toFixed(2)} min</span>`,`<span class="badge capped">${capTag(t.capK)}</span>`]),[0,0,1,0])
+    :`<div class="mempty">Ingen tvangsavsluttede${wkLabel?' i '+wkLabel:''}.</div>`;
+  html+=`</div>`;
+
+  $('#mBody').innerHTML=html;
+}
+function mstat(k,v,cls=''){return `<div class="mstat ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;}
+function table(heads,rows,numCols){
+  const th=heads.map((h,i)=>`<th class="${numCols[i]?'num':''}">${h}</th>`).join('');
+  const tr=rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${numCols[i]?'num':''}">${c}</td>`).join('')}</tr>`).join('');
+  return `<div class="mtable"><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+function closeModal(){$('#modal').classList.remove('open');}
+$('#mClose').onclick=closeModal;
+$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();chatClose();}});
+
+/* ---------- AI chat ---------- */
+let chatHistory=[], chatApiKey='', chatBusy=false;
+
+function chatToggle(){
+  const p=$('#chatPanel');
+  if(p.classList.contains('open')) chatClose();
+  else { p.classList.add('open'); chatWelcome(); setTimeout(()=>$('#chatInput').focus(),180);}
+}
+function chatClose(){$('#chatPanel').classList.remove('open');}
+
+function chatWelcome(){
+  if(chatHistory.length>0) return;
+  const msg=TX?`Data lastet (${TX.length.toLocaleString('no')} turer). Spør meg om anlegg, trender, nullturer, tvangsavslutninger — f.eks. "Hvilke anlegg har flest feil?"`:
+    'Last opp en CSV-eksport for å starte. Deretter kan du stille spørsmål om dataen.';
+  chatHistory.push({role:'assistant',content:msg});
+  renderChat();
+}
+
+function buildChatCtx(){
+  if(!WBA||!LASTC) return 'Ingen data er lastet inn ennå.';
+  const m=WBA.weekMeta[selIdx]||WBA.weekMeta[WBA.weekMeta.length-1];
+  const rows=areaRows();
+  const topF=[...rows].sort((a,b)=>b.rate-a.rate).slice(0,15);
+  const topN=[...rows].sort((a,b)=>b.misread-a.misread).slice(0,10);
+  const span=TX.map(t=>t.start).filter(Boolean).sort((a,b)=>a-b);
+  const dateRange=span.length?`${fmtDT(span[0]).slice(0,10)} – ${fmtDT(span[span.length-1]).slice(0,10)}`:'ukjent';
+  return `Du er en operativ AI-assistent for Park Nordic som hjelper med analyse av parkeringstransaksjoner. Svar alltid på norsk, kortfattet og praktisk.
+
+DATASETT: ${FILE} · Periode: ${dateRange} · ${LASTC.total.toLocaleString('no')} transaksjoner totalt, ${LASTC.misTotal.toLocaleString('no')} nullturer, ${LASTC.capTotal.toLocaleString('no')} tvangsavsluttede · ${LASTC.areaArr.length} anlegg
+Nulltur ≤ ${LASTTH.mis} sek · tvangsavslutning = multiplum av 1440 min ±${LASTTH.cap} min
+
+VALGT UKE: uke ${m.week} (${weekRange(m)})${m.partial?' — ufullstendig':''}
+Alle ${rows.length} anlegg med aktivitet denne uken:
+${rows.map(r=>`${r.area}: ${r.total} turer, ${r.misread} nullturer, ${r.capped} tvangsavsl., ${(r.rate*100).toFixed(1)}% feilandel, utvikling feilandel: ${r.dRatePP!==null?(r.dRatePP>=0?'+':''+(r.dRatePP*100).toFixed(1)+' pp'):'–'}`).join('\n')}
+
+TOPP 15 ETTER FEILANDEL (uke ${m.week}):
+${topF.map((r,i)=>`${i+1}. ${r.area}: ${(r.rate*100).toFixed(1)}% (${r.errors}/${r.total} turer)`).join('\n')}
+
+TOPP 10 ETTER NULLTURER (uke ${m.week}):
+${topN.map((r,i)=>`${i+1}. ${r.area}: ${r.misread} nullturer (endring vs forrige uke: ${r.dMis!=null?(r.dMis*100).toFixed(0)+'%':'–'})`).join('\n')}`;
+}
+
+async function sendChat(){
+  const ta=$('#chatInput'); const msg=ta.value.trim(); if(!msg||chatBusy) return;
+  if(!TX){chatHistory.push({role:'assistant',content:'Last opp en CSV-fil for å starte.'});renderChat();return;}
+  ta.value=''; chatBusy=true;
+  chatHistory.push({role:'user',content:msg});
+  chatHistory.push({role:'assistant',content:'…'});
+  renderChat(); scrollChat();
+  if(!chatApiKey){
+    chatHistory[chatHistory.length-1]={role:'assistant',content:'AI-chat er av som standard – den sender aggregert data til Anthropic (ekstern tjeneste). Lim inn en API-nøkkel over for å aktivere. Uten nøkkel sendes ingenting eksternt.'};
+    chatBusy=false; renderChat(); scrollChat(); return;
+  }
+  try{
+    const headers={'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':chatApiKey};
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:buildChatCtx(),
+        messages:chatHistory.slice(0,-1).filter(m=>m.content!=='…').map(m=>({role:m.role,content:m.content}))})});
+    const data=await res.json();
+    const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||
+      (data.error?`Feil: ${data.error.message}`:'Fikk tomt svar.');
+    chatHistory[chatHistory.length-1]={role:'assistant',content:text};
+  }catch(e){chatHistory[chatHistory.length-1]={role:'assistant',content:'Kommunikasjonsfeil: '+e.message};}
+  chatBusy=false; renderChat(); scrollChat();
+}
+
+function renderChat(){
+  $('#chatMsgs').innerHTML=chatHistory.map(m=>`<div class="cmsg ${m.role==='user'?'user':'ai'}${m.content==='…'?' thinking':''}">${esc(m.content).replace(/\n/g,'<br>')}</div>`).join('');
+}
+function scrollChat(){const el=$('#chatMsgs');el.scrollTop=el.scrollHeight;}
+
+$('#chatFab').onclick=chatToggle;
+$('#chatX').onclick=chatClose;
+$('#chatSend').onclick=sendChat;
+$('#chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}});
+$('#chatApiKey').addEventListener('change',e=>{chatApiKey=e.target.value.trim();});
+
+/* ---------- file handling ---------- */
+function handleFile(file){
+  $('#err').style.display='none';
+  const mb=(file.size/1048576).toFixed(file.size>1048576?0:1);
+  $('#drop').querySelector('h2').textContent='Behandler …';
+  $('#drop').querySelector('p').textContent=`Leser ${esc(file.name)} (${mb} MB) — store filer kan ta noen sekunder`;
+  const r=new FileReader();
+  r.onload=e=>{
+    // let the "Behandler" message paint before the heavy synchronous work
+    setTimeout(()=>{try{
+      const text=decodeBytes(e.target.result);
+      TX=buildTx(parseCSV(text)); FILE=file.name; selIdx=-1;
+      const span=TX.map(t=>t.start).filter(Boolean).sort((a,b)=>a-b);
+      $('#meta').innerHTML=`<div><b>${esc(FILE)}</b></div><div class="dim">${TX.length.toLocaleString('no')} transaksjoner${span.length?' · '+fmtDT(span[0]).slice(0,10)+' → '+fmtDT(span[span.length-1]).slice(0,10):''}</div>`;
+      recompute();
+      resetDrop();
+      $('#report').scrollIntoView({behavior:'smooth',block:'start'});
+    }catch(err){$('#err').textContent='⚠ '+err.message;$('#err').style.display='block';$('#report').classList.add('hidden');resetDrop();}},40);
+  };
+  r.onerror=()=>{$('#err').textContent='⚠ Kunne ikke lese filen.';$('#err').style.display='block';resetDrop();};
+  r.readAsArrayBuffer(file);
+}
+function resetDrop(){$('#drop').querySelector('h2').textContent='Slipp CSV-eksporten her';$('#drop').querySelector('p').textContent='eller klikk for å velge fil';}
+$('#file').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+$('#weekSel').addEventListener('change',e=>{selIdx=+e.target.value; if(WBA) renderWeek();});
+$('#thMisread').addEventListener('input',()=>{if(TX)recompute();});
+$('#thCap').addEventListener('input',()=>{if(TX)recompute();});
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+</script>
+
+</body>
+</html>
