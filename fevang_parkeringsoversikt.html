@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fevang Eiendom – Parkeringsoversikt Drammen &amp; Lørenskog</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   :root{
     --pn-darkblue:#1a2641; --pn-darkblue-soft:#243152; --pn-darkblue-deep:#131b2f;
@@ -433,8 +432,7 @@
   </footer>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // Anlegg med omtrentlige koordinater. f = Fevang-portefølje, k = konkurrent/marked.
   // f = Fevang-portefølje, k = konkurrent. v = verdi pr plass (tusen kr) for fargekoding.
@@ -510,10 +508,30 @@
     map.fitBounds(group, {padding:[55,55]});
     return map;
   }
-  document.addEventListener('DOMContentLoaded', ()=>{
-    try{ buildMap('map-drammen', DRAMMEN, [59.7435,10.2010]); }catch(e){console.warn(e);}
-    try{ buildMap('map-lorenskog', LORENSKOG, [59.9270,10.9530]); }catch(e){console.warn(e);}
-  });
+  function fallback(id, data, title){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.height='auto'; el.style.padding='18px 20px'; el.style.background='#fff';
+    const rows = data.map(p=>`<li><b>${p.n}. ${p.navn}</b> <span style="color:#6b7280">— ${p.adr}${p.vk?' · '+p.vk:''}</span></li>`).join('');
+    el.innerHTML = `<div style="font-size:14px;color:#1a2641">
+      <p style="margin:0 0 6px"><b>⚠️ Kartet kunne ikke lastes.</b> Det krever internett (kartbiblioteket Leaflet + satellittfliser).
+      Åpne filen i en nettleser med nett (Chrome/Edge/Safari), så vises satellittkartet.</p>
+      <p style="margin:0 0 8px;color:#6b7280">Anleggene i ${title} (rekkefølge = tabellene under):</p>
+      <ol style="margin:0;padding-left:22px;columns:2;font-size:13px;line-height:1.7">${rows}</ol></div>`;
+  }
+  function init(){
+    if(typeof L === 'undefined'){
+      fallback('map-drammen', DRAMMEN, 'Drammen');
+      fallback('map-lorenskog', LORENSKOG, 'Lørenskog');
+      return;
+    }
+    try{ buildMap('map-drammen', DRAMMEN, [59.7435,10.2010]); }
+    catch(e){ console.warn(e); fallback('map-drammen', DRAMMEN, 'Drammen'); }
+    try{ buildMap('map-lorenskog', LORENSKOG, [59.9270,10.9530]); }
+    catch(e){ console.warn(e); fallback('map-lorenskog', LORENSKOG, 'Lørenskog'); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 </script>
 </body>
 </html>
