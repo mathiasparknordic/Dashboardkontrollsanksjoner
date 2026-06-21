@@ -136,8 +136,10 @@
     .wrap{max-width:none;padding:0 8mm}
     header.top{background:var(--pn-darkblue)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .noprint{display:none!important}
-    section{page-break-inside:avoid}
-    .map{height:300px}
+    #drammen,#lorenskog{page-break-after:always}
+    .mapcard{page-break-inside:avoid}
+    .map{height:440px}
+    .leaflet-control-layers,.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
     th{position:static}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
@@ -194,7 +196,7 @@
       <div class="maplegend">
         <span class="lg"><span class="dot f">1</span> Fevang-portefølje (5)</span>
         <span class="lg"><span class="dot k">6</span> Marked / konkurrenter</span>
-        <span class="legnote">Tall = rad i tabellene under. Nålposisjoner er omtrentlige (orientering).</span>
+        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene under.</span>
       </div>
     </div>
 
@@ -287,7 +289,7 @@
       <div class="maplegend">
         <span class="lg"><span class="dot f">1</span> Fevang-portefølje (3)</span>
         <span class="lg"><span class="dot k">4</span> Marked / konkurrenter</span>
-        <span class="legnote">Tall = rad i tabellene under. Nålposisjoner er omtrentlige (orientering).</span>
+        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene under.</span>
       </div>
     </div>
 
@@ -443,10 +445,21 @@
   ];
 
   function buildMap(id, data, center){
-    const map = L.map(id, {scrollWheelZoom:false}).setView(center, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom:19, attribution:'© OpenStreetMap'
-    }).addTo(map);
+    const map = L.map(id, {scrollWheelZoom:false}).setView(center, 16);
+
+    // Satellitt (Esri World Imagery) + stedsnavn/gatelabels over – ingen API-nøkkel
+    const esriSat = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, attribution:'Satellitt: Esri, Maxar, Earthstar Geographics'});
+    const esriLabels = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, attribution:''});
+    const satellitt = L.layerGroup([esriSat, esriLabels]).addTo(map); // standard
+    const gatekart = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19, attribution:'© OpenStreetMap'});
+    L.control.layers({'Satellitt': satellitt, 'Gatekart': gatekart}, null,
+      {position:'topright', collapsed:false}).addTo(map);
+
     const group = [];
     data.forEach(p=>{
       const icon = L.divIcon({
