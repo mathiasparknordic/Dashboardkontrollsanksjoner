@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fevang Eiendom – Parkeringsoversikt Drammen &amp; Lørenskog</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+  :root{
+    --pn-darkblue:#1a2641; --pn-darkblue-soft:#243152; --pn-darkblue-deep:#131b2f;
+    --pn-turkis1:#83bbba; --pn-turkis2:#bcddde; --pn-turkis3:#519a9c;
+    --pn-yellow:#ffcc00; --pn-gray1:#f0f0f0; --pn-gray2:#e3e3e3; --pn-gray3:#dadad9;
+    --pn-gray4:#bcbcbc; --pn-text-muted:#6b7280; --pn-white:#fff; --pn-bg:#eaf3f3;
+    --radius:6px; --radius-lg:12px; --shadow-soft:0 2px 12px rgba(26,38,65,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Saira',system-ui,Arial,sans-serif;background:var(--pn-bg);
+    color:var(--pn-darkblue);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 64px}
+
+  /* Header */
+  header.top{background:var(--pn-darkblue);color:#fff;padding:28px 0 24px;
+    box-shadow:var(--shadow-soft)}
+  header.top .wrap{padding-bottom:0}
+  .brandrow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand .logo{width:42px;height:42px;border-radius:8px;background:var(--pn-yellow);
+    color:var(--pn-darkblue);font-weight:800;font-size:22px;display:flex;align-items:center;
+    justify-content:center;letter-spacing:-1px}
+  .brand .t1{font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--pn-turkis2)}
+  .brand .t2{font-weight:800;font-size:22px;line-height:1.1}
+  .confbadge{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    background:rgba(255,204,0,.16);color:var(--pn-yellow);border:1px solid rgba(255,204,0,.4);
+    padding:6px 12px;border-radius:999px}
+  h1{font-size:30px;margin:22px 0 6px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--pn-turkis2);font-size:16px;margin:0 0 18px;font-weight:500}
+  .meta{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:#c7d3e2;
+    border-top:1px solid rgba(255,255,255,.12);padding-top:14px}
+  .meta b{color:#fff;font-weight:600}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--pn-yellow);
+    color:var(--pn-darkblue);border:none;font-weight:700;font-size:14px;padding:10px 18px;
+    border-radius:var(--radius);cursor:pointer;font-family:inherit;text-decoration:none}
+  .btn:hover{filter:brightness(.96)}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0 8px}
+  .kpi{background:#fff;border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-soft);
+    border-left:4px solid var(--pn-turkis3)}
+  .kpi .v{font-size:26px;font-weight:800;line-height:1}
+  .kpi .l{font-size:12px;color:var(--pn-text-muted);margin-top:6px;text-transform:uppercase;
+    letter-spacing:.06em;font-weight:600}
+
+  /* Sections */
+  section{margin-top:38px}
+  .sechead{display:flex;align-items:baseline;gap:14px;border-bottom:3px solid var(--pn-yellow);
+    padding-bottom:10px;margin-bottom:6px}
+  .sechead h2{font-size:24px;margin:0;font-weight:800}
+  .sechead .pill{font-size:12px;font-weight:700;color:#fff;background:var(--pn-turkis3);
+    padding:3px 10px;border-radius:999px}
+  .lead{color:var(--pn-text-muted);font-size:14px;margin:10px 0 16px;max-width:880px}
+
+  /* Map */
+  .mapcard{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);
+    overflow:hidden;margin-bottom:18px}
+  .map{height:440px;width:100%;background:#dfeaea}
+  .maplegend{display:flex;gap:20px;flex-wrap:wrap;align-items:center;padding:12px 18px;
+    font-size:13px;border-top:1px solid var(--pn-gray2);color:var(--pn-darkblue)}
+  .lg{display:flex;align-items:center;gap:8px}
+  .dot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;
+    justify-content:center;font-size:11px;font-weight:800;color:#fff;flex:0 0 auto}
+  .dot.f{background:var(--pn-yellow);color:var(--pn-darkblue);border:2px solid var(--pn-darkblue)}
+  .dot.k{background:var(--pn-turkis3);border:2px solid #fff;box-shadow:0 0 0 1px var(--pn-turkis3)}
+  .legnote{margin-left:auto;color:var(--pn-text-muted);font-size:12px}
+
+  /* Leaflet numbered pins */
+  .pin{border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .pin.f{background:var(--pn-yellow);color:var(--pn-darkblue);border:2px solid var(--pn-darkblue)}
+  .pin.k{background:var(--pn-turkis3);color:#fff;border:2px solid #fff}
+
+  /* Tables */
+  .tblwrap{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);
+    overflow:hidden;margin-bottom:8px}
+  .tbltitle{display:flex;align-items:center;gap:10px;padding:14px 18px 12px;font-weight:700;
+    font-size:15px;border-bottom:1px solid var(--pn-gray2)}
+  .tbltitle .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .tag.fev{background:#fff7d6;color:#8a6d00;border:1px solid #ffe17a}
+  .tag.mkt{background:#e4f1f1;color:#2c6566;border:1px solid #bcddde}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--pn-gray1);vertical-align:top}
+  th{background:var(--pn-darkblue);color:#fff;font-weight:600;font-size:12px;
+    text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+  tbody tr:hover{background:#f7fbfb}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .idx{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+    border-radius:50%;font-size:11px;font-weight:800;flex:0 0 auto}
+  .idx.f{background:var(--pn-yellow);color:var(--pn-darkblue);border:1.5px solid var(--pn-darkblue)}
+  .idx.k{background:var(--pn-turkis3);color:#fff}
+  tfoot td{background:var(--pn-gray1);font-weight:700;border-top:2px solid var(--pn-gray3)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .chip.avg{background:#e7f0ff;color:#1d4ed8;border:1px solid #c3d7ff}
+  .chip.utl{background:#eafaf1;color:#0f7a43;border:1px solid #bdebd0}
+  .op{font-weight:600}
+  .muted{color:var(--pn-text-muted)}
+  .small{font-size:12px}
+
+  .note{background:#fff;border-left:4px solid var(--pn-turkis3);border-radius:var(--radius);
+    padding:12px 16px;font-size:13px;color:var(--pn-darkblue);margin:14px 0;box-shadow:var(--shadow-soft)}
+  .note b{color:var(--pn-darkblue)}
+
+  /* Avgift/utleie explainer + sources */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);padding:18px 20px}
+  .card h3{margin:0 0 8px;font-size:16px}
+  .card p{margin:0 0 8px;font-size:13.5px;color:var(--pn-darkblue)}
+  .deflist{font-size:13px}
+  .deflist dt{font-weight:700;margin-top:8px}
+  .deflist dd{margin:2px 0 0;color:var(--pn-text-muted)}
+  footer{margin-top:40px;border-top:1px solid var(--pn-gray3);padding-top:18px;font-size:12px;
+    color:var(--pn-text-muted)}
+  footer a{color:var(--pn-turkis3)}
+  .srcgrid{columns:2;font-size:12px;line-height:1.6}
+  .srcgrid a{color:var(--pn-turkis3);word-break:break-all}
+
+  @media (max-width:760px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .twocol{grid-template-columns:1fr}
+    .srcgrid{columns:1}
+  }
+  /* Print → PDF */
+  @media print{
+    body{background:#fff}
+    .wrap{max-width:none;padding:0 8mm}
+    header.top{background:var(--pn-darkblue)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .noprint{display:none!important}
+    section{page-break-inside:avoid}
+    .map{height:300px}
+    th{position:static}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="brand">
+        <div class="logo">P</div>
+        <div>
+          <div class="t1">Park Nordic AS</div>
+          <div class="t2">Parkeringsoversikt</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span class="confbadge">Konfidensiell · Intern</span>
+        <button class="btn noprint" onclick="window.print()">🖨️ Skriv ut / Lagre som PDF</button>
+      </div>
+    </div>
+    <h1>Fevang Eiendom — Drammen &amp; Lørenskog</h1>
+    <p class="sub">Lokasjoner, takster og operatørbilde for parkeringsanleggene i porteføljen og nærområdet</p>
+    <div class="meta">
+      <span><b>Til møte:</b> Fevang Eiendom</span>
+      <span><b>Forberedt:</b> 21.06.2026</span>
+      <span><b>Portefølje:</b> 8 anlegg · 523 plasser</span>
+      <span><b>Kilder:</b> Park Nordic driftsdata, AIMO Park, Onepark, DPark, APCOA, Time Park, parkeringsregisteret, kommune</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi"><div class="v">8</div><div class="l">Anlegg i porteføljen</div></div>
+    <div class="kpi"><div class="v">523</div><div class="l">Plasser totalt</div></div>
+    <div class="kpi"><div class="v">~11 MNOK</div><div class="l">Omsetning eks. mva</div></div>
+    <div class="kpi"><div class="v">2</div><div class="l">Byer (Drammen / Lørenskog)</div></div>
+  </div>
+  <p class="lead">Oversikten samler Fevang-porteføljens fem anlegg i Drammen og tre i Lørenskog,
+  sammen med konkurrerende/markedssettende anlegg i samme bysentrum. For hvert anlegg vises
+  plassering på kart, takstnivå, og om anlegget har <b>avgift</b> (korttid/timepris) og/eller
+  <b>utleie</b> (faste plasser / abonnement / kontraktsparkering).</p>
+
+  <!-- ================= DRAMMEN ================= -->
+  <section id="drammen">
+    <div class="sechead"><h2>Drammen</h2><span class="pill">5 anlegg i porteføljen · 153 plasser</span></div>
+    <p class="lead">Fevang-anleggene ligger på Strømsø-siden og rundt sentrum. Markedet domineres
+    ikke av én aktør — AIMO Park, DPark, Onepark, APCOA og kommunal gateparkering deler sentrum.</p>
+
+    <div class="mapcard">
+      <div id="map-drammen" class="map"></div>
+      <div class="maplegend">
+        <span class="lg"><span class="dot f">1</span> Fevang-portefølje (5)</span>
+        <span class="lg"><span class="dot k">6</span> Marked / konkurrenter</span>
+        <span class="legnote">Tall = rad i tabellene under. Nålposisjoner er omtrentlige (orientering).</span>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <div class="tbltitle"><span class="tag fev">Fevang-portefølje</span> Takster og omsetning — Drammen</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Anlegg</th><th>Pl.</th><th>Takst (i dag)</th>
+          <th>Utleie / abonnement</th><th>Omsetn./år</th><th>Pr. plass</th><th>Type</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="idx f">1</span></td><td><b>Engene 23</b><div class="muted small">Strømsø</div></td>
+            <td class="num">17</td><td class="muted">Korttid (sats ikke i grunnlag)</td><td class="muted">—</td>
+            <td class="num">kr 850 000</td><td class="num">kr 50 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span></span></td></tr>
+          <tr><td><span class="idx f">2</span></td><td><b>Hauges gate 24</b><div class="muted small">Strømsø</div></td>
+            <td class="num">11</td><td>kr 22 første 15 min, deretter kr 18 / 15 min</td><td class="muted">—</td>
+            <td class="num">kr 605 000</td><td class="num">kr 55 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span></span></td></tr>
+          <tr><td><span class="idx f">3</span></td><td><b>Nedre Storgate 22</b><div class="muted small">Strømsø</div></td>
+            <td class="num">25</td><td>kr 42 første 30 min, deretter kr 32 / 15 min</td><td class="muted">—</td>
+            <td class="num">kr 1 375 000</td><td class="num">kr 55 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span></span></td></tr>
+          <tr><td><span class="idx f">4</span></td><td><b>Rosenkrantzgata 61</b><div class="muted small">Bragernes/vest</div></td>
+            <td class="num">65</td><td>30 min gratis, deretter kr 24 / 30 min</td><td class="muted">Lavt korttidsbelegg → utleiepotensial</td>
+            <td class="num">kr 325 000</td><td class="num">kr 5 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie (pot.)</span></span></td></tr>
+          <tr><td><span class="idx f">5</span></td><td><b>Søren Lemmichs gate 1</b><div class="muted small">Strømsø / v/stasjonen</div></td>
+            <td class="num">35</td><td>kr 29 første 30 min, deretter kr 25 / 30 min</td><td class="muted">—</td>
+            <td class="num">kr 1 400 000</td><td class="num">kr 40 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span></span></td></tr>
+        </tbody>
+        <tfoot><tr><td></td><td>SUM Drammen</td><td class="num">153</td><td colspan="2"></td>
+          <td class="num">kr 4 555 000</td><td colspan="2"></td></tr></tfoot>
+      </table>
+    </div>
+    <p class="note small"><b>Anbefalt tiltak (Anders Hansson, Revenue Manager):</b> gjør takststrukturen lik i
+    periode 1 og periode 2 (mer oversiktlig for kunder), og juster takster mot faktisk belegg sammen med Fevang.
+    Rosenkrantzgata 61 har svært lav plassverdi (kr 5 000/plass) — kandidat for utleie/promotering.</p>
+
+    <div class="tblwrap">
+      <div class="tbltitle"><span class="tag mkt">Marked</span> Konkurrerende anlegg i Drammen sentrum</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Anlegg</th><th>Operatør (i dag)</th><th>Takst korttid</th>
+          <th>Døgn / mnd</th><th>Type</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="idx k">6</span></td><td><b>Tollbugata</b><div class="muted small">Bragernes</div></td>
+            <td class="op muted">Gateparkering (uavklart)</td><td>kr 40 / 30 min <span class="muted">(PN-grunnlag)</span></td>
+            <td class="num">kr 400 / døgn</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">7</span></td><td><b>Kinogarasjen P-hus</b><div class="muted small">Bragernes</div></td>
+            <td class="op">Onepark</td><td>kr 42 / 30 min <span class="muted">(dyn. kr 6–48/t)</span></td>
+            <td class="muted">—</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">8</span></td><td><b>Erik Børresens Allé 1</b><div class="muted small">Strømsø</div></td>
+            <td class="op muted">Uavklart</td><td>kr 30 / 30 min</td>
+            <td class="muted">—</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">9</span></td><td><b>Bragernes kvartal P-hus</b><div class="muted small">v/Bragernes torg</div></td>
+            <td class="op">AIMO Park</td><td>kr 33 første 30 min, deretter kr 29 / 30 min</td>
+            <td class="muted">Kun korttid</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">10</span></td><td><b>Øvre Storgate 15</b><div class="muted small">Bragernes (utendørs)</div></td>
+            <td class="op">AIMO Park</td><td>kr 44 / 30 min <span class="muted">(AIMO: 43 + 39)</span></td>
+            <td class="num">kr 404 / døgn</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">11</span></td><td><b>Øvre Storgate 7</b><div class="muted small">Bragernes</div></td>
+            <td class="op">P-Norge AS</td><td>kr 30 / 30 min</td>
+            <td class="muted">—</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">12</span></td><td><b>Grev Wedel P-hus</b><div class="muted small">Bragernes</div></td>
+            <td class="op">DPark (kommunalt)</td><td>Avgift dagtid; gratis kveld/helg</td>
+            <td class="num">Mnd kr 2 300</td><td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+          <tr><td><span class="idx k">13</span></td><td><b>Strømsø Torg P-hus</b><div class="muted small">Strømsø, v/First Hotel</div></td>
+            <td class="op">APCOA</td><td class="muted">Korttid (sats ikke bekreftet)</td>
+            <td class="muted">Kontrakt tilbys</td><td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+          <tr><td><span class="idx k">—</span></td><td><b>Kommunal gateparkering</b><div class="muted small">Indre sone (sone, ikke punkt)</div></td>
+            <td class="op">Drammen kommune</td><td>kr 53 / time, maks 3 t</td>
+            <td class="muted">Hverdag 08–20, lør 09–18</td><td><span class="chip avg">Avgift</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= LØRENSKOG ================= -->
+  <section id="lorenskog">
+    <div class="sechead"><h2>Lørenskog</h2><span class="pill">3 anlegg i porteføljen · 370 plasser</span></div>
+    <p class="lead">Fevang-anleggene i Lørenskog er tre P-hus rundt Lørenskog sentrum / Skårer
+    (Gamleveien 91, Hageby, Vestparken). Disse driftes i dag av AIMO Park. Markedet rundt har
+    Time Park (Triaden), APCOA (Metro / Skårersletta) og kommunal avgiftsparkering under utrulling.</p>
+
+    <div class="mapcard">
+      <div id="map-lorenskog" class="map"></div>
+      <div class="maplegend">
+        <span class="lg"><span class="dot f">1</span> Fevang-portefølje (3)</span>
+        <span class="lg"><span class="dot k">4</span> Marked / konkurrenter</span>
+        <span class="legnote">Tall = rad i tabellene under. Nålposisjoner er omtrentlige (orientering).</span>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <div class="tbltitle"><span class="tag fev">Fevang-portefølje</span> Takster og omsetning — Lørenskog</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Anlegg</th><th>Pl.</th><th>Takst korttid (i dag)</th>
+          <th>Døgn</th><th>Fri flyt / beboer (utleie)</th><th>Omsetn./år</th><th>Pr. plass</th><th>Type</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="idx f">1</span></td><td><b>Gamleveien 91 P-hus</b><div class="muted small">Driftes i dag av AIMO Park</div></td>
+            <td class="num">78</td><td>kr 35 første 30 min, deretter kr 31 / 30 min</td>
+            <td class="num">kr 320</td><td>Fri flyt kr 1 850 · Beboer kr 1 500</td>
+            <td class="num">kr 1 404 000</td><td class="num">kr 18 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+          <tr><td><span class="idx f">2</span></td><td><b>Hageby P-hus</b><div class="muted small">Nyest · ~150 pl, lading</div></td>
+            <td class="num">150</td><td>kr 33 første 30 min, deretter kr 29 / 30 min</td>
+            <td class="num">kr 330</td><td>Fri flyt kr 1 700 · Beboer kr 1 400</td>
+            <td class="num">kr 2 700 000</td><td class="num">kr 18 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+          <tr><td><span class="idx f">3</span></td><td><b>Vestparken P-hus</b><div class="muted small">v/Lørenskog sentrum</div></td>
+            <td class="num">142</td><td>kr 33 første 30 min, deretter kr 29 / 30 min</td>
+            <td class="num">kr 330</td><td>Fri flyt kr 1 950 · Beboer kr 1 400</td>
+            <td class="num">kr 2 556 000</td><td class="num">kr 18 000</td>
+            <td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+        </tbody>
+        <tfoot><tr><td></td><td>SUM Lørenskog</td><td class="num">370</td><td colspan="3"></td>
+          <td class="num">kr 6 660 000</td><td colspan="2"></td></tr></tfoot>
+      </table>
+    </div>
+    <p class="note small"><b>Plassverdi Lørenskog:</b> estimert kr 18 000/plass år 1, økende til kr 25 000/plass år 2.
+    Alle tre anlegg har både korttidsavgift og utleie (fri flyt + beboer-abonnement).</p>
+
+    <div class="tblwrap">
+      <div class="tbltitle"><span class="tag mkt">Marked</span> Konkurrerende anlegg i Lørenskog / Skårer</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Anlegg</th><th>Operatør</th><th>Takst</th>
+          <th>Døgn / gratis</th><th>Type</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="idx k">4</span></td><td><b>Triaden Storsenter P-hus</b><div class="muted small">Gamleveien 88</div></td>
+            <td class="op">Time Park</td><td>2 t gratis, deretter kr 34–36 / time</td>
+            <td class="num">Døgnmaks kr 310</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">4</span></td><td><b>Triaden Ekspress</b><div class="muted small">v/hotellet</div></td>
+            <td class="op">Time Park</td><td>kr 25–48 / 30 min (korttid)</td>
+            <td class="num">Døgnmaks kr 310</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">5</span></td><td><b>Skårersletta 52</b><div class="muted small">Skårer</div></td>
+            <td class="op muted">Uavklart (APCOA-området)</td><td>kr 16 / 30 min</td>
+            <td class="muted">—</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">6</span></td><td><b>Skårersletta 60</b><div class="muted small">Skårer · ~120 pl utendørs</div></td>
+            <td class="op">APCOA</td><td>kr 20 / 30 min · 1 time gratis</td>
+            <td class="muted">24/7</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">6</span></td><td><b>Skårersletta 45–55</b><div class="muted small">Skårer · ~195 pl</div></td>
+            <td class="op">APCOA</td><td>Avgift korttid</td>
+            <td class="muted">Kontraktsparkering tilbys</td><td><span class="chips"><span class="chip avg">Avgift</span><span class="chip utl">Utleie</span></span></td></tr>
+          <tr><td><span class="idx k">7</span></td><td><b>Metro Senter</b><div class="muted small">Lørenskog sentrum</div></td>
+            <td class="op">APCOA</td><td>3 t gratis, deretter takst</td>
+            <td class="muted">Kundeparkering</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">8</span></td><td><b>Fredensborg P-hus</b><div class="muted small">Gamleveien 89</div></td>
+            <td class="op">AIMO Park</td><td class="muted">Korttid (sats ikke bekreftet)</td>
+            <td class="muted">—</td><td><span class="chip avg">Avgift</span></td></tr>
+          <tr><td><span class="idx k">9</span></td><td><b>Kommunal avgiftsparkering</b><div class="muted small">Rådhus / sentrum (sone)</div></td>
+            <td class="op">Lørenskog kommune</td><td>kr 35 / time</td>
+            <td class="num">Døgnmaks kr 105</td><td><span class="chip avg">Avgift</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== AVGIFT vs UTLEIE + KILDER ============== -->
+  <section id="forklaring">
+    <div class="sechead"><h2>Avgift vs. utleie — og hvordan tallene er hentet</h2></div>
+    <div class="twocol">
+      <div class="card">
+        <h3>Begrepene</h3>
+        <dl class="deflist">
+          <dt><span class="chip avg" style="vertical-align:middle">Avgift</span> &nbsp;Korttidsparkering</dt>
+          <dd>Betaling per tid (time / påbegynt 30 min) for besøkende. Settes dynamisk og justeres
+          mot sesong, belegg og konkurrenter. Alle anleggene i porteføljen har avgift.</dd>
+          <dt><span class="chip utl" style="vertical-align:middle">Utleie</span> &nbsp;Faste plasser / abonnement</dt>
+          <dd>«Fri flyt»-abonnement, beboerplasser og kontraktsparkering (fast månedsleie for
+          leietaker/næring). I Lørenskog-anleggene er dette en stor del av verdien
+          (fri flyt kr 1 700–1 950, beboer kr 1 400–1 500 pr. mnd).</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h3>Metode &amp; forbehold</h3>
+        <p><b>Fevang-porteføljens takster og omsetning</b> er fra Park Nordics tilbudsgrunnlag
+        (driftsdata Drammen 2024/2025 og Lørenskog-estimater).</p>
+        <p><b>Operatør- og markedstakster</b> er hentet fra operatørenes egne nettsider, AIMO Park,
+        parkeringsregisteret og kommunenes parkeringssider (juni 2026).</p>
+        <p class="muted">Enkelte markedstakster er hentet via søkeindeksens utdrag fordi operatørsidene
+        blokkerte direkte innhenting — felt merket «uavklart»/«ikke bekreftet» bør verifiseres på
+        operatørens side eller app før møtet. Nålposisjoner på kart er omtrentlige og kun til orientering.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Kilder (utdrag):</b></p>
+    <div class="srcgrid">
+      <a href="https://www.aimopark.no/en/cities/drammen/">aimopark.no – Drammen</a><br>
+      <a href="https://www.aimopark.no/en/cities/lorenskog/">aimopark.no – Lørenskog</a><br>
+      <a href="https://www.aimopark.no/en/cities/lorenskog/gamleveien-91/">AIMO – Gamleveien 91</a><br>
+      <a href="https://www.aimopark.no/en/cities/lorenskog/vestparken-p-hus/">AIMO – Vestparken</a><br>
+      <a href="https://www.aimopark.no/en/cities/lorenskog/hageby-p-hus-/">AIMO – Hageby</a><br>
+      <a href="https://www.aimopark.no/en/cities/drammen/ovre-storgate-15/">AIMO – Øvre Storgate 15</a><br>
+      <a href="https://onepark.no/en/parking/buskerud/kinogarasjen/">onepark.no – Kinogarasjen</a><br>
+      <a href="https://dpark.no/priser/">dpark.no – priser (Grev Wedel)</a><br>
+      <a href="https://www.apcoa.no/finn-parkering/lokasjoner/drammen/stroemsoe-torg-p-hus">apcoa.no – Strømsø Torg</a><br>
+      <a href="https://triaden.no/praktisk-informasjon/parkering/">triaden.no – parkering</a><br>
+      <a href="https://www.apcoa.no/en/find-parking/loerenskog/metro-senter/">apcoa.no – Metro Senter</a><br>
+      <a href="https://www.lorenskog.kommune.no/tjenester/avfall-vei-vann-avlop-og-miljo/parkering/avgiftsparkering/">lorenskog.kommune.no – avgiftsparkering</a><br>
+      <a href="https://www.drammen.kommune.no/tjenester/vei-trafikk-parkering/parkering/priser-og-betaling-for-parkering/">drammen.kommune.no – parkeringspriser</a><br>
+      <a href="https://parkeringsregisteret.no/">parkeringsregisteret.no</a>
+    </div>
+    <p style="margin-top:14px">Park Nordic AS — intern og konfidensiell. Utarbeidet til møte med Fevang Eiendom.
+    Dette er et beslutningsgrunnlag; load-bærende tall bør verifiseres mot kilde før bruk i avtale.</p>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  // Anlegg med omtrentlige koordinater. f = Fevang-portefølje, k = konkurrent/marked.
+  const DRAMMEN = [
+    {n:1, t:'f', navn:'Engene 23', adr:'Strømsø', lat:59.7436, lon:10.1989},
+    {n:2, t:'f', navn:'Hauges gate 24', adr:'Strømsø', lat:59.7411, lon:10.1971},
+    {n:3, t:'f', navn:'Nedre Storgate 22', adr:'Strømsø', lat:59.7427, lon:10.2001},
+    {n:4, t:'f', navn:'Rosenkrantzgata 61', adr:'Bragernes/vest', lat:59.7470, lon:10.1985},
+    {n:5, t:'f', navn:'Søren Lemmichs gate 1', adr:'v/stasjonen', lat:59.7401, lon:10.2010},
+    {n:6, t:'k', navn:'Tollbugata', adr:'Bragernes · gateparkering', lat:59.7457, lon:10.2050},
+    {n:7, t:'k', navn:'Kinogarasjen P-hus', adr:'Onepark', lat:59.7447, lon:10.2066},
+    {n:8, t:'k', navn:'Erik Børresens Allé 1', adr:'Strømsø', lat:59.7391, lon:10.1957},
+    {n:9, t:'k', navn:'Bragernes kvartal P-hus', adr:'AIMO Park', lat:59.7451, lon:10.2072},
+    {n:10, t:'k', navn:'Øvre Storgate 15', adr:'AIMO Park', lat:59.7461, lon:10.2031},
+    {n:11, t:'k', navn:'Øvre Storgate 7', adr:'P-Norge', lat:59.7456, lon:10.2019},
+    {n:12, t:'k', navn:'Grev Wedel P-hus', adr:'DPark', lat:59.7444, lon:10.2080},
+    {n:13, t:'k', navn:'Strømsø Torg P-hus', adr:'APCOA', lat:59.7407, lon:10.2041},
+  ];
+  const LORENSKOG = [
+    {n:1, t:'f', navn:'Gamleveien 91 P-hus', adr:'i dag: AIMO Park', lat:59.9253, lon:10.9547},
+    {n:2, t:'f', navn:'Hageby P-hus', adr:'i dag: AIMO Park', lat:59.9295, lon:10.9559},
+    {n:3, t:'f', navn:'Vestparken P-hus', adr:'i dag: AIMO Park', lat:59.9283, lon:10.9513},
+    {n:4, t:'k', navn:'Triaden Storsenter P-hus', adr:'Time Park · Gamleveien 88', lat:59.9258, lon:10.9541},
+    {n:5, t:'k', navn:'Skårersletta 52', adr:'Skårer', lat:59.9279, lon:10.9547},
+    {n:6, t:'k', navn:'Skårersletta 60 / 45–55', adr:'APCOA', lat:59.9285, lon:10.9554},
+    {n:7, t:'k', navn:'Metro Senter', adr:'APCOA', lat:59.9248, lon:10.9511},
+    {n:8, t:'k', navn:'Fredensborg P-hus', adr:'AIMO · Gamleveien 89', lat:59.9255, lon:10.9544},
+    {n:9, t:'k', navn:'Kommunal avgiftsparkering', adr:'Rådhus/sentrum', lat:59.9267, lon:10.9489},
+  ];
+
+  function buildMap(id, data, center){
+    const map = L.map(id, {scrollWheelZoom:false}).setView(center, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19, attribution:'© OpenStreetMap'
+    }).addTo(map);
+    const group = [];
+    data.forEach(p=>{
+      const icon = L.divIcon({
+        className:'', html:`<div class="pin ${p.t}" style="width:26px;height:26px">${p.n}</div>`,
+        iconSize:[26,26], iconAnchor:[13,13]
+      });
+      const m = L.marker([p.lat,p.lon],{icon}).addTo(map);
+      const label = p.t==='f' ? 'Fevang-portefølje' : 'Marked';
+      m.bindPopup(`<b>${p.n}. ${p.navn}</b><br><span style="color:#6b7280">${p.adr}</span><br><small>${label}</small>`);
+      group.push([p.lat,p.lon]);
+    });
+    map.fitBounds(group, {padding:[40,40]});
+    return map;
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{ buildMap('map-drammen', DRAMMEN, [59.7435,10.2010]); }catch(e){console.warn(e);}
+    try{ buildMap('map-lorenskog', LORENSKOG, [59.9270,10.9530]); }catch(e){console.warn(e);}
+  });
+</script>
+</body>
+</html>
