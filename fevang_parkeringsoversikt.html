@@ -73,12 +73,22 @@
   .dot.f{background:var(--pn-yellow);color:var(--pn-darkblue);border:2px solid var(--pn-darkblue)}
   .dot.k{background:var(--pn-turkis3);border:2px solid #fff;box-shadow:0 0 0 1px var(--pn-turkis3)}
   .legnote{margin-left:auto;color:var(--pn-text-muted);font-size:12px}
+  .vsw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin:0 1px}
 
   /* Leaflet numbered pins */
   .pin{border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-weight:800;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
   .pin.f{background:var(--pn-yellow);color:var(--pn-darkblue);border:2px solid var(--pn-darkblue)}
   .pin.k{background:var(--pn-turkis3);color:#fff;border:2px solid #fff}
+  /* Verdi-tag på Fevang-anlegg (fargekodet etter verdi pr plass) */
+  .leaflet-tooltip.vtip{font-family:'Saira',Arial,sans-serif;font-size:12px;font-weight:800;
+    padding:1px 6px;border:none;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.45);
+    color:#fff;white-space:nowrap;background:#1a2641;opacity:1}
+  .leaflet-tooltip.vtip::before{display:none}
+  .vtip.v-low{background:#d64545}   /* lav verdi pr plass */
+  .vtip.v-mid{background:#e08a2b}
+  .vtip.v-hi {background:#2f6fb0}
+  .vtip.v-top{background:#2f8f57}   /* høy verdi pr plass */
 
   /* Tables */
   .tblwrap{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);
@@ -196,7 +206,12 @@
       <div class="maplegend">
         <span class="lg"><span class="dot f">1</span> Fevang-portefølje (5)</span>
         <span class="lg"><span class="dot k">6</span> Marked / konkurrenter</span>
-        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene under.</span>
+        <span class="lg" style="border-left:1px solid var(--pn-gray3);padding-left:18px">Verdi/plass:
+          <span class="vsw" style="background:#d64545"></span>lav
+          <span class="vsw" style="background:#e08a2b"></span>
+          <span class="vsw" style="background:#2f6fb0"></span>
+          <span class="vsw" style="background:#2f8f57"></span>høy</span>
+        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene. Verdi-tagger kun på Fevang-anlegg; posisjoner er omtrentlige.</span>
       </div>
     </div>
 
@@ -289,7 +304,12 @@
       <div class="maplegend">
         <span class="lg"><span class="dot f">1</span> Fevang-portefølje (3)</span>
         <span class="lg"><span class="dot k">4</span> Marked / konkurrenter</span>
-        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene under.</span>
+        <span class="lg" style="border-left:1px solid var(--pn-gray3);padding-left:18px">Verdi/plass:
+          <span class="vsw" style="background:#d64545"></span>lav
+          <span class="vsw" style="background:#e08a2b"></span>
+          <span class="vsw" style="background:#2f6fb0"></span>
+          <span class="vsw" style="background:#2f8f57"></span>høy</span>
+        <span class="legnote">Satellitt som standard — bytt til gatekart øverst til høyre. Tall = rad i tabellene. Verdi-tagger kun på Fevang-anlegg; posisjoner er omtrentlige.</span>
       </div>
     </div>
 
@@ -417,32 +437,41 @@
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
   // Anlegg med omtrentlige koordinater. f = Fevang-portefølje, k = konkurrent/marked.
+  // f = Fevang-portefølje, k = konkurrent. v = verdi pr plass (tusen kr) for fargekoding.
   const DRAMMEN = [
-    {n:1, t:'f', navn:'Engene 23', adr:'Strømsø', lat:59.7436, lon:10.1989},
-    {n:2, t:'f', navn:'Hauges gate 24', adr:'Strømsø', lat:59.7411, lon:10.1971},
-    {n:3, t:'f', navn:'Nedre Storgate 22', adr:'Strømsø', lat:59.7427, lon:10.2001},
-    {n:4, t:'f', navn:'Rosenkrantzgata 61', adr:'Bragernes/vest', lat:59.7470, lon:10.1985},
-    {n:5, t:'f', navn:'Søren Lemmichs gate 1', adr:'v/stasjonen', lat:59.7401, lon:10.2010},
-    {n:6, t:'k', navn:'Tollbugata', adr:'Bragernes · gateparkering', lat:59.7457, lon:10.2050},
-    {n:7, t:'k', navn:'Kinogarasjen P-hus', adr:'Onepark', lat:59.7447, lon:10.2066},
-    {n:8, t:'k', navn:'Erik Børresens Allé 1', adr:'Strømsø', lat:59.7391, lon:10.1957},
-    {n:9, t:'k', navn:'Bragernes kvartal P-hus', adr:'AIMO Park', lat:59.7451, lon:10.2072},
-    {n:10, t:'k', navn:'Øvre Storgate 15', adr:'AIMO Park', lat:59.7461, lon:10.2031},
-    {n:11, t:'k', navn:'Øvre Storgate 7', adr:'P-Norge', lat:59.7456, lon:10.2019},
-    {n:12, t:'k', navn:'Grev Wedel P-hus', adr:'DPark', lat:59.7444, lon:10.2080},
-    {n:13, t:'k', navn:'Strømsø Torg P-hus', adr:'APCOA', lat:59.7407, lon:10.2041},
+    {n:1, t:'f', navn:'Engene 23', adr:'Strømsø', v:50, vk:'kr 50 000/pl', lat:59.7409, lon:10.1992},
+    {n:2, t:'f', navn:'Hauges gate 24', adr:'Strømsø', v:55, vk:'kr 55 000/pl', lat:59.7404, lon:10.1979},
+    {n:3, t:'f', navn:'Nedre Storgate 22', adr:'Strømsø (sentralt)', v:55, vk:'kr 55 000/pl', lat:59.7419, lon:10.2007},
+    {n:4, t:'f', navn:'Rosenkrantzgata 61', adr:'Bragernes – ytre NV', v:5, vk:'kr 5 000/pl', lat:59.7492, lon:10.1957},
+    {n:5, t:'f', navn:'Søren Lemmichs gate 1', adr:'Strømsø, v/stasjonen', v:40, vk:'kr 40 000/pl', lat:59.7407, lon:10.2031},
+    {n:6, t:'k', navn:'Tollbugata', adr:'Bragernes · gateparkering', lat:59.7443, lon:10.2051},
+    {n:7, t:'k', navn:'Kinogarasjen P-hus', adr:'Onepark · Bragernes', lat:59.7441, lon:10.2073},
+    {n:8, t:'k', navn:'Erik Børresens Allé 1', adr:'Strømsø', lat:59.7389, lon:10.1976},
+    {n:9, t:'k', navn:'Bragernes kvartal P-hus', adr:'AIMO Park · v/torget', lat:59.7450, lon:10.2058},
+    {n:10, t:'k', navn:'Øvre Storgate 15', adr:'AIMO Park · Bragernes', lat:59.7452, lon:10.2045},
+    {n:11, t:'k', navn:'Øvre Storgate 7', adr:'P-Norge · Bragernes', lat:59.7448, lon:10.2058},
+    {n:12, t:'k', navn:'Grev Wedel P-hus', adr:'DPark · Bragernes', lat:59.7456, lon:10.2080},
+    {n:13, t:'k', navn:'Strømsø Torg P-hus', adr:'APCOA · Strømsø torg', lat:59.7414, lon:10.2042},
   ];
   const LORENSKOG = [
-    {n:1, t:'f', navn:'Gamleveien 91 P-hus', adr:'i dag: AIMO Park', lat:59.9253, lon:10.9547},
-    {n:2, t:'f', navn:'Hageby P-hus', adr:'i dag: AIMO Park', lat:59.9295, lon:10.9559},
-    {n:3, t:'f', navn:'Vestparken P-hus', adr:'i dag: AIMO Park', lat:59.9283, lon:10.9513},
-    {n:4, t:'k', navn:'Triaden Storsenter P-hus', adr:'Time Park · Gamleveien 88', lat:59.9258, lon:10.9541},
-    {n:5, t:'k', navn:'Skårersletta 52', adr:'Skårer', lat:59.9279, lon:10.9547},
-    {n:6, t:'k', navn:'Skårersletta 60 / 45–55', adr:'APCOA', lat:59.9285, lon:10.9554},
-    {n:7, t:'k', navn:'Metro Senter', adr:'APCOA', lat:59.9248, lon:10.9511},
-    {n:8, t:'k', navn:'Fredensborg P-hus', adr:'AIMO · Gamleveien 89', lat:59.9255, lon:10.9544},
-    {n:9, t:'k', navn:'Kommunal avgiftsparkering', adr:'Rådhus/sentrum', lat:59.9267, lon:10.9489},
+    {n:1, t:'f', navn:'Gamleveien 91 P-hus', adr:'i dag: AIMO Park', v:18, vk:'kr 18 000/pl', lat:59.9250, lon:10.9550},
+    {n:2, t:'f', navn:'Hageby P-hus', adr:'i dag: AIMO Park', v:18, vk:'kr 18 000/pl', lat:59.9262, lon:10.9540},
+    {n:3, t:'f', navn:'Vestparken P-hus', adr:'i dag: AIMO Park', v:18, vk:'kr 18 000/pl', lat:59.9258, lon:10.9522},
+    {n:4, t:'k', navn:'Triaden Storsenter P-hus', adr:'Time Park · Gamleveien 88', lat:59.9245, lon:10.9555},
+    {n:5, t:'k', navn:'Skårersletta 52', adr:'Skårer', lat:59.9270, lon:10.9545},
+    {n:6, t:'k', navn:'Skårersletta 60 / 45–55', adr:'APCOA', lat:59.9275, lon:10.9556},
+    {n:7, t:'k', navn:'Metro Senter', adr:'APCOA', lat:59.9268, lon:10.9518},
+    {n:8, t:'k', navn:'Fredensborg P-hus', adr:'AIMO · Gamleveien 89', lat:59.9252, lon:10.9548},
+    {n:9, t:'k', navn:'Kommunal avgiftsparkering', adr:'Rådhus/sentrum', lat:59.9272, lon:10.9505},
   ];
+
+  function vtier(v){ // fargeklasse for verdi pr plass
+    if(v==null) return '';
+    if(v<10) return 'v-low';
+    if(v<35) return 'v-mid';
+    if(v<49) return 'v-hi';
+    return 'v-top';
+  }
 
   function buildMap(id, data, center){
     const map = L.map(id, {scrollWheelZoom:false}).setView(center, 16);
@@ -462,16 +491,23 @@
 
     const group = [];
     data.forEach(p=>{
+      const sz = p.t==='f' ? 30 : 24;
       const icon = L.divIcon({
-        className:'', html:`<div class="pin ${p.t}" style="width:26px;height:26px">${p.n}</div>`,
-        iconSize:[26,26], iconAnchor:[13,13]
+        className:'', html:`<div class="pin ${p.t}" style="width:${sz}px;height:${sz}px">${p.n}</div>`,
+        iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
       });
-      const m = L.marker([p.lat,p.lon],{icon}).addTo(map);
-      const label = p.t==='f' ? 'Fevang-portefølje' : 'Marked';
-      m.bindPopup(`<b>${p.n}. ${p.navn}</b><br><span style="color:#6b7280">${p.adr}</span><br><small>${label}</small>`);
+      const m = L.marker([p.lat,p.lon],{icon, zIndexOffset: p.t==='f'?1000:0}).addTo(map);
+      const label = p.t==='f' ? 'Fevang-portefølje' : 'Marked / konkurrent';
+      const vrow = p.vk ? `<br><b style="color:#1a2641">Verdi: ${p.vk.replace('/pl','/plass')}</b>` : '';
+      m.bindPopup(`<b>${p.n}. ${p.navn}</b><br><span style="color:#6b7280">${p.adr}</span>${vrow}<br><small>${label}</small>`);
+      // alltid synlig verdi-tag på Fevang-anlegg (fargekodet etter verdi pr plass)
+      if(p.vk){
+        m.bindTooltip(`${p.v}k`,
+          {permanent:true, direction:'right', offset:[14,0], className:`vtip ${vtier(p.v)}`, opacity:1});
+      }
       group.push([p.lat,p.lon]);
     });
-    map.fitBounds(group, {padding:[40,40]});
+    map.fitBounds(group, {padding:[55,55]});
     return map;
   }
   document.addEventListener('DOMContentLoaded', ()=>{
