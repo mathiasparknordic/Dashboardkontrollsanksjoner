@@ -1,0 +1,18 @@
+{
+  "name": "Hjemmetavla",
+  "short_name": "Hjemmetavla",
+  "description": "Planlegg og huk av husholdningsoppgaver – med kalender og historikk.",
+  "lang": "nb",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF7F0",
+  "theme_color": "#8A6BE0",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

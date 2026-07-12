@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Hjemmetavla</title>
+<meta name="description" content="Hjemmetavla – planlegg og huk av husholdningsoppgaver med kalender og historikk." />
+
+<!-- PWA / iPhone hjem-skjerm -->
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#8A6BE0" />
+<meta name="color-scheme" content="light" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Hjemmetavla" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<link rel="icon" type="image/png" href="./icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+:root{
+  /* Overflater */
+  --bg:#FBF7F0;
+  --card:#FFFFFF;
+  --card-sunken:#F6F4FA;
+
+  /* Kategori-farger: fyll (bakgrunn) + ink (tekst/ikon) */
+  --dog:#FFD8A8;        --dog-ink:#B5651D;
+  --baby:#C9E4FF;       --baby-ink:#2C6FB5;
+  --cleaning:#C8F0DC;   --cleaning-ink:#1E8A5C;
+  --laundry:#E4D4FF;    --laundry-ink:#7A4FC4;
+  --custom:#FFD6E8;     --custom-ink:#C43D78;
+
+  /* Semantisk */
+  --success:#34C77B;    --success-soft:#DBF6E8;
+  --warning:#F5A623;    --warning-soft:#FDECD1;
+  --danger:#F0616D;     --danger-soft:#FBDDE0;
+
+  /* Tekst & linjer */
+  --text:#2B2A3D;
+  --muted:#8A879B;
+  --border:#ECE8F2;
+  --border-strong:#DCD6E8;
+
+  --radius:18px;
+  --radius-sm:14px;
+  --radius-chip:999px;
+  --shadow-card:0 4px 14px rgba(43,42,61,.06);
+  --shadow-lift:0 8px 24px rgba(43,42,61,.12);
+  --ease-pop:cubic-bezier(.34,1.56,.64,1);
+  --ease-std:cubic-bezier(.4,0,.2,1);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+[hidden]{display:none !important;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Nunito',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,#FBF7F0 0%,#F3F0FB 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:contain;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input{font-family:inherit;}
+
+.app{
+  max-width:520px;
+  margin:0 auto;
+  padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 32px);
+}
+
+/* ---------- Header ---------- */
+.header{
+  position:sticky;top:0;z-index:20;
+  margin:0 -16px;padding:calc(env(safe-area-inset-top) + 10px) 16px 12px;
+  background:rgba(251,247,240,.82);
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--border);
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.greeting{font-size:22px;font-weight:800;line-height:1.15;}
+.greeting small{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-top:2px;}
+.streak{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--warning-soft);color:#B5761A;
+  font-size:13px;font-weight:800;padding:7px 12px;border-radius:var(--radius-chip);
+  white-space:nowrap;
+}
+.progress-row{
+  display:flex;align-items:center;gap:14px;margin-top:12px;
+  background:var(--card);border:1px solid var(--border);
+  padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow-card);
+}
+.ring{position:relative;width:56px;height:56px;flex:0 0 auto;}
+.ring svg{transform:rotate(-90deg);}
+.ring-label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;
+}
+.progress-text{display:flex;flex-direction:column;gap:2px;}
+.progress-text .pt-main{font-size:15px;font-weight:800;}
+.progress-text .pt-sub{font-size:13px;font-weight:600;color:var(--muted);}
+
+/* ---------- Kalender ---------- */
+.calendar{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow-card);
+  padding:14px;margin-top:14px;
+}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-title{font-size:17px;font-weight:800;text-transform:capitalize;}
+.cal-nav{
+  width:38px;height:38px;border-radius:12px;background:var(--card-sunken);
+  display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--text);
+  transition:transform .12s var(--ease-std);
+}
+.cal-nav:active{transform:scale(.92);}
+.cal-weekdays,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-weekdays span{
+  text-align:center;font-size:11px;font-weight:800;color:var(--muted);
+  letter-spacing:.4px;text-transform:uppercase;padding-bottom:4px;
+}
+.cal-day{
+  position:relative;aspect-ratio:1/1;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:var(--text);
+  background:transparent;transition:transform .12s var(--ease-std),background .15s;
+}
+.cal-day.other{color:#C7C2D4;}
+.cal-day.today{color:var(--custom-ink);font-weight:800;}
+.cal-day.today::after{content:'';position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--custom-ink);}
+.cal-day.selected{background:var(--custom-ink);color:#fff;box-shadow:var(--shadow-lift);}
+.cal-day.selected.today{color:#fff;}
+.cal-day.selected.today::after{display:none;}
+.cal-day:active{transform:scale(.9);}
+.cal-dots{position:absolute;bottom:5px;display:flex;gap:3px;}
+.cal-day.today .cal-dots,.cal-day.selected .cal-dots{bottom:auto;top:5px;}
+.cal-dot{width:5px;height:5px;border-radius:50%;}
+.cal-day.selected .cal-dot{outline:1px solid rgba(255,255,255,.6);}
+
+/* ---------- Segmentert kontroll ---------- */
+.segment{
+  display:flex;gap:4px;background:var(--card-sunken);border:1px solid var(--border);
+  padding:4px;border-radius:14px;margin-top:14px;
+}
+.segment button{
+  flex:1;padding:10px 8px;border-radius:11px;font-size:14px;font-weight:800;color:var(--muted);
+  transition:all .2s var(--ease-std);
+}
+.segment button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
+
+/* ---------- Hurtigvalg ---------- */
+.section-label{
+  font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.5px;
+  text-transform:uppercase;margin:18px 4px 10px;
+}
+.chips{
+  display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;
+  height:40px;padding:0 15px;border-radius:var(--radius-chip);
+  font-size:14px;font-weight:800;white-space:nowrap;
+  transition:transform .12s var(--ease-std),filter .12s;
+}
+.chip:active{transform:scale(.94);filter:brightness(.96);}
+.chip .chip-emoji{font-size:16px;}
+.chip.flash{animation:chipflash .4s var(--ease-std);}
+@keyframes chipflash{0%{transform:scale(1);}40%{transform:scale(1.08);}100%{transform:scale(1);}}
+
+/* ---------- Egendefinert oppgave ---------- */
+.composer{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow-card);padding:14px;margin-top:12px;
+}
+.composer-row{display:flex;gap:10px;}
+.composer input[type=text]{
+  flex:1;height:48px;background:var(--card-sunken);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:0 16px;font-size:15px;font-weight:600;color:var(--text);
+  transition:border .15s,box-shadow .15s;
+}
+.composer input[type=text]::placeholder{color:var(--muted);}
+.composer input[type=text]:focus{outline:none;border-color:var(--custom-ink);box-shadow:0 0 0 3px rgba(196,61,120,.15);}
+.add-btn{
+  flex:0 0 auto;width:48px;height:48px;border-radius:var(--radius-sm);
+  background:var(--custom-ink);color:#fff;font-size:24px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;transition:transform .12s var(--ease-std);
+}
+.add-btn:active{transform:scale(.92);}
+.cat-picker{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.cat-picker .cp-label{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.cat-dot{
+  width:30px;height:30px;border-radius:50%;position:relative;transition:transform .12s var(--ease-std);
+  border:2px solid transparent;
+}
+.cat-dot:active{transform:scale(.9);}
+.cat-dot.sel{border-color:var(--text);transform:scale(1.05);}
+.cat-dot.sel::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25);}
+
+/* ---------- Oppgaveliste ---------- */
+.list{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+.day-header{
+  font-size:14px;font-weight:800;color:var(--muted);
+  background:var(--card-sunken);border:1px solid var(--border);
+  padding:8px 14px;border-radius:var(--radius-chip);align-self:flex-start;
+  text-transform:capitalize;
+}
+.task{
+  display:flex;align-items:center;gap:13px;
+  background:var(--card);border:1px solid var(--border);border-left:5px solid var(--border-strong);
+  border-radius:var(--radius);padding:13px 14px;box-shadow:var(--shadow-card);
+  transition:transform .2s var(--ease-std),opacity .3s;animation:cardin .25s var(--ease-std);
+}
+@keyframes cardin{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+.task.removing{opacity:0;transform:translateX(40px) scale(.96);}
+.task.done{opacity:.6;}
+.task.done .task-title{text-decoration:line-through;text-decoration-color:var(--muted);}
+.check{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;
+  border:2.5px solid var(--border-strong);background:transparent;position:relative;
+  display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease-std);
+}
+.check.on{background:var(--success);border-color:var(--success);animation:pop .3s var(--ease-pop);}
+.check svg{opacity:0;transition:opacity .15s;}
+.check.on svg{opacity:1;}
+@keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.2);}100%{transform:scale(1);}}
+.task-emoji{
+  flex:0 0 auto;width:38px;height:38px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.task-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.task-title{font-size:16px;font-weight:800;line-height:1.25;word-break:break-word;}
+.task-meta{font-size:12px;font-weight:700;color:var(--muted);}
+.task-del{
+  flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:var(--card-sunken);
+  color:var(--muted);font-size:17px;display:flex;align-items:center;justify-content:center;
+  transition:transform .12s var(--ease-std),background .15s,color .15s;
+}
+.task-del:active{transform:scale(.9);background:var(--danger-soft);color:var(--danger);}
+
+/* ---------- Tom tilstand ---------- */
+.empty{
+  text-align:center;background:var(--card);border:1px dashed var(--border-strong);
+  border-radius:var(--radius);padding:32px 20px;box-shadow:var(--shadow-card);
+}
+.empty .emoji{font-size:40px;}
+.empty .empty-title{font-size:16px;font-weight:800;margin-top:10px;}
+.empty .empty-sub{font-size:14px;font-weight:600;color:var(--muted);margin-top:4px;}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);
+  transform:translateX(-50%) translateY(20px);
+  background:var(--success-soft);color:#1E8A5C;border:1px solid #BEE9D3;
+  font-size:14px;font-weight:800;padding:12px 20px;border-radius:var(--radius-chip);
+  box-shadow:var(--shadow-lift);opacity:0;pointer-events:none;transition:all .3s var(--ease-pop);z-index:50;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Konfetti ---------- */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40;}
+.confetti-piece{position:absolute;width:9px;height:9px;border-radius:2px;will-change:transform,opacity;}
+
+/* ---------- PWA-hint ---------- */
+.install-hint{
+  background:var(--baby);color:var(--baby-ink);border:1px solid #B7D8FA;
+  border-radius:var(--radius);padding:12px 14px;margin-top:14px;
+  font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;
+}
+.install-hint .ih-x{margin-left:auto;font-size:18px;font-weight:800;opacity:.7;padding:2px 6px;}
+
+/* ---------- Header-knapper ---------- */
+.header-actions{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);
+  font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card);
+  transition:transform .12s var(--ease-std);
+}
+.icon-btn:active{transform:scale(.9);}
+.sync-badge{
+  margin-top:10px;background:var(--success-soft);color:#1E8A5C;border:1px solid #BEE9D3;
+  font-size:12px;font-weight:800;padding:7px 12px;border-radius:var(--radius-chip);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.sync-badge.err{background:var(--danger-soft);color:#C0343F;border-color:#F3B9BE;}
+.sync-badge::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;}
+
+/* ---------- Innstillinger ---------- */
+.back-btn{
+  font-size:15px;font-weight:800;color:var(--custom-ink);background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius-chip);padding:8px 16px;margin:14px 0 4px;
+  box-shadow:var(--shadow-card);transition:transform .12s var(--ease-std);
+}
+.back-btn:active{transform:scale(.95);}
+.settings-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow-card);padding:16px;margin-top:14px;
+}
+.settings-card.invite{background:var(--baby);border-color:#B7D8FA;}
+.settings-title{font-size:17px;font-weight:800;}
+.settings-sub{font-size:13px;font-weight:600;color:var(--muted);margin-top:4px;line-height:1.4;}
+.settings-card.invite .settings-sub{color:var(--baby-ink);}
+
+.preset-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.preset-row{
+  display:flex;align-items:center;gap:10px;background:var(--card-sunken);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;
+}
+.preset-row .pr-emoji{
+  width:32px;height:32px;flex:0 0 auto;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+.preset-row .pr-title{flex:1;font-size:15px;font-weight:700;word-break:break-word;}
+.preset-row .pr-del{
+  width:30px;height:30px;flex:0 0 auto;border-radius:8px;background:var(--card);color:var(--muted);
+  font-size:15px;display:flex;align-items:center;justify-content:center;transition:transform .12s var(--ease-std);
+}
+.preset-row .pr-del:active{transform:scale(.9);background:var(--danger-soft);color:var(--danger);}
+.preset-empty{font-size:13px;font-weight:600;color:var(--muted);padding:8px 2px;}
+.preset-add{margin-top:12px;}
+.emoji-input{
+  flex:0 0 auto;width:60px;height:48px;text-align:center;background:var(--card-sunken);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:20px;
+}
+.emoji-input:focus{outline:none;border-color:var(--custom-ink);}
+
+.wide-btn{
+  width:100%;height:48px;border-radius:var(--radius-sm);background:var(--custom-ink);color:#fff;
+  font-size:15px;font-weight:800;margin-top:12px;transition:transform .12s var(--ease-std),filter .12s;
+}
+.wide-btn:active{transform:scale(.98);filter:brightness(.96);}
+.wide-btn.ghost{background:var(--card-sunken);color:var(--text);border:1px solid var(--border-strong);}
+.btn-row{display:flex;gap:10px;}
+.btn-row .wide-btn{flex:1;}
+
+.field-label{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px;}
+.field-input{
+  width:100%;height:48px;background:var(--card-sunken);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:0 14px;font-size:15px;font-weight:600;color:var(--text);
+}
+.field-input:focus{outline:none;border-color:var(--custom-ink);box-shadow:0 0 0 3px rgba(196,61,120,.15);}
+
+.sync-status{
+  display:flex;align-items:center;gap:8px;background:var(--card-sunken);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;font-size:14px;font-weight:700;
+}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:0 0 auto;}
+.sync-dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-soft);}
+.sync-dot.err{background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft);}
+.sync-dot.wait{background:var(--warning);box-shadow:0 0 0 3px var(--warning-soft);}
+
+.help{margin-top:14px;background:var(--card-sunken);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;}
+.help summary{font-size:14px;font-weight:800;cursor:pointer;color:var(--text);}
+.help ol{margin:10px 0 0;padding-left:20px;}
+.help li{font-size:13px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:6px;}
+.help code{background:#EFEAF6;border-radius:6px;padding:1px 6px;font-size:12px;word-break:break-all;}
+.help-note{font-size:12px;font-weight:700;color:var(--warning);background:var(--warning-soft);border-radius:8px;padding:8px 10px;margin-top:10px;}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="greeting">
+        Hjemmetavla
+        <small id="headerDate">–</small>
+      </div>
+      <div class="header-actions">
+        <div class="streak" id="streak" title="Dager på rad med fullførte oppgaver">🔥 <span id="streakNum">0</span></div>
+        <button class="icon-btn" id="settingsBtn" aria-label="Innstillinger">⚙️</button>
+      </div>
+    </div>
+    <div class="sync-badge" id="syncBadge" hidden></div>
+    <div class="progress-row">
+      <div class="ring" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="24" fill="none" stroke="#EFEBF5" stroke-width="6"></circle>
+          <circle id="ringFg" cx="28" cy="28" r="24" fill="none" stroke="#34C77B" stroke-width="6"
+                  stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+        </svg>
+        <div class="ring-label" id="ringLabel">0/0</div>
+      </div>
+      <div class="progress-text">
+        <span class="pt-main" id="progressMain">Ingen oppgaver enda</span>
+        <span class="pt-sub" id="progressSub">Velg en dag og legg til oppgaver</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Kalender -->
+  <section class="calendar" aria-label="Kalender">
+    <div class="cal-head">
+      <button class="cal-nav" id="prevMonth" aria-label="Forrige måned">‹</button>
+      <div class="cal-title" id="calTitle">Måned</div>
+      <button class="cal-nav" id="nextMonth" aria-label="Neste måned">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Man</span><span>Tir</span><span>Ons</span><span>Tor</span><span>Fre</span><span>Lør</span><span>Søn</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </section>
+
+  <!-- Visningsvalg -->
+  <div class="segment" role="tablist">
+    <button id="tabPlan" class="active" role="tab">📋 Planlagt</button>
+    <button id="tabHist" role="tab">🗂️ Historikk</button>
+  </div>
+
+  <!-- Planlagt-visning -->
+  <div id="planView">
+    <div class="section-label">Hurtigvalg – trykk for å legge til</div>
+    <div class="chips" id="chips"></div>
+
+    <div class="composer">
+      <div class="composer-row">
+        <input type="text" id="customInput" placeholder="Skriv egen oppgave …" maxlength="80"
+               autocomplete="off" enterkeyhint="done" />
+        <button class="add-btn" id="addBtn" aria-label="Legg til oppgave">+</button>
+      </div>
+      <div class="cat-picker" id="catPicker">
+        <span class="cp-label">Kategori</span>
+      </div>
+    </div>
+
+    <div class="section-label" id="planListLabel">Oppgaver</div>
+    <div class="list" id="taskList"></div>
+  </div>
+
+  <!-- Historikk-visning -->
+  <div id="histView" style="display:none;">
+    <div class="section-label">Fullførte oppgaver</div>
+    <div class="list" id="histList"></div>
+  </div>
+
+  <!-- Innstillinger-visning -->
+  <div id="settingsView" style="display:none;">
+    <button class="back-btn" id="backBtn">‹ Tilbake</button>
+
+    <!-- Egne hurtigvalg -->
+    <div class="settings-card">
+      <div class="settings-title">⭐ Egne hurtigvalg</div>
+      <div class="settings-sub">Legg til dine egne faste oppgaver. De dukker opp som hurtigvalg sammen med standardvalgene – for alle som deler listen.</div>
+      <div class="preset-list" id="presetList"></div>
+      <div class="preset-add">
+        <div class="composer-row">
+          <input type="text" id="presetTitle" placeholder="Navn på hurtigvalg …" maxlength="40" autocomplete="off" />
+          <input type="text" id="presetEmoji" class="emoji-input" placeholder="🙂" maxlength="2" autocomplete="off" />
+        </div>
+        <div class="cat-picker" id="presetCatPicker">
+          <span class="cp-label">Kategori</span>
+        </div>
+        <button class="wide-btn" id="addPresetBtn">Legg til hurtigvalg</button>
+      </div>
+    </div>
+
+    <!-- Deling og synk -->
+    <div class="settings-card">
+      <div class="settings-title">👨‍👩‍👧 Deling og synk</div>
+      <div class="settings-sub">Koble til en delt liste så du og andre (f.eks. kona) ser og endrer de samme oppgavene i sanntid.</div>
+
+      <div class="sync-status" id="syncStatus">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncStatusText">Ikke tilkoblet</span>
+      </div>
+
+      <label class="field-label" for="syncUrl">Firebase database-URL</label>
+      <input type="text" id="syncUrl" class="field-input" placeholder="https://…-default-rtdb.firebaseio.com" autocomplete="off" spellcheck="false" />
+
+      <label class="field-label" for="syncCode">Husholdnings-kode</label>
+      <input type="text" id="syncCode" class="field-input" placeholder="f.eks. familien-vaar-2026" autocomplete="off" spellcheck="false" />
+
+      <div class="btn-row">
+        <button class="wide-btn" id="connectBtn">Koble til</button>
+        <button class="wide-btn ghost" id="disconnectBtn" hidden>Koble fra</button>
+      </div>
+      <button class="wide-btn ghost" id="shareBtn" hidden>🔗 Del lenke med andre</button>
+
+      <details class="help">
+        <summary>Slik setter du opp gratis synk (én gang)</summary>
+        <ol>
+          <li>Gå til <b>console.firebase.google.com</b> og opprett et gratis prosjekt.</li>
+          <li>Åpne <b>Build → Realtime Database</b> → <b>Create database</b> (velg en region, f.eks. europe-west1).</li>
+          <li>Under <b>Rules</b>, tillat lesing/skriving på husholdninger:<br>
+            <code>{ "rules": { "households": { "$h": { ".read": true, ".write": true } } } }</code></li>
+          <li>Kopier database-URL-en (ser ut som <code>https://…firebasedatabase.app</code>) inn i feltet over.</li>
+          <li>Velg en hemmelig husholdnings-kode og trykk <b>Koble til</b>. Del lenken med kona – hun trykker bare «Koble til».</li>
+        </ol>
+        <div class="help-note">Merk: hvem som helst med URL-en <i>og</i> koden kan se/endre listen. Bruk en kode som er vanskelig å gjette.</div>
+      </details>
+    </div>
+
+    <!-- Invitasjonsbanner -->
+    <div class="settings-card invite" id="inviteCard" hidden>
+      <div class="settings-title">📨 Du har fått en invitasjon</div>
+      <div class="settings-sub">Noen har delt en liste med deg. Koble til for å se de samme oppgavene.</div>
+      <button class="wide-btn" id="acceptInviteBtn">Koble til delt liste</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="confetti"></div>
+
+<script>
+/* ============================================================
+   Datamodell & lagring
+   ============================================================ */
+const STORE_KEY = 'hjemme_oppgaver_v1';
+const PRESET_KEY = 'hjemme_presets_v1';
+const SYNC_KEY = 'hjemme_sync_v1';
+const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const DAYS_FULL = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+
+const CATEGORIES = {
+  dog:      {fill:'var(--dog)',      ink:'var(--dog-ink)',      label:'Charlie'},
+  baby:     {fill:'var(--baby)',     ink:'var(--baby-ink)',     label:'William'},
+  cleaning: {fill:'var(--cleaning)', ink:'var(--cleaning-ink)', label:'Rengjøring'},
+  laundry:  {fill:'var(--laundry)',  ink:'var(--laundry-ink)',  label:'Klesvask'},
+  custom:   {fill:'var(--custom)',   ink:'var(--custom-ink)',   label:'Annet'}
+};
+
+const PRESETS = [
+  {title:'Gå tur med Charlie', emoji:'🐕', category:'dog'},
+  {title:'Vaske huset',        emoji:'🧹', category:'cleaning'},
+  {title:'Støvsuge',           emoji:'🌀', category:'cleaning'},
+  {title:'Bade William',       emoji:'🍼', category:'baby'},
+  {title:'Bade Charlie',       emoji:'🛁', category:'dog'},
+  {title:'Vaske klær',         emoji:'🧺', category:'laundry'}
+];
+
+let tasks = load();
+let customPresets = loadPresets();
+let selectedCat = 'custom';
+let presetCat = 'custom';
+
+/* Dato-hjelpere (lokale, YYYY-MM-DD) */
+function iso(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseISO(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function todayISO(){return iso(new Date());}
+function tomorrowISO(){return iso(addDays(new Date(),1));}
+
+/* Standard = planlegg dagen i forveien → i morgen er forhåndsvalgt */
+let selectedDate = tomorrowISO();
+let viewMonth = parseISO(selectedDate);
+viewMonth.setDate(1);
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(tasks)); }catch(e){}
+}
+function loadPresets(){
+  try{ const a=JSON.parse(localStorage.getItem(PRESET_KEY)); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function savePresets(){
+  try{ localStorage.setItem(PRESET_KEY, JSON.stringify(customPresets)); }catch(e){}
+}
+function uid(){ return 't' + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+
+function addTask(title, emoji, category, date){
+  title = (title||'').trim();
+  if(!title) return null;
+  const now = Date.now();
+  const t = {id:uid(), title, emoji:emoji||'📝', category:category||'custom',
+             date:date||selectedDate, done:false, doneAt:null, createdAt:now, updatedAt:now};
+  tasks.push(t);
+  save();
+  syncPush('tasks', t.id, t);
+  return t;
+}
+function toggleDone(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  t.doneAt = t.done ? Date.now() : null;
+  t.updatedAt = Date.now();
+  save();
+  syncPush('tasks', t.id, t);
+}
+function deleteTask(id){
+  tasks = tasks.filter(x=>x.id!==id);
+  save();
+  syncDelete('tasks', id);
+}
+
+function addPreset(title, emoji, category){
+  title = (title||'').trim();
+  if(!title) return null;
+  const p = {id:uid(), title, emoji:emoji||'📝', category:category||'custom', createdAt:Date.now()};
+  customPresets.push(p);
+  savePresets();
+  syncPush('presets', p.id, p);
+  return p;
+}
+function deletePreset(id){
+  customPresets = customPresets.filter(p=>p.id!==id);
+  savePresets();
+  syncDelete('presets', id);
+}
+
+/* ============================================================
+   Rendring
+   ============================================================ */
+function fmtHeaderDate(isoStr){
+  const d = parseISO(isoStr);
+  const dayName = DAYS_FULL[d.getDay()];
+  let prefix = '';
+  if(isoStr===todayISO()) prefix='I dag · ';
+  else if(isoStr===tomorrowISO()) prefix='I morgen · ';
+  else if(isoStr===iso(addDays(new Date(),-1))) prefix='I går · ';
+  return `${prefix}${dayName} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+
+function tasksForDate(dateStr){ return tasks.filter(t=>t.date===dateStr); }
+
+function renderHeader(){
+  document.getElementById('headerDate').textContent = fmtHeaderDate(selectedDate);
+  // Fremdrift for valgt dag
+  const dayTasks = tasksForDate(selectedDate);
+  const total = dayTasks.length;
+  const done = dayTasks.filter(t=>t.done).length;
+  const C = 2*Math.PI*24; // 150.8
+  const frac = total? done/total : 0;
+  const ring = document.getElementById('ringFg');
+  ring.style.strokeDashoffset = String(C*(1-frac));
+  document.getElementById('ringLabel').textContent = `${done}/${total}`;
+
+  const main = document.getElementById('progressMain');
+  const sub = document.getElementById('progressSub');
+  if(total===0){
+    main.textContent = 'Ingen oppgaver enda';
+    sub.textContent = 'Legg til under, eller trykk et hurtigvalg';
+  }else if(done===total){
+    main.textContent = 'Alt gjort – bra jobba! 🎉';
+    sub.textContent = `${done} av ${total} fullført`;
+  }else{
+    main.textContent = `${done} av ${total} gjort`;
+    sub.textContent = `${total-done} igjen på ${selectedDate===todayISO()?'i dag':(selectedDate===tomorrowISO()?'i morgen':'denne dagen')}`;
+  }
+  // Streak
+  document.getElementById('streakNum').textContent = computeStreak();
+}
+
+function computeStreak(){
+  // Antall sammenhengende dager (t.o.m. i dag) der alle planlagte oppgaver er gjort og det finnes minst én.
+  let streak = 0;
+  for(let i=0;i<365;i++){
+    const ds = iso(addDays(new Date(),-i));
+    const dt = tasksForDate(ds);
+    if(dt.length>0 && dt.every(t=>t.done)) streak++;
+    else if(i===0 && dt.length===0) continue; // i dag uten oppgaver bryter ikke
+    else break;
+  }
+  return streak;
+}
+
+function renderCalendar(){
+  document.getElementById('calTitle').textContent = `${MONTHS[viewMonth.getMonth()]} ${viewMonth.getFullYear()}`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+  // Mandag = 0
+  let startOffset = (first.getDay()+6)%7;
+  const start = addDays(first, -startOffset);
+  const tISO = todayISO();
+  for(let i=0;i<42;i++){
+    const d = addDays(start,i);
+    const dISO = iso(d);
+    const cell = document.createElement('button');
+    cell.className = 'cal-day';
+    cell.type = 'button';
+    if(d.getMonth()!==viewMonth.getMonth()) cell.classList.add('other');
+    if(dISO===tISO) cell.classList.add('today');
+    if(dISO===selectedDate) cell.classList.add('selected');
+    cell.setAttribute('aria-label', dISO);
+
+    const num = document.createElement('span');
+    num.textContent = d.getDate();
+    cell.appendChild(num);
+
+    // Prikker per kategori
+    const dt = tasksForDate(dISO);
+    if(dt.length){
+      const dots = document.createElement('div');
+      dots.className = 'cal-dots';
+      const cats = [...new Set(dt.map(t=>t.category))].slice(0,3);
+      cats.forEach(c=>{
+        const dot=document.createElement('span');
+        dot.className='cal-dot';
+        dot.style.background = dt.every(t=>t.done) ? 'var(--success)' : CATEGORIES[c].ink;
+        dots.appendChild(dot);
+      });
+      cell.appendChild(dots);
+    }
+    cell.addEventListener('click',()=>{
+      selectedDate = dISO;
+      renderAll();
+    });
+    grid.appendChild(cell);
+  }
+}
+
+function renderChips(){
+  const wrap = document.getElementById('chips');
+  wrap.innerHTML = '';
+  PRESETS.concat(customPresets).forEach(p=>{
+    const cat = CATEGORIES[p.category];
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.type='button';
+    b.style.background = cat.fill;
+    b.style.color = cat.ink;
+    b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.title}`;
+    b.addEventListener('click',()=>{
+      b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+      addTask(p.title, p.emoji, p.category, selectedDate);
+      renderAll();
+      showToast(`«${p.title}» lagt til`);
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function buildCatPicker(wrapId, current, onPick){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  wrap.querySelectorAll('.cat-dot').forEach(n=>n.remove());
+  Object.entries(CATEGORIES).forEach(([key,c])=>{
+    const dot = document.createElement('button');
+    dot.type='button';
+    dot.className = 'cat-dot'+(key===current?' sel':'');
+    dot.style.background = c.ink;
+    dot.title = c.label;
+    dot.setAttribute('aria-label', c.label);
+    dot.addEventListener('click',()=> onPick(key));
+    wrap.appendChild(dot);
+  });
+}
+function renderCatPicker(){ buildCatPicker('catPicker', selectedCat, k=>{ selectedCat=k; renderCatPicker(); }); }
+function renderPresetCatPicker(){ buildCatPicker('presetCatPicker', presetCat, k=>{ presetCat=k; renderPresetCatPicker(); }); }
+
+function checkSvg(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+function taskNode(t, readOnly){
+  const cat = CATEGORIES[t.category] || CATEGORIES.custom;
+  const el = document.createElement('div');
+  el.className = 'task'+(t.done?' done':'');
+  el.style.borderLeftColor = cat.ink;
+  el.dataset.id = t.id;
+
+  // Avhukingsknapp
+  const check = document.createElement('button');
+  check.type='button';
+  check.className = 'check'+(t.done?' on':'');
+  check.innerHTML = checkSvg();
+  check.setAttribute('aria-label', t.done?'Angre fullført':'Merk som gjort');
+  if(!readOnly){
+    check.addEventListener('click',(ev)=>{
+      const wasDone = t.done;
+      toggleDone(t.id);
+      if(!wasDone){
+        try{navigator.vibrate && navigator.vibrate(15);}catch(e){}
+        burstConfetti(ev.clientX, ev.clientY);
+        const dayTasks = tasksForDate(t.date);
+        if(dayTasks.length && dayTasks.every(x=>x.done)) showToast('Alt gjort for dagen! 🎉');
+      }
+      renderAll();
+    });
+  }else{
+    check.disabled = true;
+  }
+
+  const emoji = document.createElement('div');
+  emoji.className='task-emoji';
+  emoji.style.background = cat.fill;
+  emoji.textContent = t.emoji || '📝';
+
+  const body = document.createElement('div');
+  body.className='task-body';
+  const title = document.createElement('div');
+  title.className='task-title';
+  title.textContent = t.title;
+  const meta = document.createElement('div');
+  meta.className='task-meta';
+  if(readOnly && t.doneAt){
+    const d = new Date(t.doneAt);
+    meta.textContent = `${cat.label} · fullført kl. ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }else{
+    meta.textContent = t.done ? `${cat.label} · fullført` : cat.label;
+  }
+  body.appendChild(title);
+  body.appendChild(meta);
+
+  el.appendChild(check);
+  el.appendChild(emoji);
+  el.appendChild(body);
+
+  if(!readOnly){
+    const del = document.createElement('button');
+    del.type='button';
+    del.className='task-del';
+    del.innerHTML='🗑';
+    del.setAttribute('aria-label','Slett oppgave');
+    del.addEventListener('click',()=>{
+      el.classList.add('removing');
+      setTimeout(()=>{ deleteTask(t.id); renderAll(); }, 200);
+    });
+    el.appendChild(del);
+  }
+  return el;
+}
+
+function renderTaskList(){
+  const list = document.getElementById('taskList');
+  list.innerHTML='';
+  const dayTasks = tasksForDate(selectedDate)
+    .sort((a,b)=> (a.done-b.done) || (a.createdAt-b.createdAt));
+  document.getElementById('planListLabel').textContent =
+    dayTasks.length ? `Oppgaver (${dayTasks.filter(t=>!t.done).length} igjen)` : 'Oppgaver';
+  if(!dayTasks.length){
+    list.appendChild(emptyNode('📅','Ingen oppgaver denne dagen','Trykk et hurtigvalg eller skriv en egen oppgave over.'));
+    return;
+  }
+  dayTasks.forEach(t=> list.appendChild(taskNode(t,false)));
+}
+
+function renderHistory(){
+  const list = document.getElementById('histList');
+  list.innerHTML='';
+  const done = tasks.filter(t=>t.done && t.doneAt).sort((a,b)=> b.doneAt - a.doneAt);
+  if(!done.length){
+    list.appendChild(emptyNode('🗂️','Ingen historikk enda','Fullførte oppgaver dukker opp her.'));
+    return;
+  }
+  // Grupper etter oppgavens dato
+  const groups = {};
+  done.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
+  Object.keys(groups).sort((a,b)=> b.localeCompare(a)).forEach(dateStr=>{
+    const h = document.createElement('div');
+    h.className='day-header';
+    h.textContent = fmtHeaderDate(dateStr);
+    list.appendChild(h);
+    groups[dateStr].forEach(t=> list.appendChild(taskNode(t,true)));
+  });
+}
+
+function emptyNode(emoji,title,sub){
+  const e=document.createElement('div');
+  e.className='empty';
+  e.innerHTML=`<div class="emoji">${emoji}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div>`;
+  return e;
+}
+
+let currentView = 'plan';
+function renderAll(){
+  if(currentView==='settings'){ renderSettings(); return; }
+  renderHeader();
+  renderCalendar();
+  renderChips();
+  if(currentView==='plan'){ renderTaskList(); }
+  else if(currentView==='hist'){ renderHistory(); }
+}
+
+function renderSettings(){
+  // Egne hurtigvalg
+  const list = document.getElementById('presetList');
+  list.innerHTML = '';
+  if(!customPresets.length){
+    const e=document.createElement('div');
+    e.className='preset-empty';
+    e.textContent='Ingen egne hurtigvalg enda. Legg til under ↓';
+    list.appendChild(e);
+  }else{
+    customPresets.forEach(p=>{
+      const cat = CATEGORIES[p.category]||CATEGORIES.custom;
+      const row=document.createElement('div');
+      row.className='preset-row';
+      const em=document.createElement('div');
+      em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=p.emoji||'📝';
+      const ti=document.createElement('div');
+      ti.className='pr-title'; ti.textContent=p.title;
+      const del=document.createElement('button');
+      del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label','Slett hurtigvalg');
+      del.addEventListener('click',()=>{ deletePreset(p.id); renderSettings(); renderChips(); });
+      row.appendChild(em); row.appendChild(ti); row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+  renderPresetCatPicker();
+  renderSyncUI();
+}
+
+/* ============================================================
+   Interaksjoner
+   ============================================================ */
+document.getElementById('prevMonth').addEventListener('click',()=>{
+  viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar();
+});
+document.getElementById('nextMonth').addEventListener('click',()=>{
+  viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar();
+});
+
+function submitCustom(){
+  const input = document.getElementById('customInput');
+  const val = input.value.trim();
+  if(!val) return;
+  const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
+  addTask(val, emojiMap[selectedCat]||'📝', selectedCat, selectedDate);
+  input.value='';
+  renderAll();
+  showToast(`«${val}» lagt til`);
+}
+document.getElementById('addBtn').addEventListener('click', submitCustom);
+document.getElementById('customInput').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); submitCustom(); }
+});
+
+function showView(v){
+  currentView = v;
+  const isSettings = v==='settings';
+  document.getElementById('settingsView').style.display = isSettings?'':'none';
+  document.querySelector('.segment').style.display = isSettings?'none':'';
+  document.querySelector('.calendar').style.display = isSettings?'none':'';
+  document.getElementById('planView').style.display = (v==='plan')?'':'none';
+  document.getElementById('histView').style.display = (v==='hist')?'':'none';
+  document.getElementById('tabPlan').classList.toggle('active', v==='plan');
+  document.getElementById('tabHist').classList.toggle('active', v==='hist');
+  renderAll();
+  window.scrollTo(0,0);
+}
+document.getElementById('tabPlan').addEventListener('click',()=>showView('plan'));
+document.getElementById('tabHist').addEventListener('click',()=>showView('hist'));
+document.getElementById('settingsBtn').addEventListener('click',()=>showView('settings'));
+document.getElementById('backBtn').addEventListener('click',()=>showView('plan'));
+
+/* Egne hurtigvalg */
+document.getElementById('addPresetBtn').addEventListener('click',()=>{
+  const t = document.getElementById('presetTitle').value.trim();
+  const e = document.getElementById('presetEmoji').value.trim();
+  if(!t){ showToast('Skriv et navn'); return; }
+  const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
+  addPreset(t, e || emojiMap[presetCat] || '📝', presetCat);
+  document.getElementById('presetTitle').value='';
+  document.getElementById('presetEmoji').value='';
+  renderSettings(); renderChips();
+  showToast('Hurtigvalg lagt til');
+});
+document.getElementById('presetTitle').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addPresetBtn').click(); }
+});
+
+/* Deling og synk */
+document.getElementById('connectBtn').addEventListener('click',()=>{
+  syncConf.url = document.getElementById('syncUrl').value.trim();
+  syncConf.code = document.getElementById('syncCode').value.trim();
+  saveSync();
+  connectSync();
+});
+document.getElementById('disconnectBtn').addEventListener('click', disconnectSync);
+document.getElementById('shareBtn').addEventListener('click', shareList);
+document.getElementById('acceptInviteBtn').addEventListener('click',()=>{
+  document.getElementById('inviteCard').hidden = true;
+  syncConf.url = document.getElementById('syncUrl').value.trim();
+  syncConf.code = document.getElementById('syncCode').value.trim();
+  saveSync();
+  connectSync();
+});
+
+/* Toast */
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* Konfetti */
+function burstConfetti(x,y){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const layer=document.getElementById('confetti');
+  const colors=['#FFD8A8','#C9E4FF','#C8F0DC','#E4D4FF','#FFD6E8','#34C77B'];
+  const n=14;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.background=colors[i%colors.length];
+    p.style.left=x+'px';
+    p.style.top=y+'px';
+    layer.appendChild(p);
+    const ang=(Math.PI*2*i)/n + (Math.random()-0.5);
+    const dist=60+Math.random()*70;
+    const dx=Math.cos(ang)*dist;
+    const dy=Math.sin(ang)*dist - 40;
+    const rot=(Math.random()*360)|0;
+    p.animate([
+      {transform:`translate(0,0) rotate(0deg)`,opacity:1},
+      {transform:`translate(${dx}px,${dy+120}px) rotate(${rot}deg)`,opacity:0}
+    ],{duration:700+Math.random()*300,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>p.remove();
+  }
+}
+
+/* ============================================================
+   Deling & synk  (Firebase Realtime Database via REST + SSE)
+   – ingen SDK: native fetch for skriving, EventSource for sanntid.
+   ============================================================ */
+let syncConf = loadSync();      // {url, code, enabled}
+let syncES = null;              // EventSource
+let syncState = 'off';          // 'off' | 'wait' | 'on' | 'err'
+let applyingRemote = false;
+let pendingMerge = false;       // fletter inn lokale elementer ved første snapshot
+
+function loadSync(){
+  try{
+    const o = JSON.parse(localStorage.getItem(SYNC_KEY));
+    if(o && typeof o==='object') return {url:o.url||'', code:o.code||'', enabled:!!o.enabled};
+  }catch(e){}
+  return {url:'', code:'', enabled:false};
+}
+function saveSync(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncConf)); }catch(e){} }
+
+function dbBase(){ return (syncConf.url||'').trim().replace(/\/+$/,''); }
+function nodeUrl(path){
+  const code = encodeURIComponent((syncConf.code||'').trim());
+  const p = path ? ('/'+path) : '';
+  return `${dbBase()}/households/${code}${p}.json`;
+}
+
+function normalizeTask(id, d){
+  d = d || {};
+  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom',
+          date:d.date||todayISO(), done:!!d.done, doneAt:d.doneAt||null,
+          createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+function normalizePreset(id, d){
+  d = d || {};
+  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom', createdAt:d.createdAt||Date.now()};
+}
+
+function ingestMap(coll, map){
+  const arr = Object.entries(map||{}).map(([id,d])=> coll==='tasks'?normalizeTask(id,d):normalizePreset(id,d));
+  if(coll==='tasks') tasks = arr; else customPresets = arr;
+}
+function replaceFromDoc(doc){
+  doc = doc || {};
+  ingestMap('tasks', doc.tasks||{});
+  ingestMap('presets', doc.presets||{});
+}
+function unionRemote(remote){
+  remote = remote || {};
+  const byId = {}; tasks.forEach(t=>byId[t.id]=t);
+  Object.entries(remote.tasks||{}).forEach(([id,d])=>{
+    const r = normalizeTask(id,d), l = byId[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) byId[id]=r;
+  });
+  tasks = Object.values(byId);
+  const pById = {}; customPresets.forEach(p=>pById[p.id]=p);
+  Object.entries(remote.presets||{}).forEach(([id,d])=>{ pById[id]=normalizePreset(id,d); });
+  customPresets = Object.values(pById);
+}
+function upsertRemote(coll, id, data){
+  if(coll==='tasks'){
+    if(data==null){ tasks = tasks.filter(t=>t.id!==id); return; }
+    const t = normalizeTask(id,data), i = tasks.findIndex(x=>x.id===id);
+    if(i>=0) tasks[i]=t; else tasks.push(t);
+  }else{
+    if(data==null){ customPresets = customPresets.filter(p=>p.id!==id); return; }
+    const p = normalizePreset(id,data), i = customPresets.findIndex(x=>x.id===id);
+    if(i>=0) customPresets[i]=p; else customPresets.push(p);
+  }
+}
+function applyPut(path, data){
+  if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
+  const seg = path.replace(/^\//,'').split('/');
+  const coll = seg[0], id = seg[1];
+  if(coll!=='tasks' && coll!=='presets') return;
+  if(id) upsertRemote(coll, id, data);
+  else ingestMap(coll, data||{});
+}
+function applyPatch(path, data){
+  if(!data || typeof data!=='object') return;
+  const base = path.replace(/^\//,'');
+  Object.entries(data).forEach(([k,v])=> applyPut('/'+(base?base+'/'+k:k), v));
+}
+
+function rawPut(path, obj){
+  return fetch(nodeUrl(path), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(obj)});
+}
+async function pushAllLocal(){
+  const jobs = [];
+  tasks.forEach(t=> jobs.push(rawPut('tasks/'+t.id, t)));
+  customPresets.forEach(p=> jobs.push(rawPut('presets/'+p.id, p)));
+  await Promise.allSettled(jobs);
+}
+function syncPush(coll, id, obj){
+  if(!syncConf.enabled || applyingRemote) return;
+  rawPut(coll+'/'+id, obj).catch(()=>{});
+}
+function syncDelete(coll, id){
+  if(!syncConf.enabled || applyingRemote) return;
+  fetch(nodeUrl(coll+'/'+id), {method:'DELETE'}).catch(()=>{});
+}
+
+function onStream(raw, isPatch){
+  let p; try{ p = JSON.parse(raw); }catch(e){ return; }
+  if(!p || typeof p!=='object') return;
+  const path = p.path || '/';
+  applyingRemote = true;
+  if(!isPatch && (path==='/' || path==='') && pendingMerge){
+    // Første snapshot: flett inn lokale elementer, last dem så opp.
+    unionRemote(p.data || {});
+    pendingMerge = false;
+    applyingRemote = false;
+    save(); savePresets();
+    pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
+    setSyncState('on');
+    renderAll();
+    showToast('Koblet til delt liste');
+    return;
+  }
+  if(isPatch) applyPatch(path, p.data);
+  else applyPut(path, p.data);
+  applyingRemote = false;
+  save(); savePresets();
+  setSyncState('on');
+  renderAll();
+}
+function openStream(){
+  if(syncES){ syncES.close(); syncES=null; }
+  let es;
+  try{ es = new EventSource(nodeUrl('')); }catch(e){ setSyncState('err'); return; }
+  syncES = es;
+  es.addEventListener('put',   ev=> onStream(ev.data, false));
+  es.addEventListener('patch', ev=> onStream(ev.data, true));
+  es.onopen = ()=> setSyncState('on');
+  es.onerror = ()=>{
+    if(es.readyState===EventSource.CLOSED) setSyncState('err');
+    else setSyncState('wait');   // EventSource kobler til på nytt automatisk
+  };
+}
+
+function connectSync(){
+  if(!syncConf.url || !syncConf.code){ showToast('Fyll inn URL og kode'); return; }
+  syncConf.enabled = true; saveSync();
+  setSyncState('wait');
+  pendingMerge = true;
+  openStream();          // EventSource-strømmen leverer selv første fulle snapshot
+  renderAll();
+}
+function disconnectSync(){
+  syncConf.enabled = false; saveSync();
+  if(syncES){ syncES.close(); syncES=null; }
+  setSyncState('off');
+  renderSyncUI();
+  showToast('Koblet fra delt liste');
+}
+
+function setSyncState(s){
+  syncState = s;
+  const badge = document.getElementById('syncBadge');
+  if(badge){
+    if(s==='on'){ badge.hidden=false; badge.className='sync-badge'; badge.textContent='Delt liste – synk på'; }
+    else if(s==='wait'){ badge.hidden=false; badge.className='sync-badge'; badge.textContent='Kobler til delt liste …'; }
+    else if(s==='err'){ badge.hidden=false; badge.className='sync-badge err'; badge.textContent='Synk-feil'; }
+    else { badge.hidden=true; }
+  }
+  renderSyncUI();
+}
+function renderSyncUI(){
+  const dot = document.getElementById('syncDot');
+  if(!dot) return;
+  const txt = document.getElementById('syncStatusText');
+  const map = {
+    off:['','Ikke tilkoblet'],
+    wait:['wait','Kobler til …'],
+    on:['on','Tilkoblet – synkroniserer i sanntid'],
+    err:['err','Tilkoblingsfeil – sjekk URL, kode og regler']
+  };
+  const [cls,label] = map[syncState] || map.off;
+  dot.className = 'sync-dot'+(cls?(' '+cls):'');
+  txt.textContent = label;
+  const active = syncConf.enabled && syncState!=='off';
+  document.getElementById('connectBtn').hidden = active;
+  document.getElementById('disconnectBtn').hidden = !active;
+  document.getElementById('shareBtn').hidden = !(syncConf.url && syncConf.code);
+  const urlI = document.getElementById('syncUrl'), codeI = document.getElementById('syncCode');
+  if(document.activeElement!==urlI) urlI.value = syncConf.url||'';
+  if(document.activeElement!==codeI) codeI.value = syncConf.code||'';
+}
+
+function makeShareLink(){
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify({u:syncConf.url, c:syncConf.code}))));
+  return location.href.split('#')[0] + '#sync=' + payload;
+}
+async function shareList(){
+  if(!syncConf.url || !syncConf.code){ showToast('Koble til først'); return; }
+  const link = makeShareLink();
+  try{ if(navigator.share){ await navigator.share({title:'Hjemmeoppgaver', text:'Vår delte oppgaveliste', url:link}); return; } }catch(e){ return; }
+  try{ await navigator.clipboard.writeText(link); showToast('Lenke kopiert – send den til den du deler med'); }
+  catch(e){ window.prompt('Kopier og del denne lenken:', link); }
+}
+function parseInvite(){
+  const m = (location.hash||'').match(/sync=([^&]+)/);
+  if(!m) return null;
+  try{ const o = JSON.parse(decodeURIComponent(escape(atob(m[1])))); if(o.u && o.c) return o; }catch(e){}
+  return null;
+}
+
+/* ============================================================
+   Oppstart
+   ============================================================ */
+function seedIfFirstRun(){
+  if(localStorage.getItem(STORE_KEY)!==null) return;
+  // Legg noen eksempler på i morgen + litt historikk, kun første gang.
+  const tm = tomorrowISO();
+  addTask('Gå tur med Charlie','🐕','dog',tm);
+  addTask('Vaske klær','🧺','laundry',tm);
+  const yest = iso(addDays(new Date(),-1));
+  const a = addTask('Støvsuge','🌀','cleaning',yest);
+  const b = addTask('Bade William','🍼','baby',yest);
+  [a,b].forEach(t=>{ if(t){t.done=true;t.doneAt=Date.now()-3600e3;} });
+  save();
+}
+
+renderChips();
+renderCatPicker();
+seedIfFirstRun();
+tasks = load();
+customPresets = loadPresets();
+renderAll();
+
+/* Invitasjon via delt lenke (#sync=…) */
+const invite = parseInvite();
+if(invite){
+  syncConf.url = invite.u; syncConf.code = invite.c; saveSync();
+  const card = document.getElementById('inviteCard');
+  if(card) card.hidden = false;
+  showView('settings');
+}
+/* Gjenoppta synk hvis vi var tilkoblet fra før */
+if(syncConf.enabled && syncConf.url && syncConf.code){
+  connectSync();
+}
+renderSyncUI();
+
+/* Registrer service worker (kun når appen kjøres via http/https, f.eks. GitHub Pages) */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
