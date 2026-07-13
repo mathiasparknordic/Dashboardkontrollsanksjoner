@@ -1,6 +1,6 @@
 /* Enkel service worker: cacher app-skallet slik at appen kan legges til
    på hjem-skjermen og fungere uten nett. */
-const CACHE = 'hjemme-v1';
+const CACHE = 'hjemme-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -32,6 +32,26 @@ self.addEventListener('fetch', (e) => {
   // ellers brytes sanntidsstrømmen (EventSource).
   if (url.origin !== self.location.origin) return;
   if ((req.headers.get('accept') || '').includes('text/event-stream')) return;
+
+  const accept = req.headers.get('accept') || '';
+  const isHTML = req.mode === 'navigate' || accept.includes('text/html');
+
+  if (isHTML) {
+    // HTML: nett først, så nyeste app-versjon vises straks når du er online.
+    // Faller tilbake til cache når du er offline.
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Øvrige app-filer (ikoner, manifest): cache først for fart/offline.
   e.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
