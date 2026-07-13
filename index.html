@@ -365,6 +365,48 @@ input{font-family:inherit;}
 .help code{background:#EFEAF6;border-radius:6px;padding:1px 6px;font-size:12px;word-break:break-all;}
 .help-note{font-size:12px;font-weight:700;color:var(--warning);background:var(--warning-soft);border-radius:8px;padding:8px 10px;margin-top:10px;}
 
+/* Dag-bytter på forsiden */
+.dayswitch{display:flex;gap:8px;margin:14px 0 2px;}
+.dayswitch button{
+  flex:1;height:42px;border-radius:var(--radius-sm);font-size:15px;font-weight:800;
+  background:var(--card);border:1.5px solid var(--border);color:var(--muted);
+  box-shadow:var(--shadow-card);transition:all .18s var(--ease-std);
+}
+.dayswitch button.active{background:var(--custom-ink);border-color:var(--custom-ink);color:#fff;}
+.dayswitch button:active{transform:scale(.97);}
+
+/* Kategori-velger med etiketter (chips) */
+.cat-picker{align-items:center;}
+.cat-opt{
+  display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;
+  border-radius:var(--radius-chip);font-size:13px;font-weight:800;
+  border:2px solid transparent;transition:transform .12s var(--ease-std);
+}
+.cat-opt:active{transform:scale(.95);}
+.cat-opt.sel{border-color:var(--text);}
+.cat-opt-dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 2px rgba(255,255,255,.6) inset;}
+
+/* Redigerbare kategorier i innstillinger */
+.cat-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.cat-row{
+  display:flex;align-items:center;gap:10px;background:var(--card-sunken);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;
+}
+.cat-name-input{
+  flex:1;height:38px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;padding:0 12px;font-size:15px;font-weight:700;color:var(--text);min-width:0;
+}
+.cat-name-input:focus{outline:none;border-color:var(--custom-ink);}
+.color-swatch{
+  position:relative;width:40px;height:40px;flex:0 0 auto;border-radius:11px;
+  border:2px solid var(--border-strong);overflow:hidden;padding:0;
+}
+.color-swatch input[type=color]{
+  position:absolute;top:-6px;left:-6px;width:56px;height:56px;border:none;background:none;padding:0;cursor:pointer;
+}
+.cat-add{margin-top:12px;}
+.day-default button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
+
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important;}
 }
@@ -422,6 +464,11 @@ input{font-family:inherit;}
 
   <!-- Planlagt-visning -->
   <div id="planView">
+    <div class="dayswitch" id="dayswitch">
+      <button data-day="today">I dag</button>
+      <button data-day="tomorrow">I morgen</button>
+    </div>
+
     <div class="section-label">Hurtigvalg – trykk for å legge til</div>
     <div class="chips" id="chips"></div>
 
@@ -464,6 +511,32 @@ input{font-family:inherit;}
           <span class="cp-label">Kategori</span>
         </div>
         <button class="wide-btn" id="addPresetBtn">Legg til hurtigvalg</button>
+      </div>
+    </div>
+
+    <!-- Standard dag -->
+    <div class="settings-card">
+      <div class="settings-title">📅 Standard dag ved oppstart</div>
+      <div class="settings-sub">Velg hvilken dag som vises når du åpner appen. Du kan alltid bytte raskt øverst på forsiden.</div>
+      <div class="segment day-default" role="tablist" style="margin-top:12px;">
+        <button id="defToday">I dag</button>
+        <button id="defTomorrow">I morgen</button>
+      </div>
+    </div>
+
+    <!-- Kategorier -->
+    <div class="settings-card">
+      <div class="settings-title">🎨 Kategorier</div>
+      <div class="settings-sub">Gi kategoriene egne navn og farger, eller lag nye. Fargen brukes på oppgaver, kalenderprikker og hurtigvalg – for alle som deler listen.</div>
+      <div class="cat-list" id="catList"></div>
+      <div class="cat-add">
+        <div class="composer-row">
+          <input type="text" id="newCatName" placeholder="Ny kategori …" maxlength="24" autocomplete="off" />
+          <button type="button" class="color-swatch" id="newCatColorBtn" aria-label="Velg farge">
+            <input type="color" id="newCatColor" value="#E4914C" />
+          </button>
+        </div>
+        <button class="wide-btn" id="addCatBtn">Legg til kategori</button>
       </div>
     </div>
 
@@ -522,16 +595,43 @@ input{font-family:inherit;}
 const STORE_KEY = 'hjemme_oppgaver_v1';
 const PRESET_KEY = 'hjemme_presets_v1';
 const SYNC_KEY = 'hjemme_sync_v1';
+const CAT_KEY = 'hjemme_categories_v1';
+const PREFS_KEY = 'hjemme_prefs_v1';
 const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 const DAYS_FULL = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
 
-const CATEGORIES = {
-  dog:      {fill:'var(--dog)',      ink:'var(--dog-ink)',      label:'Charlie'},
-  baby:     {fill:'var(--baby)',     ink:'var(--baby-ink)',     label:'William'},
-  cleaning: {fill:'var(--cleaning)', ink:'var(--cleaning-ink)', label:'Rengjøring'},
-  laundry:  {fill:'var(--laundry)',  ink:'var(--laundry-ink)',  label:'Klesvask'},
-  custom:   {fill:'var(--custom)',   ink:'var(--custom-ink)',   label:'Annet'}
-};
+/* Kategorier er nå redigerbare (navn + farge) og synkes. Hver kategori har én
+   aksentfarge; den lyse «fill»-fargen utledes automatisk. */
+const DEFAULT_CATEGORIES = [
+  {id:'dog',      label:'Charlie',    color:'#B5651D'},
+  {id:'baby',     label:'William',    color:'#2C6FB5'},
+  {id:'cleaning', label:'Rengjøring', color:'#1E8A5C'},
+  {id:'laundry',  label:'Klesvask',   color:'#7A4FC4'},
+  {id:'custom',   label:'Annet',      color:'#C43D78'}
+];
+
+function normCat(c){
+  return {id:c.id, label:(c.label||'Kategori'), color:(c.color||'#C43D78'), createdAt:c.createdAt||Date.now()};
+}
+function loadCategories(){
+  try{ const a=JSON.parse(localStorage.getItem(CAT_KEY)); if(Array.isArray(a)&&a.length) return a.map(normCat); }catch(e){}
+  return DEFAULT_CATEGORIES.map(normCat);
+}
+function saveCategories(){ try{ localStorage.setItem(CAT_KEY, JSON.stringify(categories)); }catch(e){} }
+
+function lighten(hex, amt){
+  const h=(hex||'#C43D78').replace('#','');
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  if([r,g,b].some(isNaN)) return '#FFD6E8';
+  const mix=(c)=>Math.round(c+(255-c)*amt), to=(c)=>c.toString(16).padStart(2,'0');
+  return `#${to(mix(r))}${to(mix(g))}${to(mix(b))}`;
+}
+/* Returnerer kategori med utledet ink (aksent) + fill (lys bakgrunn). */
+function catById(id){
+  const c = categories.find(x=>x.id===id) || categories.find(x=>x.id==='custom') || categories[0];
+  if(!c) return {id:'custom', label:'Annet', color:'#C43D78', ink:'#C43D78', fill:'#FFD6E8'};
+  return {...c, ink:c.color, fill:lighten(c.color, 0.80)};
+}
 
 const PRESETS = [
   {title:'Gå tur med Charlie', emoji:'🐕', category:'dog'},
@@ -542,10 +642,19 @@ const PRESETS = [
   {title:'Vaske klær',         emoji:'🧺', category:'laundry'}
 ];
 
+let categories = loadCategories();
+let prefs = loadPrefs();
 let tasks = load();
 let customPresets = loadPresets();
 let selectedCat = 'custom';
 let presetCat = 'custom';
+let newCatColor = '#E4914C';
+
+function loadPrefs(){
+  try{ const o=JSON.parse(localStorage.getItem(PREFS_KEY)); if(o&&typeof o==='object') return {defaultDay:(o.defaultDay==='today'?'today':'tomorrow')}; }catch(e){}
+  return {defaultDay:'tomorrow'};
+}
+function savePrefs(){ try{ localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }catch(e){} }
 
 /* Dato-hjelpere (lokale, YYYY-MM-DD) */
 function iso(d){
@@ -557,8 +666,8 @@ function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
 function todayISO(){return iso(new Date());}
 function tomorrowISO(){return iso(addDays(new Date(),1));}
 
-/* Standard = planlegg dagen i forveien → i morgen er forhåndsvalgt */
-let selectedDate = tomorrowISO();
+/* Standard-dag styres av innstilling (i morgen som standard = planlegg i forveien) */
+let selectedDate = (prefs.defaultDay==='today') ? todayISO() : tomorrowISO();
 let viewMonth = parseISO(selectedDate);
 viewMonth.setDate(1);
 
@@ -620,6 +729,40 @@ function deletePreset(id){
   customPresets = customPresets.filter(p=>p.id!==id);
   savePresets();
   syncDelete('presets', id);
+}
+
+/* --- Kategorier (redigerbare) --- */
+function addCategory(label, color){
+  label = (label||'').trim();
+  if(!label) return null;
+  const c = normCat({id:uid(), label, color:color||'#C43D78'});
+  categories.push(c);
+  saveCategories();
+  syncPush('categories', c.id, c);
+  return c;
+}
+function updateCategory(id, patch){
+  const c = categories.find(x=>x.id===id);
+  if(!c) return;
+  if(patch.label!==undefined){ const l=(patch.label||'').trim(); if(l) c.label=l; }
+  if(patch.color!==undefined) c.color = patch.color;
+  saveCategories();
+  syncPush('categories', c.id, c);
+}
+function deleteCategory(id){
+  if(categories.length<=1){ showToast('Du må ha minst én kategori'); return; }
+  const fallback = (categories.find(x=>x.id!==id)||{}).id;
+  const movedTasks = [];
+  tasks.forEach(t=>{ if(t.category===id){ t.category=fallback; t.updatedAt=Date.now(); movedTasks.push(t); } });
+  const movedPresets = [];
+  customPresets.forEach(p=>{ if(p.category===id){ p.category=fallback; movedPresets.push(p); } });
+  categories = categories.filter(x=>x.id!==id);
+  if(selectedCat===id) selectedCat=fallback;
+  if(presetCat===id) presetCat=fallback;
+  saveCategories(); save(); savePresets();
+  syncDelete('categories', id);
+  movedTasks.forEach(t=> syncPush('tasks', t.id, t));
+  movedPresets.forEach(p=> syncPush('presets', p.id, p));
 }
 
 /* ============================================================
@@ -711,7 +854,7 @@ function renderCalendar(){
       cats.forEach(c=>{
         const dot=document.createElement('span');
         dot.className='cal-dot';
-        dot.style.background = dt.every(t=>t.done) ? 'var(--success)' : CATEGORIES[c].ink;
+        dot.style.background = dt.every(t=>t.done) ? 'var(--success)' : catById(c).ink;
         dots.appendChild(dot);
       });
       cell.appendChild(dots);
@@ -728,7 +871,7 @@ function renderChips(){
   const wrap = document.getElementById('chips');
   wrap.innerHTML = '';
   PRESETS.concat(customPresets).forEach(p=>{
-    const cat = CATEGORIES[p.category];
+    const cat = catById(p.category);
     const b = document.createElement('button');
     b.className = 'chip';
     b.type='button';
@@ -748,16 +891,18 @@ function renderChips(){
 function buildCatPicker(wrapId, current, onPick){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
-  wrap.querySelectorAll('.cat-dot').forEach(n=>n.remove());
-  Object.entries(CATEGORIES).forEach(([key,c])=>{
-    const dot = document.createElement('button');
-    dot.type='button';
-    dot.className = 'cat-dot'+(key===current?' sel':'');
-    dot.style.background = c.ink;
-    dot.title = c.label;
-    dot.setAttribute('aria-label', c.label);
-    dot.addEventListener('click',()=> onPick(key));
-    wrap.appendChild(dot);
+  wrap.querySelectorAll('.cat-opt').forEach(n=>n.remove());
+  categories.forEach(c=>{
+    const cat = catById(c.id);
+    const b = document.createElement('button');
+    b.type='button';
+    b.className = 'cat-opt'+(c.id===current?' sel':'');
+    b.style.background = cat.fill;
+    b.style.color = cat.ink;
+    b.innerHTML = `<span class="cat-opt-dot" style="background:${cat.ink}"></span>${cat.label}`;
+    b.setAttribute('aria-label', cat.label);
+    b.addEventListener('click',()=> onPick(c.id));
+    wrap.appendChild(b);
   });
 }
 function renderCatPicker(){ buildCatPicker('catPicker', selectedCat, k=>{ selectedCat=k; renderCatPicker(); }); }
@@ -768,7 +913,7 @@ function checkSvg(){
 }
 
 function taskNode(t, readOnly){
-  const cat = CATEGORIES[t.category] || CATEGORIES.custom;
+  const cat = catById(t.category);
   const el = document.createElement('div');
   el.className = 'task'+(t.done?' done':'');
   el.style.borderLeftColor = cat.ink;
@@ -883,7 +1028,7 @@ function renderAll(){
   renderHeader();
   renderCalendar();
   renderChips();
-  if(currentView==='plan'){ renderTaskList(); }
+  if(currentView==='plan'){ renderDaySwitch(); renderCatPicker(); renderTaskList(); }
   else if(currentView==='hist'){ renderHistory(); }
 }
 
@@ -898,7 +1043,7 @@ function renderSettings(){
     list.appendChild(e);
   }else{
     customPresets.forEach(p=>{
-      const cat = CATEGORIES[p.category]||CATEGORIES.custom;
+      const cat = catById(p.category);
       const row=document.createElement('div');
       row.className='preset-row';
       const em=document.createElement('div');
@@ -913,12 +1058,74 @@ function renderSettings(){
     });
   }
   renderPresetCatPicker();
+  renderCategoriesList();
+  // Standard-dag segment
+  document.getElementById('defToday').classList.toggle('active', prefs.defaultDay==='today');
+  document.getElementById('defTomorrow').classList.toggle('active', prefs.defaultDay==='tomorrow');
   renderSyncUI();
+}
+
+function renderCategoriesList(){
+  const list = document.getElementById('catList');
+  if(!list) return;
+  list.innerHTML = '';
+  categories.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+
+    const swatch = document.createElement('button');
+    swatch.type='button'; swatch.className='color-swatch'; swatch.setAttribute('aria-label','Endre farge');
+    const color = document.createElement('input');
+    color.type='color'; color.value=c.color;
+    color.addEventListener('input',()=>{ updateCategory(c.id,{color:color.value}); renderAll(); });
+    swatch.appendChild(color);
+
+    const name = document.createElement('input');
+    name.type='text'; name.className='cat-name-input'; name.value=c.label; name.maxLength=24;
+    name.addEventListener('change',()=>{ updateCategory(c.id,{label:name.value}); renderChips(); });
+
+    const del = document.createElement('button');
+    del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label','Slett kategori');
+    del.addEventListener('click',()=>{ deleteCategory(c.id); renderSettings(); renderAll(); });
+
+    row.append(swatch, name, del);
+    list.appendChild(row);
+  });
+}
+
+function renderDaySwitch(){
+  const wrap = document.getElementById('dayswitch');
+  if(!wrap) return;
+  const t = todayISO(), tm = tomorrowISO();
+  wrap.querySelector('[data-day="today"]').classList.toggle('active', selectedDate===t);
+  wrap.querySelector('[data-day="tomorrow"]').classList.toggle('active', selectedDate===tm);
 }
 
 /* ============================================================
    Interaksjoner
    ============================================================ */
+// Rask dag-bytter på forsiden
+document.querySelectorAll('#dayswitch button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    selectedDate = btn.dataset.day==='today' ? todayISO() : tomorrowISO();
+    viewMonth = parseISO(selectedDate); viewMonth.setDate(1);
+    renderAll();
+  });
+});
+// Standard-dag innstilling
+document.getElementById('defToday').addEventListener('click',()=>{ prefs.defaultDay='today'; savePrefs(); renderSettings(); });
+document.getElementById('defTomorrow').addEventListener('click',()=>{ prefs.defaultDay='tomorrow'; savePrefs(); renderSettings(); });
+// Legg til kategori
+document.getElementById('newCatColor').addEventListener('input',(e)=>{ newCatColor = e.target.value; });
+document.getElementById('addCatBtn').addEventListener('click',()=>{
+  const name = document.getElementById('newCatName').value.trim();
+  if(!name){ showToast('Skriv et navn'); return; }
+  addCategory(name, document.getElementById('newCatColor').value || newCatColor);
+  document.getElementById('newCatName').value='';
+  renderSettings(); renderAll();
+  showToast('Kategori lagt til');
+});
+
 document.getElementById('prevMonth').addEventListener('click',()=>{
   viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar();
 });
@@ -1065,13 +1272,16 @@ function normalizePreset(id, d){
 }
 
 function ingestMap(coll, map){
-  const arr = Object.entries(map||{}).map(([id,d])=> coll==='tasks'?normalizeTask(id,d):normalizePreset(id,d));
-  if(coll==='tasks') tasks = arr; else customPresets = arr;
+  const ent = Object.entries(map||{});
+  if(coll==='tasks') tasks = ent.map(([id,d])=>normalizeTask(id,d));
+  else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
+  else customPresets = ent.map(([id,d])=>normalizePreset(id,d));
 }
 function replaceFromDoc(doc){
   doc = doc || {};
-  ingestMap('tasks', doc.tasks||{});
-  ingestMap('presets', doc.presets||{});
+  if(doc.tasks!==undefined) ingestMap('tasks', doc.tasks||{});
+  if(doc.presets!==undefined) ingestMap('presets', doc.presets||{});
+  if(doc.categories!==undefined) ingestMap('categories', doc.categories||{});
 }
 function unionRemote(remote){
   remote = remote || {};
@@ -1084,12 +1294,21 @@ function unionRemote(remote){
   const pById = {}; customPresets.forEach(p=>pById[p.id]=p);
   Object.entries(remote.presets||{}).forEach(([id,d])=>{ pById[id]=normalizePreset(id,d); });
   customPresets = Object.values(pById);
+  // Kategorier: remote vinner for delte id-er, behold lokale-only
+  const cById = {}; categories.forEach(c=>cById[c.id]=c);
+  Object.entries(remote.categories||{}).forEach(([id,d])=>{ cById[id]=normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}); });
+  categories = Object.values(cById);
 }
 function upsertRemote(coll, id, data){
   if(coll==='tasks'){
     if(data==null){ tasks = tasks.filter(t=>t.id!==id); return; }
     const t = normalizeTask(id,data), i = tasks.findIndex(x=>x.id===id);
     if(i>=0) tasks[i]=t; else tasks.push(t);
+  }else if(coll==='categories'){
+    if(data==null){ categories = categories.filter(c=>c.id!==id); return; }
+    const c = normCat({id, label:data.label, color:data.color, createdAt:data.createdAt});
+    const i = categories.findIndex(x=>x.id===id);
+    if(i>=0) categories[i]=c; else categories.push(c);
   }else{
     if(data==null){ customPresets = customPresets.filter(p=>p.id!==id); return; }
     const p = normalizePreset(id,data), i = customPresets.findIndex(x=>x.id===id);
@@ -1100,7 +1319,7 @@ function applyPut(path, data){
   if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
   const seg = path.replace(/^\//,'').split('/');
   const coll = seg[0], id = seg[1];
-  if(coll!=='tasks' && coll!=='presets') return;
+  if(coll!=='tasks' && coll!=='presets' && coll!=='categories') return;
   if(id) upsertRemote(coll, id, data);
   else ingestMap(coll, data||{});
 }
@@ -1117,6 +1336,7 @@ async function pushAllLocal(){
   const jobs = [];
   tasks.forEach(t=> jobs.push(rawPut('tasks/'+t.id, t)));
   customPresets.forEach(p=> jobs.push(rawPut('presets/'+p.id, p)));
+  categories.forEach(c=> jobs.push(rawPut('categories/'+c.id, c)));
   await Promise.allSettled(jobs);
 }
 function syncPush(coll, id, obj){
@@ -1138,7 +1358,7 @@ function onStream(raw, isPatch){
     unionRemote(p.data || {});
     pendingMerge = false;
     applyingRemote = false;
-    save(); savePresets();
+    save(); savePresets(); saveCategories();
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
     setSyncState('on');
     renderAll();
@@ -1148,7 +1368,7 @@ function onStream(raw, isPatch){
   if(isPatch) applyPatch(path, p.data);
   else applyPut(path, p.data);
   applyingRemote = false;
-  save(); savePresets();
+  save(); savePresets(); saveCategories();
   setSyncState('on');
   renderAll();
 }
@@ -1254,6 +1474,7 @@ renderCatPicker();
 seedIfFirstRun();
 tasks = load();
 customPresets = loadPresets();
+categories = loadCategories();
 renderAll();
 
 /* Invitasjon via delt lenke (#sync=…) */

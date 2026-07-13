@@ -7,7 +7,9 @@ mellom flere (f.eks. deg og partneren din).
 
 ## Funksjoner
 
-- **Planlegg dagen i forveien** – appen åpner på **i morgen** som standard.
+- **Planlegg dagen i forveien** – appen åpner på **i morgen** som standard, men
+  du kan bytte til **i dag** med ett trykk på forsiden, eller endre hva som
+  vises ved oppstart i innstillingene.
 - **Kalender** med prikker på dager som har oppgaver (fargekodet per kategori,
   grønn når alt er gjort). Trykk en dato for å planlegge akkurat den dagen.
 - **Hurtigvalg** for de vanligste oppgavene:
@@ -15,6 +17,8 @@ mellom flere (f.eks. deg og partneren din).
   🍼 Bade William · 🛁 Bade Charlie · 🧺 Vaske klær
 - **Egendefinert oppgave** med kategori-velger.
 - **Egne hurtigvalg** (⚙️ Innstillinger) som deles med alle på lista.
+- **Redigerbare kategorier** (⚙️ Innstillinger) – gi dem egne navn og farger,
+  eller lag nye. Fargevelgeren viser navnene tydelig.
 - **Historikk** over alt som er gjort, gruppert per dag med tidspunkt.
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database
   (REST + `EventSource`, ingen SDK/CDN).
