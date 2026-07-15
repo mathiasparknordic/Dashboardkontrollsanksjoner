@@ -507,7 +507,7 @@ input{font-family:inherit;}
 
     <div class="composer">
       <div class="composer-row">
-        <input type="text" id="shopInput" placeholder="Legg til vare … (skill flere med komma)" maxlength="60"
+        <input type="text" id="shopInput" placeholder="Legg til vare … (skill flere med komma)" maxlength="200"
                autocomplete="off" enterkeyhint="done" />
         <button class="add-btn" id="shopAddBtn" aria-label="Legg til vare">+</button>
       </div>
@@ -784,7 +784,8 @@ const SHOP_PRESETS = [
   {name:'Kaffe',emoji:'☕'},{name:'Dopapir',emoji:'🧻'},{name:'Pasta',emoji:'🍝'}
 ];
 const SHOP_EMOJI = [
-  [/melk|fløte|rømme/,'🥛'],[/brød|rundstyk|baguett|bolle/,'🍞'],[/egg/,'🥚'],[/ost/,'🧀'],
+  [/melk|fløte|rømme/,'🥛'],[/brød|rundstyk|baguett|bolle|loff|knekkebr/,'🍞'],[/egg/,'🥚'],[/ost/,'🧀'],
+  [/persille|dill|basilikum|krydder|urter/,'🌿'],[/pakke|hente|hent /,'📦'],[/jordbær/,'🍓'],
   [/smør|margarin/,'🧈'],[/banan/,'🍌'],[/eple/,'🍏'],[/tomat/,'🍅'],[/potet/,'🥔'],
   [/gulrot|grønnsak/,'🥕'],[/løk/,'🧅'],[/salat/,'🥗'],[/kyllling|kylling/,'🍗'],
   [/kjøtt|biff|deig/,'🥩'],[/laks|fisk/,'🐟'],[/bacon|pølse|skinke/,'🥓'],[/kaffe/,'☕'],
@@ -1719,6 +1720,21 @@ if(syncConf.enabled && syncConf.url && syncConf.code){
   connectSync();
 }
 renderSyncUI();
+
+/* Importer handleliste via lenke: #list=vare1,vare2,… (URL-kodet) */
+(function importListFromHash(){
+  const m = (location.hash||'').match(/list=([^&]+)/);
+  if(!m) return;
+  let names = [];
+  try{ names = decodeURIComponent(m[1]).split(',').map(s=>s.trim()).filter(Boolean); }catch(e){ return; }
+  if(!names.length) return;
+  let added = 0;
+  names.forEach(n=>{ if(addShopItem(n)) added++; });
+  // Fjern hash så en ny innlasting ikke legger til på nytt
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+  showView('shop');
+  showToast(added ? `La til ${added} ${added===1?'vare':'varer'} i handlelista 🛒` : 'Varene lå allerede i lista');
+})();
 
 /* Registrer service worker (kun når appen kjøres via http/https, f.eks. GitHub Pages) */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
