@@ -156,6 +156,12 @@ input{font-family:inherit;}
   transition:all .2s var(--ease-std);
 }
 .segment button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
+.segment-3 button{padding:10px 4px;font-size:12.5px;position:relative;white-space:nowrap;}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:17px;height:17px;padding:0 4px;margin-left:5px;border-radius:999px;
+  background:var(--custom-ink);color:#fff;font-size:10px;font-weight:800;vertical-align:middle;
+}
 
 /* ---------- Hurtigvalg ---------- */
 .section-label{
@@ -457,8 +463,9 @@ input{font-family:inherit;}
   </section>
 
   <!-- Visningsvalg -->
-  <div class="segment" role="tablist">
+  <div class="segment segment-3" role="tablist">
     <button id="tabPlan" class="active" role="tab">📋 Planlagt</button>
+    <button id="tabShop" role="tab">🛒 Handleliste<span class="tab-badge" id="shopBadge" hidden></span></button>
     <button id="tabHist" role="tab">🗂️ Historikk</button>
   </div>
 
@@ -491,6 +498,24 @@ input{font-family:inherit;}
   <div id="histView" style="display:none;">
     <div class="section-label">Fullførte oppgaver</div>
     <div class="list" id="histList"></div>
+  </div>
+
+  <!-- Handleliste-visning -->
+  <div id="shopView" style="display:none;">
+    <div class="section-label">Hurtigvalg – trykk for å legge til</div>
+    <div class="chips" id="shopChips"></div>
+
+    <div class="composer">
+      <div class="composer-row">
+        <input type="text" id="shopInput" placeholder="Legg til vare … (skill flere med komma)" maxlength="60"
+               autocomplete="off" enterkeyhint="done" />
+        <button class="add-btn" id="shopAddBtn" aria-label="Legg til vare">+</button>
+      </div>
+    </div>
+
+    <div class="section-label" id="shopListLabel">Handleliste</div>
+    <div class="list" id="shopList"></div>
+    <button class="wide-btn ghost" id="clearCheckedBtn" hidden>🧹 Fjern avhukede</button>
   </div>
 
   <!-- Innstillinger-visning -->
@@ -597,6 +622,7 @@ const PRESET_KEY = 'hjemme_presets_v1';
 const SYNC_KEY = 'hjemme_sync_v1';
 const CAT_KEY = 'hjemme_categories_v1';
 const PREFS_KEY = 'hjemme_prefs_v1';
+const SHOP_KEY = 'hjemme_handleliste_v1';
 const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 const DAYS_FULL = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
 
@@ -646,6 +672,7 @@ let categories = loadCategories();
 let prefs = loadPrefs();
 let tasks = load();
 let customPresets = loadPresets();
+let shop = loadShop();
 let selectedCat = 'custom';
 let presetCat = 'custom';
 let newCatColor = '#E4914C';
@@ -749,6 +776,71 @@ function updateCategory(id, patch){
   saveCategories();
   syncPush('categories', c.id, c);
 }
+/* --- Handleliste --- */
+const SHOP_PRESETS = [
+  {name:'Melk',emoji:'🥛'},{name:'Brød',emoji:'🍞'},{name:'Egg',emoji:'🥚'},
+  {name:'Ost',emoji:'🧀'},{name:'Smør',emoji:'🧈'},{name:'Bananer',emoji:'🍌'},
+  {name:'Tomater',emoji:'🍅'},{name:'Poteter',emoji:'🥔'},{name:'Kylling',emoji:'🍗'},
+  {name:'Kaffe',emoji:'☕'},{name:'Dopapir',emoji:'🧻'},{name:'Pasta',emoji:'🍝'}
+];
+const SHOP_EMOJI = [
+  [/melk|fløte|rømme/,'🥛'],[/brød|rundstyk|baguett|bolle/,'🍞'],[/egg/,'🥚'],[/ost/,'🧀'],
+  [/smør|margarin/,'🧈'],[/banan/,'🍌'],[/eple/,'🍏'],[/tomat/,'🍅'],[/potet/,'🥔'],
+  [/gulrot|grønnsak/,'🥕'],[/løk/,'🧅'],[/salat/,'🥗'],[/kyllling|kylling/,'🍗'],
+  [/kjøtt|biff|deig/,'🥩'],[/laks|fisk/,'🐟'],[/bacon|pølse|skinke/,'🥓'],[/kaffe/,'☕'],
+  [/te\b/,'🍵'],[/pasta|spagetti/,'🍝'],[/ris\b/,'🍚'],[/pizza/,'🍕'],[/is\b|iskrem/,'🍨'],
+  [/dopapir|papir|tørk/,'🧻'],[/såpe|vask/,'🧼'],[/øl|pils/,'🍺'],[/vin/,'🍷'],
+  [/vann/,'💧'],[/juice|saft/,'🧃'],[/sjokolade|godteri|snacks|chips/,'🍫'],[/frukt|bær/,'🍓']
+];
+function guessEmoji(name){
+  const n = (name||'').toLowerCase();
+  for(const [re,em] of SHOP_EMOJI){ if(re.test(n)) return em; }
+  return '🛒';
+}
+function loadShop(){
+  try{ const a=JSON.parse(localStorage.getItem(SHOP_KEY)); if(Array.isArray(a)) return a; }catch(e){}
+  return [];
+}
+function saveShop(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(shop)); }catch(e){} }
+function normalizeShop(id, d){
+  d = d || {};
+  return {id, title:d.title||'', emoji:d.emoji||'🛒', done:!!d.done, doneAt:d.doneAt||null,
+          createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+function addShopItem(name, emoji){
+  name = (name||'').trim();
+  if(!name) return null;
+  // Dedupe mot varer som ikke er huket av (case-insensitivt)
+  const existing = shop.find(i=>!i.done && i.title.toLowerCase()===name.toLowerCase());
+  if(existing) return existing;
+  const now = Date.now();
+  const it = {id:uid(), title:name, emoji:emoji||guessEmoji(name), done:false, doneAt:null, createdAt:now, updatedAt:now};
+  shop.push(it);
+  saveShop();
+  syncPush('shop', it.id, it);
+  return it;
+}
+function toggleShopItem(id){
+  const it = shop.find(x=>x.id===id);
+  if(!it) return;
+  it.done = !it.done;
+  it.doneAt = it.done ? Date.now() : null;
+  it.updatedAt = Date.now();
+  saveShop();
+  syncPush('shop', it.id, it);
+}
+function deleteShopItem(id){
+  shop = shop.filter(x=>x.id!==id);
+  saveShop();
+  syncDelete('shop', id);
+}
+function clearCheckedShop(){
+  const done = shop.filter(i=>i.done);
+  shop = shop.filter(i=>!i.done);
+  saveShop();
+  done.forEach(i=> syncDelete('shop', i.id));
+}
+
 function deleteCategory(id){
   if(categories.length<=1){ showToast('Du må ha minst én kategori'); return; }
   const fallback = (categories.find(x=>x.id!==id)||{}).id;
@@ -1023,8 +1115,16 @@ function emptyNode(emoji,title,sub){
 }
 
 let currentView = 'plan';
+function updateShopBadge(){
+  const badge = document.getElementById('shopBadge');
+  if(!badge) return;
+  const remaining = shop.filter(i=>!i.done).length;
+  if(remaining>0){ badge.hidden=false; badge.textContent=String(remaining); } else { badge.hidden=true; }
+}
 function renderAll(){
+  updateShopBadge();
   if(currentView==='settings'){ renderSettings(); return; }
+  if(currentView==='shop'){ renderShop(); return; }
   renderHeader();
   renderCalendar();
   renderChips();
@@ -1101,6 +1201,99 @@ function renderDaySwitch(){
   wrap.querySelector('[data-day="tomorrow"]').classList.toggle('active', selectedDate===tm);
 }
 
+/* --- Handleliste-rendring --- */
+function renderShopChips(){
+  const wrap = document.getElementById('shopChips');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  SHOP_PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type='button';
+    b.style.background = 'var(--card-sunken)'; b.style.color = 'var(--text)';
+    b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.name}`;
+    b.addEventListener('click',()=>{
+      b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+      addShopItem(p.name, p.emoji);
+      renderShop();
+      try{navigator.vibrate && navigator.vibrate(12);}catch(e){}
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function shopNode(item){
+  const el = document.createElement('div');
+  el.className = 'task'+(item.done?' done':'');
+  el.style.borderLeft = 'none';
+  el.dataset.id = item.id;
+
+  const check = document.createElement('button');
+  check.type='button';
+  check.className = 'check'+(item.done?' on':'');
+  check.innerHTML = checkSvg();
+  check.setAttribute('aria-label', item.done?'Angre':'Huk av');
+  check.addEventListener('click',(ev)=>{
+    const wasDone = item.done;
+    toggleShopItem(item.id);
+    if(!wasDone){
+      try{navigator.vibrate && navigator.vibrate(15);}catch(e){}
+      const items = shop;
+      if(items.length && items.every(x=>x.done)){ burstConfetti(ev.clientX, ev.clientY); showToast('Alt i kurven! 🎉'); }
+    }
+    renderShop();
+  });
+
+  const emoji = document.createElement('div');
+  emoji.className='task-emoji';
+  emoji.style.background = 'var(--card-sunken)';
+  emoji.textContent = item.emoji || '🛒';
+
+  const body = document.createElement('div');
+  body.className='task-body';
+  const title = document.createElement('div');
+  title.className='task-title';
+  title.textContent = item.title;
+  body.appendChild(title);
+
+  const del = document.createElement('button');
+  del.type='button'; del.className='task-del'; del.innerHTML='🗑';
+  del.setAttribute('aria-label','Slett vare');
+  del.addEventListener('click',()=>{
+    el.classList.add('removing');
+    setTimeout(()=>{ deleteShopItem(item.id); renderShop(); }, 200);
+  });
+
+  el.append(check, emoji, body, del);
+  return el;
+}
+
+function renderShop(){
+  const list = document.getElementById('shopList');
+  if(!list) return;
+  list.innerHTML='';
+  const items = shop.slice().sort((a,b)=> (a.done-b.done) || (a.createdAt-b.createdAt));
+  const remaining = items.filter(i=>!i.done).length;
+  const doneCount = items.filter(i=>i.done).length;
+
+  const label = document.getElementById('shopListLabel');
+  label.textContent = items.length ? `Handleliste – ${remaining} av ${items.length} i kurven` : 'Handleliste';
+
+  // Oppdater fane-merket (antall igjen å kjøpe)
+  const badge = document.getElementById('shopBadge');
+  if(badge){ if(remaining>0){ badge.hidden=false; badge.textContent=String(remaining); } else { badge.hidden=true; } }
+
+  if(!items.length){
+    list.appendChild(emptyNode('🛒','Handlelisten er tom','Trykk et hurtigvalg, eller skriv en vare. Den som handler ser den med en gang.'));
+  }else{
+    items.forEach(it=> list.appendChild(shopNode(it)));
+  }
+  const clearBtn = document.getElementById('clearCheckedBtn');
+  if(clearBtn){
+    clearBtn.hidden = doneCount===0;
+    clearBtn.textContent = `🧹 Fjern avhukede (${doneCount})`;
+  }
+}
+
 /* ============================================================
    Interaksjoner
    ============================================================ */
@@ -1151,18 +1344,38 @@ document.getElementById('customInput').addEventListener('keydown',(e)=>{
 function showView(v){
   currentView = v;
   const isSettings = v==='settings';
+  const hideCal = isSettings || v==='shop';   // kalender er ikke relevant for handleliste
   document.getElementById('settingsView').style.display = isSettings?'':'none';
   document.querySelector('.segment').style.display = isSettings?'none':'';
-  document.querySelector('.calendar').style.display = isSettings?'none':'';
+  document.querySelector('.calendar').style.display = hideCal?'none':'';
   document.getElementById('planView').style.display = (v==='plan')?'':'none';
   document.getElementById('histView').style.display = (v==='hist')?'':'none';
+  document.getElementById('shopView').style.display = (v==='shop')?'':'none';
   document.getElementById('tabPlan').classList.toggle('active', v==='plan');
   document.getElementById('tabHist').classList.toggle('active', v==='hist');
+  document.getElementById('tabShop').classList.toggle('active', v==='shop');
   renderAll();
   window.scrollTo(0,0);
 }
 document.getElementById('tabPlan').addEventListener('click',()=>showView('plan'));
 document.getElementById('tabHist').addEventListener('click',()=>showView('hist'));
+document.getElementById('tabShop').addEventListener('click',()=>showView('shop'));
+
+/* Handleliste-interaksjoner */
+function submitShop(){
+  const input = document.getElementById('shopInput');
+  const raw = input.value.trim();
+  if(!raw) return;
+  raw.split(',').map(s=>s.trim()).filter(Boolean).forEach(name=> addShopItem(name));
+  input.value='';
+  input.focus();               // hold tastaturet oppe for rask inntasting
+  renderShop();
+}
+document.getElementById('shopAddBtn').addEventListener('click', submitShop);
+document.getElementById('shopInput').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); submitShop(); }
+});
+document.getElementById('clearCheckedBtn').addEventListener('click',()=>{ clearCheckedShop(); renderShop(); });
 document.getElementById('settingsBtn').addEventListener('click',()=>showView('settings'));
 document.getElementById('backBtn').addEventListener('click',()=>showView('plan'));
 
@@ -1275,6 +1488,7 @@ function ingestMap(coll, map){
   const ent = Object.entries(map||{});
   if(coll==='tasks') tasks = ent.map(([id,d])=>normalizeTask(id,d));
   else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
+  else if(coll==='shop') shop = ent.map(([id,d])=>normalizeShop(id,d));
   else customPresets = ent.map(([id,d])=>normalizePreset(id,d));
 }
 function replaceFromDoc(doc){
@@ -1282,6 +1496,7 @@ function replaceFromDoc(doc){
   if(doc.tasks!==undefined) ingestMap('tasks', doc.tasks||{});
   if(doc.presets!==undefined) ingestMap('presets', doc.presets||{});
   if(doc.categories!==undefined) ingestMap('categories', doc.categories||{});
+  if(doc.shop!==undefined) ingestMap('shop', doc.shop||{});
 }
 function unionRemote(remote){
   remote = remote || {};
@@ -1298,6 +1513,13 @@ function unionRemote(remote){
   const cById = {}; categories.forEach(c=>cById[c.id]=c);
   Object.entries(remote.categories||{}).forEach(([id,d])=>{ cById[id]=normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}); });
   categories = Object.values(cById);
+  // Handleliste: nyeste vinner per id
+  const sById = {}; shop.forEach(i=>sById[i.id]=i);
+  Object.entries(remote.shop||{}).forEach(([id,d])=>{
+    const r = normalizeShop(id,d), l = sById[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) sById[id]=r;
+  });
+  shop = Object.values(sById);
 }
 function upsertRemote(coll, id, data){
   if(coll==='tasks'){
@@ -1309,6 +1531,10 @@ function upsertRemote(coll, id, data){
     const c = normCat({id, label:data.label, color:data.color, createdAt:data.createdAt});
     const i = categories.findIndex(x=>x.id===id);
     if(i>=0) categories[i]=c; else categories.push(c);
+  }else if(coll==='shop'){
+    if(data==null){ shop = shop.filter(s=>s.id!==id); return; }
+    const it = normalizeShop(id,data), i = shop.findIndex(x=>x.id===id);
+    if(i>=0) shop[i]=it; else shop.push(it);
   }else{
     if(data==null){ customPresets = customPresets.filter(p=>p.id!==id); return; }
     const p = normalizePreset(id,data), i = customPresets.findIndex(x=>x.id===id);
@@ -1319,7 +1545,7 @@ function applyPut(path, data){
   if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
   const seg = path.replace(/^\//,'').split('/');
   const coll = seg[0], id = seg[1];
-  if(coll!=='tasks' && coll!=='presets' && coll!=='categories') return;
+  if(coll!=='tasks' && coll!=='presets' && coll!=='categories' && coll!=='shop') return;
   if(id) upsertRemote(coll, id, data);
   else ingestMap(coll, data||{});
 }
@@ -1337,6 +1563,7 @@ async function pushAllLocal(){
   tasks.forEach(t=> jobs.push(rawPut('tasks/'+t.id, t)));
   customPresets.forEach(p=> jobs.push(rawPut('presets/'+p.id, p)));
   categories.forEach(c=> jobs.push(rawPut('categories/'+c.id, c)));
+  shop.forEach(i=> jobs.push(rawPut('shop/'+i.id, i)));
   await Promise.allSettled(jobs);
 }
 function syncPush(coll, id, obj){
@@ -1358,7 +1585,7 @@ function onStream(raw, isPatch){
     unionRemote(p.data || {});
     pendingMerge = false;
     applyingRemote = false;
-    save(); savePresets(); saveCategories();
+    save(); savePresets(); saveCategories(); saveShop();
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
     setSyncState('on');
     renderAll();
@@ -1368,7 +1595,7 @@ function onStream(raw, isPatch){
   if(isPatch) applyPatch(path, p.data);
   else applyPut(path, p.data);
   applyingRemote = false;
-  save(); savePresets(); saveCategories();
+  save(); savePresets(); saveCategories(); saveShop();
   setSyncState('on');
   renderAll();
 }
@@ -1471,10 +1698,12 @@ function seedIfFirstRun(){
 
 renderChips();
 renderCatPicker();
+renderShopChips();
 seedIfFirstRun();
 tasks = load();
 customPresets = loadPresets();
 categories = loadCategories();
+shop = loadShop();
 renderAll();
 
 /* Invitasjon via delt lenke (#sync=…) */

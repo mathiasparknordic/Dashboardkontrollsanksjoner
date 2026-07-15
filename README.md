@@ -19,6 +19,10 @@ mellom flere (f.eks. deg og partneren din).
 - **Egne hurtigvalg** (⚙️ Innstillinger) som deles med alle på lista.
 - **Redigerbare kategorier** (⚙️ Innstillinger) – gi dem egne navn og farger,
   eller lag nye. Fargevelgeren viser navnene tydelig.
+- **Handleliste** (🛒-fanen) – en delt liste der den ene legger til varer
+  hjemmefra og den andre krysser dem av i butikken. Hurtigvalg for vanlige
+  varer, rask inntasting (skill flere med komma), auto-emoji, avhukede varer
+  synker ned, og «Fjern avhukede» rydder etter handleturen. Synkes i sanntid.
 - **Historikk** over alt som er gjort, gruppert per dag med tidspunkt.
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database
   (REST + `EventSource`, ingen SDK/CDN).
