@@ -413,6 +413,42 @@ input{font-family:inherit;}
 .cat-add{margin-top:12px;}
 .day-default button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
 
+/* ---------- Rediger-oppgave-ark ---------- */
+.task.tappable{cursor:pointer;}
+.task.tappable:active{transform:scale(.994);}
+#sheetBackdrop{
+  position:fixed;inset:0;background:rgba(43,42,61,.34);
+  opacity:0;pointer-events:none;transition:opacity .26s var(--ease-std);z-index:60;
+}
+#sheetBackdrop.show{opacity:1;pointer-events:auto;}
+#editSheet{
+  position:fixed;left:50%;bottom:0;width:100%;max-width:520px;
+  transform:translateX(-50%) translateY(110%);
+  background:var(--card);border-radius:22px 22px 0 0;
+  box-shadow:0 -8px 30px rgba(43,42,61,.18);z-index:61;
+  padding:6px 18px calc(env(safe-area-inset-bottom) + 18px);
+  transition:transform .30s var(--ease-pop);will-change:transform;
+}
+#editSheet.show{transform:translateX(-50%) translateY(0);}
+.sheet-grab{width:40px;height:5px;border-radius:999px;background:var(--border-strong);margin:8px auto 10px;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;}
+.sheet-head h2{font-size:18px;font-weight:800;margin:0;}
+.sheet-del{color:var(--danger);font-size:14px;font-weight:800;padding:6px 8px;border-radius:8px;transition:transform .12s var(--ease-std);}
+.sheet-del:active{transform:scale(.94);}
+.done-chip{display:inline-block;background:var(--success-soft);color:#1E8A5C;font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;margin:8px 0 2px;}
+.date-quick{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;}
+.date-quick button{
+  height:38px;padding:0 14px;border-radius:var(--radius-chip);font-size:14px;font-weight:800;
+  background:var(--card-sunken);color:var(--text);border:2px solid transparent;
+  transition:transform .12s var(--ease-std);
+}
+.date-quick button:active{transform:scale(.95);}
+.date-quick button.q-primary{background:var(--custom);color:var(--custom-ink);}
+.date-quick button.sel{border-color:var(--text);}
+.sheet-actions{display:flex;gap:10px;margin-top:20px;}
+.sheet-actions .wide-btn{flex:1;margin-top:0;}
+.sheet-actions .wide-btn:last-child{flex:1.3;}
+
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important;}
 }
@@ -612,6 +648,32 @@ input{font-family:inherit;}
 
 <div class="toast" id="toast"></div>
 <div id="confetti"></div>
+
+<!-- Rediger-oppgave-ark (bunnark) -->
+<div id="sheetBackdrop"></div>
+<div id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editSheetTitle">
+  <div class="sheet-grab" id="sheetGrab"></div>
+  <div class="sheet-head">
+    <h2 id="editSheetTitle">Rediger oppgave</h2>
+    <button type="button" class="sheet-del" id="editDeleteBtn">Slett</button>
+  </div>
+  <div class="done-chip" id="editDoneChip" hidden>✓ Fullført</div>
+
+  <label class="field-label">Dato</label>
+  <div class="date-quick" id="dateQuick"></div>
+  <input type="date" class="field-input" id="editDate" />
+
+  <label class="field-label" for="editTitle">Tittel</label>
+  <input type="text" class="field-input" id="editTitle" maxlength="80" enterkeyhint="done" autocomplete="off" />
+
+  <label class="field-label">Kategori</label>
+  <div class="cat-picker" id="editCatPicker"></div>
+
+  <div class="sheet-actions">
+    <button type="button" class="wide-btn ghost" id="editCancelBtn">Avbryt</button>
+    <button type="button" class="wide-btn" id="editSaveBtn">Lagre</button>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -1060,6 +1122,15 @@ function taskNode(t, readOnly){
   el.appendChild(body);
 
   if(!readOnly){
+    // Trykk på kortet (utenom avkryssing/sletting) åpner redigering – bl.a. endre dato
+    el.classList.add('tappable');
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label', `Rediger «${t.title}»`);
+    el.addEventListener('click',(ev)=>{
+      if(ev.target.closest('.check') || ev.target.closest('.task-del')) return;
+      openEditSheet(t.id);
+    });
+
     const del = document.createElement('button');
     del.type='button';
     del.className='task-del';
@@ -1295,6 +1366,97 @@ function renderShop(){
   }
 }
 
+/* --- Rediger oppgave (endre dato, tittel, kategori) --- */
+let editId = null, editDraft = null, lastTrigger = null;
+
+function relDayLabel(dateStr){
+  if(dateStr===todayISO()) return 'i dag';
+  if(dateStr===tomorrowISO()) return 'i morgen';
+  if(dateStr===iso(addDays(new Date(),-1))) return 'i går';
+  const d = parseISO(dateStr);
+  return `${DAYS_FULL[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function updateTask(id, patch){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return null;
+  Object.assign(t, patch, {updatedAt:Date.now()});
+  save();
+  syncPush('tasks', t.id, t);
+  return t;
+}
+function renderDateQuick(){
+  const wrap = document.getElementById('dateQuick');
+  wrap.innerHTML = '';
+  const base = parseISO(editDraft.date);
+  const opts = [
+    {label:'I dag',    val:todayISO(),               primary:true},
+    {label:'I morgen', val:tomorrowISO(),            primary:true},
+    {label:'− 1 dag',  val:iso(addDays(base,-1))},
+    {label:'+ 1 dag',  val:iso(addDays(base, 1))}
+  ];
+  opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = (o.primary?'q-primary':'') + (o.val===editDraft.date?' sel':'');
+    b.textContent = o.label;
+    b.addEventListener('click',()=>{
+      editDraft.date = o.val;
+      document.getElementById('editDate').value = o.val;
+      renderDateQuick();
+    });
+    wrap.appendChild(b);
+  });
+}
+function renderEditCat(){
+  buildCatPicker('editCatPicker', editDraft.category, cid=>{ editDraft.category = cid; renderEditCat(); });
+}
+function openEditSheet(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  editId = id;
+  editDraft = {date:t.date, title:t.title, category:t.category};
+  lastTrigger = document.activeElement;
+  document.getElementById('editDate').value = t.date;
+  document.getElementById('editTitle').value = t.title;
+  document.getElementById('editDoneChip').hidden = !t.done;
+  renderDateQuick();
+  renderEditCat();
+  const bd = document.getElementById('sheetBackdrop'), sh = document.getElementById('editSheet');
+  bd.classList.add('show');
+  requestAnimationFrame(()=> sh.classList.add('show'));
+  try{ navigator.vibrate && navigator.vibrate(8); }catch(e){}
+}
+function closeEditSheet(){
+  document.getElementById('editSheet').classList.remove('show');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  editId = null; editDraft = null;
+  if(lastTrigger && lastTrigger.focus){ try{ lastTrigger.focus(); }catch(e){} }
+}
+function saveEdit(){
+  if(!editId || !editDraft) return;
+  const t = tasks.find(x=>x.id===editId);
+  if(!t){ closeEditSheet(); return; }
+  const orig = {date:t.date, title:t.title, category:t.category};
+  const newDate = document.getElementById('editDate').value || editDraft.date;
+  const newTitle = (document.getElementById('editTitle').value||'').trim() || orig.title;
+  const newCat = editDraft.category;
+  const dateChanged = newDate !== orig.date;
+  const anyChange = dateChanged || newTitle !== orig.title || newCat !== orig.category;
+  if(!anyChange){ closeEditSheet(); return; }
+  updateTask(editId, {date:newDate, title:newTitle, category:newCat});
+  closeEditSheet();
+  renderAll();
+  showToast(dateChanged ? `Flyttet til ${relDayLabel(newDate)}` : 'Oppgave oppdatert');
+}
+function deleteFromSheet(){
+  if(!editId) return;
+  const id = editId;
+  closeEditSheet();
+  deleteTask(id);
+  renderAll();
+  showToast('Oppgave slettet');
+}
+
 /* ============================================================
    Interaksjoner
    ============================================================ */
@@ -1319,6 +1481,31 @@ document.getElementById('addCatBtn').addEventListener('click',()=>{
   renderSettings(); renderAll();
   showToast('Kategori lagt til');
 });
+
+// Rediger-oppgave-ark
+document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
+document.getElementById('editCancelBtn').addEventListener('click', closeEditSheet);
+document.getElementById('editDeleteBtn').addEventListener('click', deleteFromSheet);
+document.getElementById('sheetBackdrop').addEventListener('click', closeEditSheet);
+document.getElementById('editDate').addEventListener('change',(e)=>{
+  if(!editDraft) return;
+  editDraft.date = e.target.value || editDraft.date;
+  renderDateQuick();
+});
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && editId) closeEditSheet(); });
+// Dra ned for å lukke (fra håndtaket/toppen)
+(function(){
+  const sh = document.getElementById('editSheet');
+  const grab = document.getElementById('sheetGrab');
+  let startY=null, dy=0;
+  function start(y){ startY=y; dy=0; sh.style.transition='none'; }
+  function move(y){ if(startY===null) return; dy=Math.max(0, y-startY); sh.style.transform=`translateX(-50%) translateY(${dy}px)`; }
+  function end(){ if(startY===null) return; sh.style.transition=''; startY=null; if(dy>90){ closeEditSheet(); } sh.style.transform=''; dy=0; }
+  grab.addEventListener('touchstart',(e)=>start(e.touches[0].clientY),{passive:true});
+  sh.querySelector('.sheet-head').addEventListener('touchstart',(e)=>start(e.touches[0].clientY),{passive:true});
+  sh.addEventListener('touchmove',(e)=>{ if(startY!==null){ move(e.touches[0].clientY); } },{passive:true});
+  sh.addEventListener('touchend', end);
+})();
 
 document.getElementById('prevMonth').addEventListener('click',()=>{
   viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar();

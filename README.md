@@ -16,6 +16,9 @@ mellom flere (f.eks. deg og partneren din).
   🐕 Gå tur med Charlie · 🧹 Vaske huset · 🌀 Støvsuge ·
   🍼 Bade William · 🛁 Bade Charlie · 🧺 Vaske klær
 - **Egendefinert oppgave** med kategori-velger.
+- **Rediger oppgave:** trykk på et gjøremål for å åpne et redigerings-ark –
+  endre **dato** (hurtigvalg I dag / I morgen / ±1 dag + datovelger), tittel og
+  kategori, eller slett. Flyttede oppgaver dukker opp på ny dato hos begge.
 - **Egne hurtigvalg** (⚙️ Innstillinger) som deles med alle på lista.
 - **Redigerbare kategorier** (⚙️ Innstillinger) – gi dem egne navn og farger,
   eller lag nye. Fargevelgeren viser navnene tydelig.
