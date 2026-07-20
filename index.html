@@ -413,6 +413,39 @@ input{font-family:inherit;}
 .cat-add{margin-top:12px;}
 .day-default button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
 
+/* ---------- Forfalte oppgaver ---------- */
+.tab-badge.warn{background:var(--warning);}
+.overdue-box{
+  background:var(--warning-soft);border:1px solid #F3D9A8;border-radius:var(--radius);
+  margin:14px 0 4px;overflow:hidden;box-shadow:var(--shadow-card);
+  animation:ovIn .28s var(--ease-pop);
+}
+@keyframes ovIn{from{opacity:0;transform:translateY(-6px) scale(.98);}to{opacity:1;transform:none;}}
+.overdue-head{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:13px 14px;font-weight:800;font-size:14.5px;color:#9A6A12;background:transparent;
+}
+.ov-icon{font-size:16px;}
+.ov-title{flex:1;text-align:left;}
+.ov-count{
+  min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--warning);color:#fff;
+  font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;
+}
+.ov-chev{transition:transform .2s var(--ease-std);font-size:12px;color:#B98B3E;}
+.overdue-box.collapsed .ov-chev{transform:rotate(-90deg);}
+.overdue-body{max-height:1400px;transition:max-height .28s var(--ease-std);padding:0 10px 10px;overflow:hidden;}
+.overdue-box.collapsed .overdue-body{max-height:0;padding:0 10px;}
+.overdue-box .list{margin-top:4px;}
+.overdue-box .task{background:var(--card);}
+.overdue-box .meta-warn{color:#B26A00;font-weight:800;}
+.ov-today{
+  flex:0 0 auto;height:32px;padding:0 12px;border-radius:var(--radius-chip);
+  border:1.5px solid var(--warning);color:#B26A00;background:transparent;
+  font-size:12.5px;font-weight:800;transition:transform .12s var(--ease-std),background .12s,color .12s;
+}
+.ov-today:active{background:var(--warning);color:#fff;transform:scale(.95);}
+.ov-bulk{margin-top:10px;background:var(--warning);color:#fff;}
+
 /* ---------- Rediger-oppgave-ark ---------- */
 .task.tappable{cursor:pointer;}
 .task.tappable:active{transform:scale(.994);}
@@ -500,13 +533,27 @@ input{font-family:inherit;}
 
   <!-- Visningsvalg -->
   <div class="segment segment-3" role="tablist">
-    <button id="tabPlan" class="active" role="tab">📋 Planlagt</button>
+    <button id="tabPlan" class="active" role="tab">📋 Planlagt<span class="tab-badge warn" id="planBadge" hidden></span></button>
     <button id="tabShop" role="tab">🛒 Handleliste<span class="tab-badge" id="shopBadge" hidden></span></button>
     <button id="tabHist" role="tab">🗂️ Historikk</button>
   </div>
 
   <!-- Planlagt-visning -->
   <div id="planView">
+    <!-- Forfalte (ikke-fullførte) oppgaver -->
+    <section id="overdueBox" class="overdue-box" hidden>
+      <button type="button" class="overdue-head" id="overdueHead" aria-expanded="true">
+        <span class="ov-icon">⏰</span>
+        <span class="ov-title">Forfalt – ikke fullført</span>
+        <span class="ov-count" id="overdueCount">0</span>
+        <span class="ov-chev" id="overdueChev">▾</span>
+      </button>
+      <div class="overdue-body" id="overdueBody">
+        <div class="list" id="overdueList"></div>
+        <button class="wide-btn ov-bulk" id="overdueMoveAll" hidden>→ Flytt alle til i dag</button>
+      </div>
+    </section>
+
     <div class="dayswitch" id="dayswitch">
       <button data-day="today">I dag</button>
       <button data-day="tomorrow">I morgen</button>
@@ -935,6 +982,55 @@ function fmtHeaderDate(isoStr){
 
 function tasksForDate(dateStr){ return tasks.filter(t=>t.date===dateStr); }
 
+/* --- Forfalte (ikke-fullførte) oppgaver: rent avledet, ingen datamutasjon --- */
+function overdueTasks(){
+  const today = todayISO();
+  return tasks.filter(t=> !t.done && t.date < today)   // YYYY-MM-DD sorterer alfabetisk = kronologisk
+    .sort((a,b)=> a.date.localeCompare(b.date) || (a.createdAt-b.createdAt));
+}
+function overdueLabel(dateStr){
+  const days = Math.round((parseISO(todayISO()) - parseISO(dateStr)) / 864e5);
+  if(days<=1) return 'forfalt i går';
+  if(days<7) return `forfalt for ${days} dager siden`;
+  const d = parseISO(dateStr);
+  return `forfalt ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function moveToToday(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.date = todayISO(); t.updatedAt = Date.now();
+  save();
+  syncPush('tasks', t.id, t);
+  try{ navigator.vibrate && navigator.vibrate(15); }catch(e){}
+  showToast('Flyttet til i dag');
+  renderAll();
+}
+function moveAllOverdueToToday(){
+  const list = overdueTasks();
+  if(!list.length) return;
+  const today = todayISO(), now = Date.now();
+  list.forEach(t=>{ t.date = today; t.updatedAt = now; });
+  save();
+  list.forEach(t=> syncPush('tasks', t.id, t));
+  try{ navigator.vibrate && navigator.vibrate(20); }catch(e){}
+  showToast(`${list.length} oppgaver flyttet til i dag`);
+  renderAll();
+}
+function renderOverdue(){
+  const list = overdueTasks();
+  const badge = document.getElementById('planBadge');
+  if(badge){ if(list.length){ badge.hidden=false; badge.textContent=String(list.length); } else badge.hidden=true; }
+  const box = document.getElementById('overdueBox');
+  if(!box) return;
+  if(!list.length){ box.hidden = true; return; }
+  box.hidden = false;
+  document.getElementById('overdueCount').textContent = String(list.length);
+  const listEl = document.getElementById('overdueList');
+  listEl.innerHTML = '';
+  list.forEach(t=> listEl.appendChild(taskNode(t, false, true)));
+  document.getElementById('overdueMoveAll').hidden = list.length < 2;
+}
+
 function renderHeader(){
   document.getElementById('headerDate').textContent = fmtHeaderDate(selectedDate);
   // Fremdrift for valgt dag
@@ -1067,11 +1163,11 @@ function checkSvg(){
   return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
-function taskNode(t, readOnly){
+function taskNode(t, readOnly, overdue){
   const cat = catById(t.category);
   const el = document.createElement('div');
   el.className = 'task'+(t.done?' done':'');
-  el.style.borderLeftColor = cat.ink;
+  el.style.borderLeftColor = overdue ? 'var(--warning)' : cat.ink;
   el.dataset.id = t.id;
 
   // Avhukingsknapp
@@ -1110,7 +1206,12 @@ function taskNode(t, readOnly){
   meta.className='task-meta';
   if(readOnly && t.doneAt){
     const d = new Date(t.doneAt);
-    meta.textContent = `${cat.label} · fullført kl. ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    let late = '';
+    if(iso(d) !== t.date){ late = ` · ${relDayLabel(t.date)}`; }
+    meta.textContent = `${cat.label} · fullført kl. ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}${late}`;
+  }else if(overdue){
+    meta.textContent = `${cat.label} · ${overdueLabel(t.date)}`;
+    meta.classList.add('meta-warn');
   }else{
     meta.textContent = t.done ? `${cat.label} · fullført` : cat.label;
   }
@@ -1127,9 +1228,19 @@ function taskNode(t, readOnly){
     el.setAttribute('role','button');
     el.setAttribute('aria-label', `Rediger «${t.title}»`);
     el.addEventListener('click',(ev)=>{
-      if(ev.target.closest('.check') || ev.target.closest('.task-del')) return;
+      if(ev.target.closest('.check') || ev.target.closest('.task-del') || ev.target.closest('.ov-today')) return;
       openEditSheet(t.id);
     });
+
+    if(overdue){
+      const todayBtn = document.createElement('button');
+      todayBtn.type='button';
+      todayBtn.className='ov-today';
+      todayBtn.textContent='I dag';
+      todayBtn.setAttribute('aria-label','Flytt til i dag');
+      todayBtn.addEventListener('click',(ev)=>{ ev.stopPropagation(); moveToToday(t.id); });
+      el.appendChild(todayBtn);
+    }
 
     const del = document.createElement('button');
     del.type='button';
@@ -1195,6 +1306,7 @@ function updateShopBadge(){
 }
 function renderAll(){
   updateShopBadge();
+  renderOverdue();
   if(currentView==='settings'){ renderSettings(); return; }
   if(currentView==='shop'){ renderShop(); return; }
   renderHeader();
@@ -1481,6 +1593,21 @@ document.getElementById('addCatBtn').addEventListener('click',()=>{
   renderSettings(); renderAll();
   showToast('Kategori lagt til');
 });
+
+// Forfalte oppgaver: sammenfell/utvid + flytt alle
+(function(){
+  const box = document.getElementById('overdueBox');
+  const head = document.getElementById('overdueHead');
+  if(localStorage.getItem('hjemme_overdue_collapsed')==='1'){ box.classList.add('collapsed'); head.setAttribute('aria-expanded','false'); }
+  head.addEventListener('click',()=>{
+    const collapsed = box.classList.toggle('collapsed');
+    head.setAttribute('aria-expanded', collapsed?'false':'true');
+    try{ localStorage.setItem('hjemme_overdue_collapsed', collapsed?'1':'0'); }catch(e){}
+  });
+  document.getElementById('overdueMoveAll').addEventListener('click', moveAllOverdueToToday);
+})();
+// Oppdater «i dag»-grensen (og dermed forfalt) når appen kommer i forgrunnen
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderAll(); });
 
 // Rediger-oppgave-ark
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);

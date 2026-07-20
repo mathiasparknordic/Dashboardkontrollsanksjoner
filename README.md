@@ -26,7 +26,12 @@ mellom flere (f.eks. deg og partneren din).
   hjemmefra og den andre krysser dem av i butikken. Hurtigvalg for vanlige
   varer, rask inntasting (skill flere med komma), auto-emoji, avhukede varer
   synker ned, og «Fjern avhukede» rydder etter handleturen. Synkes i sanntid.
-- **Historikk** over alt som er gjort, gruppert per dag med tidspunkt.
+- **Forfalte oppgaver:** et eget felt øverst i Planlagt samler gjøremål som
+  ligger på en tidligere dato uten å være fullført, med etikett for hvor lenge
+  siden. Flytt én til i dag, «Flytt alle til i dag», rediger dato, eller fullfør
+  – alt fra feltet. Et tall-merke på Planlagt-fanen viser antallet.
+- **Historikk** over alt som er gjort, gruppert per dag med tidspunkt (og en
+  merknad hvis noe ble fullført på en annen dag enn planlagt).
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database
   (REST + `EventSource`, ingen SDK/CDN).
 - **Fremdriftsring**, streak og konfetti når du huker av. 🎉
