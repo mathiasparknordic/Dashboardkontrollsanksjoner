@@ -5,10 +5,16 @@ Riverty daglig leveranse – cron-/scheduler-inngang.
 Kjør én gang per dag (Europe/Oslo). Henter dagens «betalt av PN»-numre fra
 sanksjonssystemet, bygger PaidByPN_*.txt og laster opp via SFTP. Tom dag => ingen fil.
 
-  AUTH-løst miljø, eksempel (systemd timer eller cron):
-    RIVERTY_SFTP_HOST=sftp.riverty.no RIVERTY_SFTP_USER=parknordic \
-    RIVERTY_SFTP_KEY=/etc/parknordic/riverty_ed25519 \
-    RIVERTY_KNOWN_HOSTS=/etc/parknordic/known_hosts \
+  Alle SFTP-verdier kommer fra miljøet – ingenting er hardkodet i koden:
+    RIVERTY_SFTP_HOST, RIVERTY_SFTP_PORT (valgfri, default 22), RIVERTY_SFTP_USER,
+    RIVERTY_SFTP_KEY, RIVERTY_KNOWN_HOSTS, RIVERTY_REMOTE_DIR.
+
+  Produksjonsmiljø, eksempel (systemd timer eller cron) – bekreftet Riverty-oppsett:
+    RIVERTY_SFTP_HOST=file.gothiagroup.com RIVERTY_SFTP_PORT=22 \
+    RIVERTY_SFTP_USER=ParkNordic \
+    RIVERTY_SFTP_KEY=/home/thomas/.ssh/parknas_from_ppk \
+    RIVERTY_KNOWN_HOSTS=/home/thomas/.ssh/known_hosts_riverty \
+    RIVERTY_REMOTE_DIR="/To Riverty" \
     SANKSJON_DB=/opt/parknordic/parknordic.db \
     LEVERANSE_DB=/opt/parknordic/riverty_leveranse.db \
     python3 run_leveranse.py
@@ -68,7 +74,7 @@ def config_fra_env() -> tuple[riverty.SftpConfig | None, str | None]:
         username=_krev("RIVERTY_SFTP_USER"),
         password=os.environ.get("RIVERTY_SFTP_PASS"),
         key_file=os.environ.get("RIVERTY_SFTP_KEY"),
-        remote_dir=os.environ.get("RIVERTY_REMOTE_DIR", riverty.REMOTE_DIR),
+        remote_dir=_krev("RIVERTY_REMOTE_DIR"),
         known_hosts=known,
     )
     return cfg, None

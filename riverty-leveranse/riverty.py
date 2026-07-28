@@ -33,7 +33,8 @@ from typing import Callable, Iterable, Optional
 
 log = logging.getLogger("riverty")
 
-REMOTE_DIR = "/Park_Nordic/to_Arvato/PaidByPN"
+# Ingen hardkodet mål-katalog: opplastingsmappen settes eksplisitt via
+# SftpConfig.remote_dir (fra RIVERTY_REMOTE_DIR). Se run_leveranse.py.
 FORBUDTE = {"etc", "etc.", "etc...", "..."}
 
 
@@ -121,11 +122,11 @@ def skriv_logg(db_sti: str, r: Resultat) -> None:
 @dataclass
 class SftpConfig:
     host: str
+    remote_dir: str                       # eksplisitt mål-katalog – ingen hardkodet default
     port: int = 22
     username: str = ""
     password: Optional[str] = None
     key_file: Optional[str] = None
-    remote_dir: str = REMOTE_DIR
     timeout: int = 20
     known_hosts: Optional[str] = None     # sti til known_hosts; None => krev i prod (se from_env)
 
@@ -144,6 +145,8 @@ def last_opp_sftp(innhold: str, navn: str, cfg: SftpConfig) -> tuple[str, int]:
     """Last opp via SFTP, verifiser at fjernfilen har riktig størrelse. Returnerer (fjernsti, bytes)."""
     import paramiko
 
+    if not cfg.remote_dir or not cfg.remote_dir.strip("/"):
+        raise ValueError("remote_dir er ikke satt (RIVERTY_REMOTE_DIR mangler).")
     data = innhold.encode("utf-8")
     klient = paramiko.SSHClient()
     if cfg.known_hosts:

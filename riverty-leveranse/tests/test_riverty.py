@@ -41,12 +41,13 @@ def test_leverer_til_sftp_og_verifiserer(tmp_path):
     root.mkdir()
     db = str(tmp_path / "logg.db")
     with dummy_sftp(str(root)) as (host, port, user, pw):
-        cfg = riverty.SftpConfig(host=host, port=port, username=user, password=pw)
+        cfg = riverty.SftpConfig(host=host, remote_dir="/To Riverty",
+                                 port=port, username=user, password=pw)
         r = riverty.lever_dagens(lambda: ["5001", "5002", "5003"], cfg,
                                  db_sti=db, ts=datetime(2026, 6, 10, 8, 0))
     assert r.status == "SENDT"
     assert r.antall == 3
-    levert = root / "Park_Nordic" / "to_Arvato" / "PaidByPN" / "PaidByPN_20260610_0800.txt"
+    levert = root / "To Riverty" / "PaidByPN_20260610_0800.txt"   # mellomrom i sti håndteres
     assert levert.read_text() == "5001\n5002\n5003\n"          # byte-for-byte
     rad = sqlite3.connect(db).execute(
         "SELECT status, antall, filnavn FROM leveranse_logg").fetchone()
@@ -57,11 +58,12 @@ def test_tom_dag_gir_ingen_fil(tmp_path):
     root = tmp_path / "sftproot"; root.mkdir()
     db = str(tmp_path / "logg.db")
     with dummy_sftp(str(root)) as (host, port, user, pw):
-        cfg = riverty.SftpConfig(host=host, port=port, username=user, password=pw)
+        cfg = riverty.SftpConfig(host=host, remote_dir="/To Riverty",
+                                 port=port, username=user, password=pw)
         r = riverty.lever_dagens(lambda: [], cfg, db_sti=db)
     assert r.status == "SKIPPET"
-    # ingen fil skrevet noe sted under PaidByPN
-    pn = root / "Park_Nordic" / "to_Arvato" / "PaidByPN"
+    # ingen fil skrevet noe sted under mål-katalogen
+    pn = root / "To Riverty"
     assert not pn.exists() or not any(pn.iterdir())
     status = sqlite3.connect(db).execute("SELECT status FROM leveranse_logg").fetchone()[0]
     assert status == "SKIPPET"
@@ -71,7 +73,8 @@ def test_feil_ved_opplasting_gir_feilet_og_varsler(tmp_path):
     db = str(tmp_path / "logg.db")
     varsler = []
     # Peker på en port der ingen lytter -> connect feiler -> FEILET + varsle.
-    cfg = riverty.SftpConfig(host="127.0.0.1", port=1, username="x", password="y", timeout=3)
+    cfg = riverty.SftpConfig(host="127.0.0.1", remote_dir="/To Riverty",
+                             port=1, username="x", password="y", timeout=3)
     r = riverty.lever_dagens(lambda: ["9001"], cfg, db_sti=db, varsle=varsler.append)
     assert r.status == "FEILET"
     assert len(varsler) == 1 and varsler[0].status == "FEILET"   # sikkerhetsventil utløst

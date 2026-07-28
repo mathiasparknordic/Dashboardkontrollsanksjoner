@@ -27,12 +27,30 @@ python -m pytest -q            # 9 tester: format, validering, full SFTP-flyt, t
 # Dry-run (skriv lokalt, før Riverty-tilgang er på plass):
 RIVERTY_DRYRUN_DIR=/tmp/riverty-out SANKSJON_DB=/sti/parknordic.db python3 run_leveranse.py
 
-# Produksjon (SFTP, host key pinnet):
-RIVERTY_SFTP_HOST=... RIVERTY_SFTP_USER=... RIVERTY_SFTP_KEY=... \
-RIVERTY_KNOWN_HOSTS=/etc/parknordic/known_hosts \
+# Produksjon (SFTP, host key pinnet) – bekreftet Riverty-oppsett:
+RIVERTY_SFTP_HOST=file.gothiagroup.com RIVERTY_SFTP_PORT=22 RIVERTY_SFTP_USER=ParkNordic \
+RIVERTY_SFTP_KEY=/home/thomas/.ssh/parknas_from_ppk \
+RIVERTY_KNOWN_HOSTS=/home/thomas/.ssh/known_hosts_riverty \
+RIVERTY_REMOTE_DIR="/To Riverty" \
 SANKSJON_DB=/opt/parknordic/parknordic.db LEVERANSE_DB=/opt/parknordic/riverty_leveranse.db \
 python3 run_leveranse.py
 ```
+
+## SFTP-konfigurasjon (alt fra miljøet – ingenting hardkodet)
+| Miljøvariabel | Påkrevd | Beskrivelse |
+|---------------|---------|-------------|
+| `RIVERTY_SFTP_HOST` | ja | Vertsnavn (`file.gothiagroup.com`) |
+| `RIVERTY_SFTP_PORT` | nei | Port, default `22` |
+| `RIVERTY_SFTP_USER` | ja | Brukernavn (`ParkNordic`) |
+| `RIVERTY_SFTP_KEY`  | ja* | Sti til privat SSH-nøkkel (OpenSSH-format) |
+| `RIVERTY_KNOWN_HOSTS` | ja | Sti til known_hosts (host key pinning – ingen blind AutoAdd i prod) |
+| `RIVERTY_REMOTE_DIR` | ja | Mål-katalog på Riverty-serveren, f.eks. `"/To Riverty"` |
+
+\* Nøkkel eller passord må finnes; i prod brukes SSH-nøkkel.
+
+> **Bytte mål-katalog:** når Riverty bekrefter endelig mappe er hele endringen å
+> sette `RIVERTY_REMOTE_DIR` – ingen kodeendring. Mellomrom i sti (`/To Riverty`)
+> håndteres. Den gamle stien `/Park_Nordic/to_Arvato/PaidByPN` er fjernet fra koden.
 
 ## Hva Thomas må koble på
 1. **Numrene**: `hent_dagens_numre()` i `run_leveranse.py` har en SQL-**mal** – tilpass
