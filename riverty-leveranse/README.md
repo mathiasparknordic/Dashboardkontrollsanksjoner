@@ -7,6 +7,12 @@ Spec: `RIVERTY_leveranse_spec.md` (handoff-pakken).
 > og felles auth, jf. spec. Riverty-tilgang (host/nøkkel) og endelig SQL mot `parknordic.db`
 > kobles på av Thomas.
 
+> ⚠️ **`run_leveranse.py` er STILLAS/MAL, ikke en ferdig produksjonsfil.** SQL-en i
+> `hent_dagens_numre()` er en plassholder (antatte tabell-/kolonnenavn), og markering av
+> leverte saker (mot dobbeltlevering) MANGLER bevisst. Kun SFTP-oppsettet er
+> produksjonsklart. **Ikke kopier fila rått over en tilpasset produksjonsversjon** – legg
+> SFTP-endringene *oppå* produksjonsfila. Se banneret øverst i `run_leveranse.py`.
+
 ## Filformat (bekreftet)
 - Ren `.txt`, **ett sanksjonsnummer per linje**, ingen header, ingen skilletegn.
 - Filnavn: `PaidByPN_YYYYMMDD_HHMM.txt`.

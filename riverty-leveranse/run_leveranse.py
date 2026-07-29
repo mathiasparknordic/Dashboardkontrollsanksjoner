@@ -2,6 +2,23 @@
 """
 Riverty daglig leveranse – cron-/scheduler-inngang.
 
+╔══════════════════════════════════════════════════════════════════════════╗
+║  ADVARSEL – DENNE FILEN ER STILLAS/MAL, IKKE EN FERDIG PRODUKSJONSFIL.    ║
+║                                                                          ║
+║  IKKE kopier denne fila rått over en tilpasset produksjonsversjon.       ║
+║  To deler her er PLASSHOLDERE som må tilpasses faktisk parknordic.db:     ║
+║    1) hent_dagens_numre(): SQL-en er en MAL (tabell-/kolonnenavn og       ║
+║       behandlingsverdier er antatt, ikke bekreftet mot skjemaet).        ║
+║    2) Markering av leverte saker MANGLER her. Produksjon MÅ etter en      ║
+║       vellykket SENDT markere sakene i sanksjons-DB (f.eks. en           ║
+║       marker_levert()/UPDATE ... SET sendt_riverty=1) for å hindre       ║
+║       DOBBELTLEVERING. skriv_logg() gjør IKKE dette – den skriver kun    ║
+║       en kvittering til leveranseloggen (egen DB).                       ║
+║                                                                          ║
+║  Kun SFTP-oppsettet (config_fra_env) er produksjonsklart. Ved deploy:    ║
+║  legg SFTP-endringene oppå den tilpassede produksjonsfila – ikke omvendt.║
+╚══════════════════════════════════════════════════════════════════════════╝
+
 Kjør én gang per dag (Europe/Oslo). Henter dagens «betalt av PN»-numre fra
 sanksjonssystemet, bygger PaidByPN_*.txt og laster opp via SFTP. Tom dag => ingen fil.
 
@@ -92,6 +109,17 @@ def main() -> int:
     leveranse_db = os.environ.get("LEVERANSE_DB", "riverty_leveranse.db")
     r = riverty.lever_dagens(hent_dagens_numre, cfg, db_sti=leveranse_db,
                              varsle=varsle, lokal_mappe=dry)
+
+    # ┌─ PRODUKSJON MÅ FYLLE INN HER ────────────────────────────────────────┐
+    # │ Etter en vellykket leveranse SKAL de leverte sakene markeres i        │
+    # │ sanksjons-DB, ellers plukkes de på nytt i morgen (DOBBELTLEVERING).   │
+    # │ Dette stillaset gjør det IKKE. I produksjon, legg til f.eks.:         │
+    # │     if r.status == "SENDT":                                           │
+    # │         marker_levert(r.numre)   # UPDATE sanksjoner SET sendt_...    │
+    # │ (skriv_logg() i lever_dagens skriver kun kvittering til leveranse-    │
+    # │  loggen – det er IKKE markering av sanksjonene.)                      │
+    # └──────────────────────────────────────────────────────────────────────┘
+
     print(f"{r.status}: {r.filnavn or '(ingen fil)'} – {r.antall} sanksjoner")
     return 0 if r.status in ("SENDT", "SKIPPET") else 1
 
