@@ -54,9 +54,34 @@ python3 run_leveranse.py
 
 \* Nøkkel eller passord må finnes; i prod brukes SSH-nøkkel.
 
+> ⚠️ **Verdier med mellomrom MÅ siteres.** `RIVERTY_REMOTE_DIR` er `/To Riverty`
+> (med mellomrom). Skriv den alltid med anførselstegn:
+> ```
+> RIVERTY_REMOTE_DIR="/To Riverty"     # riktig
+> RIVERTY_REMOTE_DIR=/To Riverty       # FEIL – Bash tolker «Riverty» som en kommando
+> ```
+> Uten anførselstegn feiler Bash ved `source` av miljøfila (og det blir uryddig i en
+> systemd `EnvironmentFile`). Selve stien håndterer mellomrom fint i koden – fella er
+> kun shell-siteringen. Gjelder enhver verdi med mellomrom.
+
 > **Bytte mål-katalog:** når Riverty bekrefter endelig mappe er hele endringen å
-> sette `RIVERTY_REMOTE_DIR` – ingen kodeendring. Mellomrom i sti (`/To Riverty`)
-> håndteres. Den gamle stien `/Park_Nordic/to_Arvato/PaidByPN` er fjernet fra koden.
+> sette `RIVERTY_REMOTE_DIR` – ingen kodeendring. Den gamle stien
+> `/Park_Nordic/to_Arvato/PaidByPN` er fjernet fra koden.
+
+### Eksempel: `/etc/riverty-leveranse.env` (systemd `EnvironmentFile`)
+```
+RIVERTY_SFTP_HOST=file.gothiagroup.com
+RIVERTY_SFTP_PORT=22
+RIVERTY_SFTP_USER=ParkNordic
+RIVERTY_SFTP_KEY=/home/thomas/.ssh/parknas_from_ppk
+RIVERTY_KNOWN_HOSTS=/home/thomas/.ssh/known_hosts_riverty
+RIVERTY_REMOTE_DIR="/To Riverty"
+SANKSJON_DB=/opt/parknordic/parknordic_komplett/data/parknordic.db
+LEVERANSE_DB=/opt/riverty-leveranse/riverty_leveranse.db
+```
+> **Merk databasen:** den reelle sanksjonsdatabasen er
+> `/opt/parknordic/parknordic_komplett/data/parknordic.db` – *ikke*
+> `/opt/parknordic/parknordic.db` (sistnevnte har kun auth-tabeller).
 
 ## Hva Thomas må koble på
 1. **Numrene**: `hent_dagens_numre()` i `run_leveranse.py` har en SQL-**mal** – tilpass
