@@ -20,6 +20,10 @@ mellom flere (f.eks. deg og partneren din).
   endre **dato** (hurtigvalg I dag / I morgen / ±1 dag + datovelger), tittel og
   kategori, eller slett. Flyttede oppgaver dukker opp på ny dato hos begge.
 - **Egne hurtigvalg** (⚙️ Innstillinger) som deles med alle på lista.
+- **Daglige rutiner** (⚙️ Innstillinger): oppgaver som legges inn automatisk
+  hver dag (forhåndsfylt med pusse tenner William, gå tur med Charlie, oppvask,
+  vaske lekematte, gi inhalasjon). Legg til egne selv. Sync-trygt – ingen
+  duplikater mellom telefonene, og en du sletter kommer ikke tilbake samme dag.
 - **Redigerbare kategorier** (⚙️ Innstillinger) – gi dem egne navn og farger,
   eller lag nye. Fargevelgeren viser navnene tydelig.
 - **Handleliste** (🛒-fanen) – en delt liste der den ene legger til varer

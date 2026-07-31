@@ -622,6 +622,23 @@ input{font-family:inherit;}
       </div>
     </div>
 
+    <!-- Daglige rutiner -->
+    <div class="settings-card">
+      <div class="settings-title">🔁 Daglige rutiner</div>
+      <div class="settings-sub">Oppgaver her legges automatisk inn hver dag – for begge som deler listen. Fullfør dem som vanlig; en du sletter kommer ikke tilbake før neste dag.</div>
+      <div class="preset-list" id="routineList"></div>
+      <div class="preset-add">
+        <div class="composer-row">
+          <input type="text" id="routineTitle" placeholder="Ny daglig rutine …" maxlength="40" autocomplete="off" />
+          <input type="text" id="routineEmoji" class="emoji-input" placeholder="🔁" maxlength="2" autocomplete="off" />
+        </div>
+        <div class="cat-picker" id="routineCatPicker">
+          <span class="cp-label">Kategori</span>
+        </div>
+        <button class="wide-btn" id="addRoutineBtn">Legg til daglig rutine</button>
+      </div>
+    </div>
+
     <!-- Standard dag -->
     <div class="settings-card">
       <div class="settings-title">📅 Standard dag ved oppstart</div>
@@ -732,6 +749,8 @@ const SYNC_KEY = 'hjemme_sync_v1';
 const CAT_KEY = 'hjemme_categories_v1';
 const PREFS_KEY = 'hjemme_prefs_v1';
 const SHOP_KEY = 'hjemme_handleliste_v1';
+const ROUTINE_KEY = 'hjemme_rutiner_v1';
+const ROUTINE_SEED_FLAG = 'hjemme_rutiner_seedet_v1';
 const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 const DAYS_FULL = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
 
@@ -782,6 +801,8 @@ let prefs = loadPrefs();
 let tasks = load();
 let customPresets = loadPresets();
 let shop = loadShop();
+let routines = loadRoutines();
+let routineCat = 'custom';
 let selectedCat = 'custom';
 let presetCat = 'custom';
 let newCatColor = '#E4914C';
@@ -949,6 +970,73 @@ function clearCheckedShop(){
   shop = shop.filter(i=>!i.done);
   saveShop();
   done.forEach(i=> syncDelete('shop', i.id));
+}
+
+/* --- Daglige rutiner (auto-genererer én oppgave per dag) --- */
+const DEFAULT_ROUTINES = [
+  {id:'r_tenner',     title:'Pusse tenner William', emoji:'🪥', category:'baby'},
+  {id:'r_charlie',    title:'Gå tur med Charlie',   emoji:'🐕', category:'dog'},
+  {id:'r_oppvask',    title:'Oppvask',              emoji:'🍽️', category:'cleaning'},
+  {id:'r_lekematte',  title:'Vaske lekematte',      emoji:'🧼', category:'cleaning'},
+  {id:'r_inhalasjon', title:'Gi inhalasjon',        emoji:'💨', category:'baby'}
+];
+function normalizeRoutine(id, d){
+  d = d || {};
+  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom',
+          lastGen:d.lastGen||null, createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+function loadRoutines(){
+  try{ const a=JSON.parse(localStorage.getItem(ROUTINE_KEY)); if(Array.isArray(a)) return a.map(x=>normalizeRoutine(x.id,x)); }catch(e){}
+  return [];
+}
+function saveRoutines(){ try{ localStorage.setItem(ROUTINE_KEY, JSON.stringify(routines)); }catch(e){} }
+
+function addRoutine(title, emoji, category){
+  title = (title||'').trim();
+  if(!title) return null;
+  const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'🔁'};
+  const r = normalizeRoutine(uid(), {title, emoji:emoji||emojiMap[category]||'🔁', category:category||'custom'});
+  routines.push(r);
+  saveRoutines();
+  syncPush('routines', r.id, r);
+  ensureDailyTasks();   // legg inn dagens forekomst med en gang
+  return r;
+}
+function deleteRoutine(id){
+  routines = routines.filter(r=>r.id!==id);
+  saveRoutines();
+  syncDelete('routines', id);
+}
+/* Sørg for at hver rutine har en oppgave for i DAG. Rent idempotent:
+   deterministisk id + lastGen-vakt hindrer duplikater på tvers av enheter
+   OG gjenoppstandelse hvis brukeren sletter dagens forekomst. */
+function ensureDailyTasks(){
+  const today = todayISO();
+  let changed = false;
+  routines.forEach(r=>{
+    if(r.lastGen === today) return;          // allerede behandlet i dag
+    const tid = 'dr_'+r.id+'_'+today;        // deterministisk → samme id på begge telefoner
+    if(!tasks.find(t=>t.id===tid)){
+      const now = Date.now();
+      const t = {id:tid, title:r.title, emoji:r.emoji||'📝', category:r.category||'custom',
+                 date:today, done:false, doneAt:null, createdAt:now, updatedAt:now};
+      tasks.push(t);
+      syncPush('tasks', t.id, t);
+    }
+    r.lastGen = today; r.updatedAt = Date.now();
+    syncPush('routines', r.id, r);
+    changed = true;
+  });
+  if(changed){ save(); saveRoutines(); }
+}
+function seedRoutinesOnce(){
+  if(localStorage.getItem(ROUTINE_SEED_FLAG)) return;
+  if(routines.length === 0){
+    routines = DEFAULT_ROUTINES.map(r=> normalizeRoutine(r.id, r));
+    saveRoutines();
+    routines.forEach(r=> syncPush('routines', r.id, r));
+  }
+  try{ localStorage.setItem(ROUTINE_SEED_FLAG, '1'); }catch(e){}
 }
 
 function deleteCategory(id){
@@ -1342,11 +1430,41 @@ function renderSettings(){
     });
   }
   renderPresetCatPicker();
+  renderRoutinesList();
+  renderRoutineCatPicker();
   renderCategoriesList();
   // Standard-dag segment
   document.getElementById('defToday').classList.toggle('active', prefs.defaultDay==='today');
   document.getElementById('defTomorrow').classList.toggle('active', prefs.defaultDay==='tomorrow');
   renderSyncUI();
+}
+
+function renderRoutineCatPicker(){ buildCatPicker('routineCatPicker', routineCat, k=>{ routineCat=k; renderRoutineCatPicker(); }); }
+function renderRoutinesList(){
+  const list = document.getElementById('routineList');
+  if(!list) return;
+  list.innerHTML = '';
+  if(!routines.length){
+    const e=document.createElement('div');
+    e.className='preset-empty';
+    e.textContent='Ingen daglige rutiner. Legg til under ↓';
+    list.appendChild(e);
+    return;
+  }
+  routines.forEach(r=>{
+    const cat = catById(r.category);
+    const row=document.createElement('div');
+    row.className='preset-row';
+    const em=document.createElement('div');
+    em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=r.emoji||'🔁';
+    const ti=document.createElement('div');
+    ti.className='pr-title'; ti.textContent=r.title;
+    const del=document.createElement('button');
+    del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label','Slett rutine');
+    del.addEventListener('click',()=>{ deleteRoutine(r.id); renderSettings(); });
+    row.appendChild(em); row.appendChild(ti); row.appendChild(del);
+    list.appendChild(row);
+  });
 }
 
 function renderCategoriesList(){
@@ -1607,7 +1725,7 @@ document.getElementById('addCatBtn').addEventListener('click',()=>{
   document.getElementById('overdueMoveAll').addEventListener('click', moveAllOverdueToToday);
 })();
 // Oppdater «i dag»-grensen (og dermed forfalt) når appen kommer i forgrunnen
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderAll(); });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureDailyTasks(); renderAll(); } });
 
 // Rediger-oppgave-ark
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
@@ -1710,6 +1828,21 @@ document.getElementById('presetTitle').addEventListener('keydown',(e)=>{
   if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addPresetBtn').click(); }
 });
 
+// Daglige rutiner
+document.getElementById('addRoutineBtn').addEventListener('click',()=>{
+  const t = document.getElementById('routineTitle').value.trim();
+  const e = document.getElementById('routineEmoji').value.trim();
+  if(!t){ showToast('Skriv et navn'); return; }
+  addRoutine(t, e || undefined, routineCat);
+  document.getElementById('routineTitle').value='';
+  document.getElementById('routineEmoji').value='';
+  renderSettings(); renderAll();
+  showToast('Daglig rutine lagt til');
+});
+document.getElementById('routineTitle').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addRoutineBtn').click(); }
+});
+
 /* Deling og synk */
 document.getElementById('connectBtn').addEventListener('click',()=>{
   syncConf.url = document.getElementById('syncUrl').value.trim();
@@ -1804,6 +1937,7 @@ function ingestMap(coll, map){
   if(coll==='tasks') tasks = ent.map(([id,d])=>normalizeTask(id,d));
   else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
   else if(coll==='shop') shop = ent.map(([id,d])=>normalizeShop(id,d));
+  else if(coll==='routines') routines = ent.map(([id,d])=>normalizeRoutine(id,d));
   else customPresets = ent.map(([id,d])=>normalizePreset(id,d));
 }
 function replaceFromDoc(doc){
@@ -1812,6 +1946,7 @@ function replaceFromDoc(doc){
   if(doc.presets!==undefined) ingestMap('presets', doc.presets||{});
   if(doc.categories!==undefined) ingestMap('categories', doc.categories||{});
   if(doc.shop!==undefined) ingestMap('shop', doc.shop||{});
+  if(doc.routines!==undefined) ingestMap('routines', doc.routines||{});
 }
 function unionRemote(remote){
   remote = remote || {};
@@ -1835,6 +1970,13 @@ function unionRemote(remote){
     if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) sById[id]=r;
   });
   shop = Object.values(sById);
+  // Rutiner: nyeste vinner per id (bevarer siste lastGen)
+  const rById = {}; routines.forEach(r=>rById[r.id]=r);
+  Object.entries(remote.routines||{}).forEach(([id,d])=>{
+    const r = normalizeRoutine(id,d), l = rById[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) rById[id]=r;
+  });
+  routines = Object.values(rById);
 }
 function upsertRemote(coll, id, data){
   if(coll==='tasks'){
@@ -1850,6 +1992,10 @@ function upsertRemote(coll, id, data){
     if(data==null){ shop = shop.filter(s=>s.id!==id); return; }
     const it = normalizeShop(id,data), i = shop.findIndex(x=>x.id===id);
     if(i>=0) shop[i]=it; else shop.push(it);
+  }else if(coll==='routines'){
+    if(data==null){ routines = routines.filter(r=>r.id!==id); return; }
+    const r = normalizeRoutine(id,data), i = routines.findIndex(x=>x.id===id);
+    if(i>=0) routines[i]=r; else routines.push(r);
   }else{
     if(data==null){ customPresets = customPresets.filter(p=>p.id!==id); return; }
     const p = normalizePreset(id,data), i = customPresets.findIndex(x=>x.id===id);
@@ -1860,7 +2006,7 @@ function applyPut(path, data){
   if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
   const seg = path.replace(/^\//,'').split('/');
   const coll = seg[0], id = seg[1];
-  if(coll!=='tasks' && coll!=='presets' && coll!=='categories' && coll!=='shop') return;
+  if(coll!=='tasks' && coll!=='presets' && coll!=='categories' && coll!=='shop' && coll!=='routines') return;
   if(id) upsertRemote(coll, id, data);
   else ingestMap(coll, data||{});
 }
@@ -1879,6 +2025,7 @@ async function pushAllLocal(){
   customPresets.forEach(p=> jobs.push(rawPut('presets/'+p.id, p)));
   categories.forEach(c=> jobs.push(rawPut('categories/'+c.id, c)));
   shop.forEach(i=> jobs.push(rawPut('shop/'+i.id, i)));
+  routines.forEach(r=> jobs.push(rawPut('routines/'+r.id, r)));
   await Promise.allSettled(jobs);
 }
 function syncPush(coll, id, obj){
@@ -1900,7 +2047,8 @@ function onStream(raw, isPatch){
     unionRemote(p.data || {});
     pendingMerge = false;
     applyingRemote = false;
-    save(); savePresets(); saveCategories(); saveShop();
+    save(); savePresets(); saveCategories(); saveShop(); saveRoutines();
+    ensureDailyTasks();             // generer dagens rutine-oppgaver for synkede rutiner
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
     setSyncState('on');
     renderAll();
@@ -1910,7 +2058,7 @@ function onStream(raw, isPatch){
   if(isPatch) applyPatch(path, p.data);
   else applyPut(path, p.data);
   applyingRemote = false;
-  save(); savePresets(); saveCategories(); saveShop();
+  save(); savePresets(); saveCategories(); saveShop(); saveRoutines();
   setSyncState('on');
   renderAll();
 }
@@ -2019,6 +2167,9 @@ tasks = load();
 customPresets = loadPresets();
 categories = loadCategories();
 shop = loadShop();
+routines = loadRoutines();
+seedRoutinesOnce();      // forhåndsfyll de faste daglige rutinene (kun første gang)
+ensureDailyTasks();      // legg inn dagens forekomster
 renderAll();
 
 /* Invitasjon via delt lenke (#sync=…) */
