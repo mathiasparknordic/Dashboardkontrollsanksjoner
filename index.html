@@ -1006,26 +1006,46 @@ function deleteRoutine(id){
   routines = routines.filter(r=>r.id!==id);
   saveRoutines();
   syncDelete('routines', id);
+  // Fjern kommende (ikke-fullførte) auto-oppgaver for rutinen; behold fullførte i historikk
+  const today = todayISO();
+  const prefix = 'dr_'+id+'_';
+  const remove = tasks.filter(t=> t.id.indexOf(prefix)===0 && !t.done && t.date >= today);
+  if(remove.length){
+    const ids = new Set(remove.map(t=>t.id));
+    tasks = tasks.filter(t=> !ids.has(t.id));
+    save();
+    remove.forEach(t=> syncDelete('tasks', t.id));
+  }
 }
 /* Sørg for at hver rutine har en oppgave for i DAG. Rent idempotent:
    deterministisk id + lastGen-vakt hindrer duplikater på tvers av enheter
    OG gjenoppstandelse hvis brukeren sletter dagens forekomst. */
+const ROUTINE_HORIZON = 2;   // generer for i dag + i morgen, så de vises når man planlegger i forveien
 function ensureDailyTasks(){
   const today = todayISO();
+  const endISO = iso(addDays(parseISO(today), ROUTINE_HORIZON - 1));
   let changed = false;
   routines.forEach(r=>{
-    if(r.lastGen === today) return;          // allerede behandlet i dag
-    const tid = 'dr_'+r.id+'_'+today;        // deterministisk → samme id på begge telefoner
-    if(!tasks.find(t=>t.id===tid)){
-      const now = Date.now();
-      const t = {id:tid, title:r.title, emoji:r.emoji||'📝', category:r.category||'custom',
-                 date:today, done:false, doneAt:null, createdAt:now, updatedAt:now};
-      tasks.push(t);
-      syncPush('tasks', t.id, t);
+    // Start dagen etter sist genererte, men aldri før i dag (ingen etterfylling av fortiden)
+    let d = today;
+    if(r.lastGen){
+      const next = iso(addDays(parseISO(r.lastGen), 1));
+      if(next > d) d = next;
     }
-    r.lastGen = today; r.updatedAt = Date.now();
-    syncPush('routines', r.id, r);
-    changed = true;
+    while(d <= endISO){
+      const tid = 'dr_'+r.id+'_'+d;          // deterministisk id → samme på begge telefoner
+      if(!tasks.find(t=>t.id===tid)){
+        const now = Date.now();
+        const t = {id:tid, title:r.title, emoji:r.emoji||'📝', category:r.category||'custom',
+                   date:d, done:false, doneAt:null, createdAt:now, updatedAt:now};
+        tasks.push(t);
+        syncPush('tasks', t.id, t);
+        changed = true;
+      }
+      d = iso(addDays(parseISO(d), 1));
+    }
+    // Høyvannsmerke: generer aldri disse dagene på nytt (respekterer sletting)
+    if(!r.lastGen || r.lastGen < endISO){ r.lastGen = endISO; r.updatedAt = Date.now(); syncPush('routines', r.id, r); changed = true; }
   });
   if(changed){ save(); saveRoutines(); }
 }
@@ -2147,16 +2167,8 @@ function parseInvite(){
    Oppstart
    ============================================================ */
 function seedIfFirstRun(){
-  if(localStorage.getItem(STORE_KEY)!==null) return;
-  // Legg noen eksempler på i morgen + litt historikk, kun første gang.
-  const tm = tomorrowISO();
-  addTask('Gå tur med Charlie','🐕','dog',tm);
-  addTask('Vaske klær','🧺','laundry',tm);
-  const yest = iso(addDays(new Date(),-1));
-  const a = addTask('Støvsuge','🌀','cleaning',yest);
-  const b = addTask('Bade William','🍼','baby',yest);
-  [a,b].forEach(t=>{ if(t){t.done=true;t.doneAt=Date.now()-3600e3;} });
-  save();
+  // Tidligere la denne inn eksempeloppgaver. Nå gir de daglige rutinene
+  // ekte startinnhold, så vi hopper over demo-data (unngår dubletter).
 }
 
 renderChips();
