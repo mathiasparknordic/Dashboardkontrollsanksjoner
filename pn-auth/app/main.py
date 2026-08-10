@@ -277,16 +277,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def reset_password(uid: int, body: ResetPwdBody, admin: Admin):
         import secrets
         actor = int(admin["sub"])
+        satt_av_admin = bool(body.passord)          # admin valgte passordet selv
         temp = body.passord or ("Pn-" + secrets.token_urlsafe(9))
         conn = db.connect(cfg.db_path)
         try:
             row = db.user_with_permissions(conn, user_id=uid)
             if not row:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Ukjent bruker")
+            # Admin-satt passord får stå (må ikke byttes). Auto-generert temp tvinger bytte.
             conn.execute(
-                "UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?",
-                (security.hash_password(temp), uid))
-            db.log_change(conn, actor, uid, "passord nullstilt")
+                "UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?",
+                (security.hash_password(temp), 0 if satt_av_admin else 1, uid))
+            db.log_change(conn, actor, uid, "passord satt av admin" if satt_av_admin else "passord nullstilt")
             conn.commit()
             navn, til = row["name"], row["email"]
         finally:

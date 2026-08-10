@@ -182,6 +182,20 @@ def test_reset_password_forces_change_and_temp_returned(client, seed):
     assert lr.json()["must_change_password"] is True
 
 
+def test_admin_set_specific_password_stands(client, seed):
+    """Admin kan sette et passord selv – det virker direkte og tvinger ikke bytte."""
+    ids = seed()
+    login(client, "admin@parknordic.no", "hemmelig123")
+    r = client.post(f"/auth/users/{ids['sanks']}/reset-password",
+                    json={"passord": "adminvalgt-9x"})
+    assert r.status_code == 200
+    assert r.json()["temp_passord"] is None          # admin satte selv → ikke returnert
+    client.cookies.clear()
+    lr = login(client, "mathias@parknordic.no", "adminvalgt-9x")
+    assert lr.status_code == 200
+    assert lr.json()["must_change_password"] is False   # ikke tvunget bytte
+
+
 def test_change_password_flow(client, seed):
     seed()
     login(client, "mathias@parknordic.no", "nordic1234")

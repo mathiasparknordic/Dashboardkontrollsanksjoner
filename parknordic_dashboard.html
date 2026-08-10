@@ -2133,20 +2133,26 @@
   }
 
   async function adminResetPwd(uid) {
+    // Admin kan enten SETTE et passord selv, eller la stå tomt for et tilfeldig
+    // midlertidig (som brukeren må endre ved innlogging).
+    const valgt = prompt('Nytt passord for brukeren (minst 8 tegn).\n\nLa stå tomt for å lage et tilfeldig midlertidig passord som brukeren må endre ved innlogging.');
+    if (valgt === null) return;                       // avbrutt
+    const satt = valgt.trim();
+    if (satt && satt.length < 8) { adminFlash('Passordet må være minst 8 tegn.', false); return; }
     if (LAUNCHER_MODUS) {
-      const temp = 'pn-' + Math.random().toString(36).slice(2, 8);
+      const temp = satt || ('pn-' + Math.random().toString(36).slice(2, 8));
       if (typeof uid === 'string') setStoredPwd(uid, temp);
-      adminFlash(`Midlertidig passord (demo): ${temp} – gi til brukeren.`, true);
+      adminFlash(satt ? `Passord satt (demo) – gi til brukeren.` : `Midlertidig passord (demo): ${temp} – gi til brukeren.`, true);
       return;
     }
-    const res = await authApi(`/auth/users/${uid}/reset-password`, { method: 'POST', body: JSON.stringify({}) });
-    if (!res.ok) { adminFlash('Kunne ikke nullstille passord.', false); return; }
+    const res = await authApi(`/auth/users/${uid}/reset-password`, { method: 'POST', body: JSON.stringify(satt ? { passord: satt } : {}) });
+    if (!res.ok) { adminFlash('Kunne ikke endre passord.', false); return; }
     const data = await res.json();
     const epostInfo = data.epost === 'sendt' ? ' Nytt passord er sendt på e-post.'
       : data.epost === 'dry-run' ? ' (E-postrelay ikke aktivt ennå.)' : '';
     adminFlash(data.temp_passord
       ? `Midlertidig passord: ${data.temp_passord} (gi til brukeren – må endres ved innlogging).${epostInfo}`
-      : 'Passord nullstilt.' + epostInfo, true);
+      : `Passord satt – brukeren kan logge inn med det med en gang.${epostInfo}`, true);
   }
 
   async function adminCreateUser() {
