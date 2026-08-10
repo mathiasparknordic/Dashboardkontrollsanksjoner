@@ -118,7 +118,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/auth/login")
     def login(body: LoginBody, request: Request, response: Response):
         ip = _client_ip(request)
-        if not limiter.check(ip):
+        # Rate-limit per (IP, konto) – IKKE per IP alene. Ellers deler alle som går ut
+        # mot nett bak samme offentlige IP (kontor-NAT, eller nginx uten X-Forwarded-For)
+        # én teller, og fem bomforsøk låser HELE kontoret ute. Med konto i nøkkelen får
+        # hver bruker sitt eget budsjett, og brute-force mot én konto begrenses fortsatt.
+        rate_nokkel = f"{ip}|{(body.brukernavn or '').strip().lower()}"
+        if not limiter.check(rate_nokkel):
             raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                                 "For mange forsøk. Prøv igjen om litt.")
         conn = db.connect(cfg.db_path)
@@ -130,7 +135,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not row or not row["active"] or not security.verify_password(
                 body.passord, row["password_hash"]):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Feil brukernavn eller passord")
-        limiter.reset(ip)
+        limiter.reset(rate_nokkel)
         perms = _perm_dict(row)
         token = security.make_token(
             secret=cfg.auth_secret, user_id=row["id"], name=row["name"],
