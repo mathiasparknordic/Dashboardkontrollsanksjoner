@@ -34,6 +34,16 @@ mellom flere (f.eks. deg og partneren din).
   ligger på en tidligere dato uten å være fullført, med etikett for hvor lenge
   siden. Flytt én til i dag, «Flytt alle til i dag», rediger dato, eller fullfør
   – alt fra feltet. Et tall-merke på Planlagt-fanen viser antallet.
+- **Fikse hjemme** (🛠️-fanen) – punkter per rom, delt i *Fikse* og *Kjøpe*,
+  forhåndsfylt med lista over det som skal gjøres før salg. Legg til raskt
+  (skill flere med komma), trykk på et punkt for å redigere tittel, rom, type
+  og notat, eller planlegge det på **én dag** eller **over flere dager**
+  (hurtigvalg for helgen, i dag + i morgen, neste 7 dager). Planlagte punkter
+  får egen turkis prikk i kalenderen og vises under Planlagt på hver av dagene
+  («Dag 2 av 3»). Visning per rom (med fremdrift) eller etter dato, filter for
+  Fikse/Kjøpe, og kjøpepunkter kan sendes rett til handlelista. Synkes som
+  `fix` i Firebase; startlista legges inn én gang per husholdning, og slettinger
+  lagres som myk sletting så de ikke dukker opp igjen fra en annen telefon.
 - **Historikk** over alt som er gjort, gruppert per dag med tidspunkt (og en
   merknad hvis noe ble fullført på en annen dag enn planlagt).
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database

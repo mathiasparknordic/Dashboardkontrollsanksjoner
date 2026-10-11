@@ -454,7 +454,7 @@ input{font-family:inherit;}
   opacity:0;pointer-events:none;transition:opacity .26s var(--ease-std);z-index:60;
 }
 #sheetBackdrop.show{opacity:1;pointer-events:auto;}
-#editSheet{
+#editSheet,#fixSheet{
   position:fixed;left:50%;bottom:0;width:100%;max-width:520px;
   transform:translateX(-50%) translateY(110%);
   background:var(--card);border-radius:22px 22px 0 0;
@@ -462,7 +462,8 @@ input{font-family:inherit;}
   padding:6px 18px calc(env(safe-area-inset-bottom) + 18px);
   transition:transform .30s var(--ease-pop);will-change:transform;
 }
-#editSheet.show{transform:translateX(-50%) translateY(0);}
+#editSheet.show,#fixSheet.show{transform:translateX(-50%) translateY(0);}
+#fixSheet{max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .sheet-grab{width:40px;height:5px;border-radius:999px;background:var(--border-strong);margin:8px auto 10px;}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;}
 .sheet-head h2{font-size:18px;font-weight:800;margin:0;}
@@ -481,6 +482,101 @@ input{font-family:inherit;}
 .sheet-actions{display:flex;gap:10px;margin-top:20px;}
 .sheet-actions .wide-btn{flex:1;margin-top:0;}
 .sheet-actions .wide-btn:last-child{flex:1.3;}
+
+/* ---------- Fire faner (ikon over tekst) ---------- */
+.segment-4 button{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  padding:7px 2px 6px;font-size:11.5px;position:relative;white-space:nowrap;min-width:0;
+}
+.segment-4 .seg-ico{font-size:17px;line-height:1.1;}
+.segment-4 .tab-badge{position:absolute;top:3px;right:4px;margin:0;}
+
+/* ---------- Fikse hjemme ---------- */
+:root{ --fix-ink:#0E8C93; --fix:#D3F1F2; }
+.fx-summary{
+  display:flex;align-items:center;gap:14px;margin-top:14px;
+  background:var(--card);border:1px solid var(--border);
+  padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow-card);
+}
+.fx-summary .pt-main{font-size:15px;font-weight:800;}
+.fx-summary .pt-sub{font-size:13px;font-weight:600;color:var(--muted);}
+.fx-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.fx-pill{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--card-sunken);color:var(--muted);}
+.fx-pill.fix{background:var(--fix);color:var(--fix-ink);}
+.fx-pill.buy{background:var(--warning-soft);color:#9A6A12;}
+.fx-pill.warn{background:var(--danger-soft);color:#C0343F;}
+.fx-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+.fx-toolbar .segment{margin-top:0;flex:1 1 100%;}
+.fx-filter{
+  height:34px;padding:0 13px;border-radius:999px;font-size:13px;font-weight:800;
+  background:var(--card);border:1.5px solid var(--border);color:var(--muted);
+  transition:transform .12s var(--ease-std);
+}
+.fx-filter:active{transform:scale(.95);}
+.fx-filter.on{background:var(--text);border-color:var(--text);color:#fff;}
+.fx-composer .composer-row + .composer-row{margin-top:10px;}
+.fx-select{
+  flex:1;min-width:0;height:42px;background:var(--card-sunken);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:0 10px;font-size:14px;font-weight:700;color:var(--text);
+}
+.fx-kind{display:flex;gap:4px;background:var(--card-sunken);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:3px;flex:0 0 auto;}
+.fx-kind button{height:34px;padding:0 10px;border-radius:10px;font-size:13px;font-weight:800;color:var(--muted);}
+.fx-kind button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow-card);}
+.fx-more{margin-top:10px;width:100%;height:40px;border-radius:var(--radius-sm);font-size:14px;font-weight:800;
+  background:transparent;border:1.5px dashed var(--border-strong);color:var(--fix-ink);}
+.fx-more:active{transform:scale(.98);}
+
+.fx-room{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow-card);overflow:hidden;
+}
+.fx-room-head{
+  display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;text-align:left;
+}
+.fx-room-emoji{width:36px;height:36px;flex:0 0 auto;border-radius:11px;background:var(--fix);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.fx-room-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+.fx-room-name{font-size:16px;font-weight:800;}
+.fx-bar{height:6px;border-radius:999px;background:var(--card-sunken);overflow:hidden;}
+.fx-bar span{display:block;height:100%;background:var(--fix-ink);border-radius:999px;transition:width .3s var(--ease-std);}
+.fx-bar span.full{background:var(--success);}
+.fx-room-count{font-size:13px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.fx-room-chev{font-size:12px;color:var(--muted);transition:transform .2s var(--ease-std);}
+.fx-room.collapsed .fx-room-chev{transform:rotate(-90deg);}
+.fx-room.collapsed .fx-room-body{display:none;}
+.fx-room-body{padding:0 10px 10px;display:flex;flex-direction:column;gap:8px;}
+.fx-sub{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:6px 4px 0;}
+.fx-empty-room{font-size:13px;font-weight:600;color:var(--muted);padding:4px 6px 6px;}
+
+.fx-item{
+  display:flex;align-items:center;gap:12px;background:var(--card-sunken);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;
+  transition:transform .12s var(--ease-std);
+}
+.fx-item:active{transform:scale(.99);}
+.fx-item.done{opacity:.55;}
+.fx-item.done .fx-title{text-decoration:line-through;text-decoration-color:var(--muted);}
+.fx-item .check{width:26px;height:26px;}
+.fx-item-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.fx-title{font-size:15px;font-weight:800;line-height:1.25;word-break:break-word;}
+.fx-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12px;font-weight:700;color:var(--muted);}
+.fx-date{display:inline-flex;align-items:center;gap:4px;background:var(--fix);color:var(--fix-ink);padding:2px 8px;border-radius:999px;font-weight:800;}
+.fx-date.warn{background:var(--warning-soft);color:#B26A00;}
+.fx-kind-tag{font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;}
+.fx-kind-tag.fix{background:var(--fix);color:var(--fix-ink);}
+.fx-kind-tag.buy{background:var(--warning-soft);color:#9A6A12;}
+.fx-note{font-size:12px;font-weight:600;color:var(--muted);}
+.list .fx-item{background:var(--card);box-shadow:var(--shadow-card);}
+
+/* Fikse-ark */
+#fixSheet .fx-mode{margin-top:0;}
+.fx-dates{display:flex;gap:10px;margin-top:10px;}
+.fx-dates > div{flex:1;min-width:0;}
+.fx-dates .field-label{margin-top:0;}
+.fx-room-picker{display:flex;flex-wrap:wrap;gap:6px;}
+.fx-room-opt{height:34px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:800;background:var(--card-sunken);color:var(--text);border:2px solid transparent;}
+.fx-room-opt.sel{border-color:var(--fix-ink);background:var(--fix);color:var(--fix-ink);}
+.fx-sheet-extra{width:100%;margin-top:14px;}
+.fx-range-hint{font-size:12.5px;font-weight:700;color:var(--fix-ink);margin-top:8px;}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important;}
@@ -532,10 +628,11 @@ input{font-family:inherit;}
   </section>
 
   <!-- Visningsvalg -->
-  <div class="segment segment-3" role="tablist">
-    <button id="tabPlan" class="active" role="tab">📋 Planlagt<span class="tab-badge warn" id="planBadge" hidden></span></button>
-    <button id="tabShop" role="tab">🛒 Handleliste<span class="tab-badge" id="shopBadge" hidden></span></button>
-    <button id="tabHist" role="tab">🗂️ Historikk</button>
+  <div class="segment segment-4" id="mainTabs" role="tablist">
+    <button id="tabPlan" class="active" role="tab"><span class="seg-ico">📋</span><span>Planlagt</span><span class="tab-badge warn" id="planBadge" hidden></span></button>
+    <button id="tabFix" role="tab"><span class="seg-ico">🛠️</span><span>Fikse</span><span class="tab-badge warn" id="fixBadge" hidden></span></button>
+    <button id="tabShop" role="tab"><span class="seg-ico">🛒</span><span>Handleliste</span><span class="tab-badge" id="shopBadge" hidden></span></button>
+    <button id="tabHist" role="tab"><span class="seg-ico">🗂️</span><span>Historikk</span></button>
   </div>
 
   <!-- Planlagt-visning -->
@@ -575,6 +672,58 @@ input{font-family:inherit;}
 
     <div class="section-label" id="planListLabel">Oppgaver</div>
     <div class="list" id="taskList"></div>
+
+    <div id="fixDayWrap" hidden>
+      <div class="section-label" id="fixDayLabel">🛠️ Fikse denne dagen</div>
+      <div class="list" id="fixDayList"></div>
+    </div>
+  </div>
+
+  <!-- Fikse hjemme-visning -->
+  <div id="fixView" style="display:none;">
+    <div class="fx-summary">
+      <div class="ring" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="24" fill="none" stroke="#EFEBF5" stroke-width="6"></circle>
+          <circle id="fxRingFg" cx="28" cy="28" r="24" fill="none" stroke="#0E8C93" stroke-width="6"
+                  stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+        </svg>
+        <div class="ring-label" id="fxRingLabel">0/0</div>
+      </div>
+      <div class="progress-text">
+        <span class="pt-main" id="fxMain">Fikse hjemme</span>
+        <div class="fx-pills" id="fxPills"></div>
+      </div>
+    </div>
+
+    <div class="fx-toolbar">
+      <div class="segment" role="tablist">
+        <button id="fxModeRoom" class="active">🏠 Per rom</button>
+        <button id="fxModeDate">📅 Etter dato</button>
+      </div>
+      <button class="fx-filter on" data-kind="all">Alle</button>
+      <button class="fx-filter" data-kind="fix">🔧 Fikse</button>
+      <button class="fx-filter" data-kind="buy">🛒 Kjøpe</button>
+      <button class="fx-filter" id="fxShowDone">Vis fullførte</button>
+    </div>
+
+    <div class="composer fx-composer">
+      <div class="composer-row">
+        <input type="text" id="fxInput" placeholder="Skriv nytt punkt …" maxlength="200"
+               autocomplete="off" enterkeyhint="done" />
+        <button class="add-btn" id="fxAddBtn" aria-label="Legg til punkt" style="background:var(--fix-ink)">+</button>
+      </div>
+      <div class="composer-row">
+        <select id="fxRoomSel" class="fx-select" aria-label="Rom"></select>
+        <div class="fx-kind" id="fxKindQuick">
+          <button data-kind="fix" class="active">🔧 Fikse</button>
+          <button data-kind="buy">🛒 Kjøpe</button>
+        </div>
+      </div>
+      <button class="fx-more" id="fxNewWithDate">📅 Nytt punkt med dato eller notat</button>
+    </div>
+
+    <div class="list" id="fxList"></div>
   </div>
 
   <!-- Historikk-visning -->
@@ -736,6 +885,62 @@ input{font-family:inherit;}
   <div class="sheet-actions">
     <button type="button" class="wide-btn ghost" id="editCancelBtn">Avbryt</button>
     <button type="button" class="wide-btn" id="editSaveBtn">Lagre</button>
+  </div>
+</div>
+
+<!-- Fikse-punkt-ark (bunnark) -->
+<div id="fixSheet" role="dialog" aria-modal="true" aria-labelledby="fixSheetTitle">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <h2 id="fixSheetTitle">Rediger punkt</h2>
+    <button type="button" class="sheet-del" id="fxDeleteBtn">Slett</button>
+  </div>
+  <div class="done-chip" id="fxDoneChip" hidden>✓ Fullført</div>
+
+  <label class="field-label" for="fxTitle">Hva skal gjøres</label>
+  <input type="text" class="field-input" id="fxTitle" maxlength="100" autocomplete="off" enterkeyhint="done" />
+
+  <label class="field-label">Type</label>
+  <div class="fx-kind" id="fxKindSheet" style="display:inline-flex;">
+    <button type="button" data-kind="fix">🔧 Fikse</button>
+    <button type="button" data-kind="buy">🛒 Kjøpe</button>
+  </div>
+
+  <label class="field-label">Rom</label>
+  <div class="fx-room-picker" id="fxRoomPicker"></div>
+  <div class="composer-row" style="margin-top:8px;">
+    <input type="text" class="field-input" id="fxNewRoom" placeholder="Eller skriv nytt rom …" maxlength="30" autocomplete="off" style="height:42px;" />
+  </div>
+
+  <label class="field-label">Når</label>
+  <div class="segment fx-mode" id="fxWhen">
+    <button type="button" data-mode="none">Ikke planlagt</button>
+    <button type="button" data-mode="one">Én dag</button>
+    <button type="button" data-mode="multi">Flere dager</button>
+  </div>
+  <div id="fxDateArea">
+    <div class="date-quick" id="fxDateQuick" style="margin-top:10px;"></div>
+    <div class="fx-dates">
+      <div>
+        <label class="field-label" for="fxStart" id="fxStartLabel">Dato</label>
+        <input type="date" class="field-input" id="fxStart" />
+      </div>
+      <div id="fxEndWrap">
+        <label class="field-label" for="fxEnd">Til og med</label>
+        <input type="date" class="field-input" id="fxEnd" />
+      </div>
+    </div>
+    <div class="fx-range-hint" id="fxRangeHint"></div>
+  </div>
+
+  <label class="field-label" for="fxNote">Notat</label>
+  <input type="text" class="field-input" id="fxNote" maxlength="140" autocomplete="off" placeholder="F.eks. mål, butikk, frist …" />
+
+  <button type="button" class="wide-btn ghost fx-sheet-extra" id="fxToShop" hidden>🛒 Legg i handlelista</button>
+
+  <div class="sheet-actions">
+    <button type="button" class="wide-btn ghost" id="fxCancelBtn">Avbryt</button>
+    <button type="button" class="wide-btn" id="fxSaveBtn" style="background:var(--fix-ink)">Lagre</button>
   </div>
 </div>
 
@@ -1076,6 +1281,527 @@ function deleteCategory(id){
 }
 
 /* ============================================================
+   Fikse hjemme – punkter per rom (fikse/kjøpe), med dato over én
+   eller flere dager. Synkes som samlingen «fix».
+   ============================================================ */
+const FIX_KEY = 'hjemme_fikse_v1';
+const FIXMETA_KEY = 'hjemme_fikse_meta_v1';
+const FIX_UI_KEY = 'hjemme_fikse_ui_v1';
+const MONTHS_SHORT = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+const DAYS_SHORT = ['søn','man','tir','ons','tor','fre','lør'];
+
+const FIX_ROOMS = [
+  {name:'Kjøkken', emoji:'🍳'}, {name:'Stue', emoji:'🛋️'}, {name:'Gjestedo', emoji:'🚽'},
+  {name:'Soverommet vårt', emoji:'🛏️'}, {name:'Badet oppe', emoji:'🛁'}, {name:'Gang', emoji:'🚪'},
+  {name:'Gjesterom', emoji:'🛌'}, {name:'Kjellerstue', emoji:'📺'}, {name:'William sitt rom', emoji:'🧸'},
+  {name:'Bad nede', emoji:'🚿'}, {name:'Vaskerom', emoji:'🧺'}, {name:'Bod', emoji:'📦'},
+  {name:'Garasje', emoji:'🚗'}, {name:'Utebod', emoji:'🏚️'}, {name:'Ute', emoji:'🌳'}, {name:'Diverse', emoji:'📌'}
+];
+/* Startlista. «*» foran = allerede gjort. Notat etter « | ». */
+const FIX_SEED = {
+  'Kjøkken': {fix:['*Barnesikre skap/skuffer','Vaske kjøleskap','Vaske komfyr','Vaske fliser','Vaske skuffer og skap','Vaske vask grundig','Skru fast ovnen'],
+              buy:['Plisségardiner','Søppeldunker','Håndtak til kjøkkeninnredning']},
+  'Stue': {fix:['Fjerne robotstøvsuger','*Fjerne Charlie sine leker','Henge TV på vegg'],
+           buy:['Plisségardiner','Gardiner','Lite bord','*Sofaputer']},
+  'Gjestedo': {fix:['Skjule ledning','Få taklampe til å lyse','Fjerne en hylle','Vaske vask grundig'],
+               buy:['Kluter','Kurv til kluter']},
+  'Soverommet vårt': {fix:['Senke bunnen i sprinkelseng','Støvsuge seng','Vaske sengegavl','Barnesikre nattbordsskuffer','Barnesikre stikkontakter/ledninger','Fjerne skruer i taket ved garderobeskap','Sparkle der skruene var','Male taket','Liste taket inn til garderobeskapet'],
+                      buy:['Rullgardin']},
+  'Badet oppe': {fix:['Barnesikre dusj','Barnesikre skuffer','Vaske dusj grundig','Vaske vask grundig','Lys over speilet','Fuge dusjen','Bytte flis'],
+                 buy:['Plisségardin','*Dolokk']},
+  'Gang': {fix:['Justere høyder i garderobeskap','Fjerne endehylle','Bygge hyller inntil garderobeskap','Fjerne skruer i taket ved garderobeskap','Sparkle der skruene var','Male taket','Liste taket inn til garderobeskapet'],
+           buy:['Liten kommode','Lamper','Stort speil']},
+  'Gjesterom': {fix:['*Barnesikre stikkontakter'], buy:['Kommode','Rullgardiner']},
+  'Kjellerstue': {fix:['Barnesikre TV-benk','Kaste kurv'], buy:[]},
+  'William sitt rom': {fix:['Vaske leker','Fylle ut album'], buy:['Gardiner','Rullgardin','Bilder til veggen']},
+  'Bad nede': {fix:['Reparere dusj så den ikke lekker','Vaske dusj grundig','Vaske vask grundig','Barnesikre skuff'], buy:[]},
+  'Vaskerom': {fix:['Barnesikre skuffer og skap','Vaske vask grundig','Støvsuge og vaske bak vaskemaskin/tørketrommel','Vaske vegger'], buy:[]},
+  'Bod': {fix:['Rydde'], buy:['Stort skap']},
+  'Garasje': {fix:['Rydde','Kaste ting vi ikke trenger'], buy:[]},
+  'Utebod': {fix:['Rydde','Kaste ting vi ikke trenger'], buy:[]},
+  'Ute': {fix:['Vaske vinduer','Støvsuge hageputer','Rydde inn hageputer','Pakke bort hagemøbler for vinteren','Luke ugress','Klippe hekk','Fjerne alt som ikke er pent i stort bed','Barke stort bed','Lage fonteneløsning i dammen','Male over sølt beis','Stolpe ved Tesla','Vaske huset utvendig','Vaske terrassen','Beise toppen av gjerdet'],
+          buy:['Nye stener til «bedet» i dammen']},
+  'Diverse': {fix:['Søke om pleiepenger | 8 ukers behandlingstid','Sette opp budsjett','Slutte å snuse','Vaske vinduer inne','Sette frem/henge opp bilder','Legge ut ting for salg/levere til gjenbruk','Bestille vaskehjelp'], buy:[]}
+};
+
+function normalizeFix(id, d){
+  d = d || {};
+  const start = d.start || null;
+  let end = d.end || start;
+  if(start && end && end < start) end = start;
+  return {id, title:d.title||'', room:d.room||'Diverse', kind:(d.kind==='buy'?'buy':'fix'),
+          note:d.note||'', start, end:start?end:null, done:!!d.done, doneAt:d.doneAt||null, deleted:!!d.deleted,
+          order:(typeof d.order==='number'?d.order:0),
+          createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+function loadFix(){
+  try{ const a=JSON.parse(localStorage.getItem(FIX_KEY)); if(Array.isArray(a)) return a.map(x=>normalizeFix(x.id,x)); }catch(e){}
+  return [];
+}
+function saveFix(){ try{ localStorage.setItem(FIX_KEY, JSON.stringify(fix)); }catch(e){} }
+function loadFixMeta(){
+  try{ const o=JSON.parse(localStorage.getItem(FIXMETA_KEY)); if(o&&typeof o==='object') return o; }catch(e){}
+  return {};
+}
+function saveFixMeta(){ try{ localStorage.setItem(FIXMETA_KEY, JSON.stringify(fixMeta)); }catch(e){} }
+function loadFixUI(){
+  const def = {mode:'room', kind:'all', showDone:false, collapsed:{}, room:'Kjøkken', quickKind:'fix'};
+  try{ const o=JSON.parse(localStorage.getItem(FIX_UI_KEY)); if(o&&typeof o==='object') return Object.assign(def,o); }catch(e){}
+  return def;
+}
+function saveFixUI(){ try{ localStorage.setItem(FIX_UI_KEY, JSON.stringify(fixUI)); }catch(e){} }
+
+let fix = loadFix();
+let fixMeta = loadFixMeta();
+let fixUI = loadFixUI();
+
+/* Legg inn startlista én gang. Faste id-er gjør at to telefoner som seeder
+   samtidig skriver de samme punktene (ingen dubletter). */
+function seedFixItems(){
+  const now = Date.now();
+  const out = [];
+  Object.keys(FIX_SEED).forEach((room, ri)=>{
+    ['fix','buy'].forEach(kind=>{
+      (FIX_SEED[room][kind]||[]).forEach((raw, i)=>{
+        let title = raw, done = false, note = '';
+        if(title.charAt(0)==='*'){ done = true; title = title.slice(1); }
+        const bar = title.indexOf(' | ');
+        if(bar>=0){ note = title.slice(bar+3); title = title.slice(0,bar); }
+        const id = 'fx_s'+String(ri).padStart(2,'0')+'_'+kind+'_'+String(i).padStart(2,'0');
+        out.push(normalizeFix(id, {title, room, kind, note, done, doneAt:null,
+          order:ri*1000+(kind==='buy'?500:0)+i, createdAt:now+ri*100+i, updatedAt:now}));
+      });
+    });
+  });
+  return out;
+}
+/* remote = første snapshot fra Firebase (eller null uten synk) */
+function maybeSeedFix(remote){
+  if(fixMeta.seeded){
+    if(remote && !(remote.fixmeta && remote.fixmeta.seeded)) syncPush('fixmeta', 'seeded', true);
+    return false;
+  }
+  const remoteSeeded = remote && remote.fixmeta && remote.fixmeta.seeded;
+  const hasItems = fix.length>0 || (remote && remote.fix && Object.keys(remote.fix).length>0);
+  if(!remoteSeeded && !hasItems){
+    const items = seedFixItems();
+    fix = fix.concat(items);
+    saveFix();
+    if(!remote) fixMeta.localSeedAt = Date.now();   // lokal seed uten synk – kan forkastes ved tilkobling
+    items.forEach(it=> syncPush('fix', it.id, it));
+  }
+  fixMeta.seeded = true; saveFixMeta();
+  if(!remoteSeeded) syncPush('fixmeta', 'seeded', true);
+  return true;
+}
+
+function fixRooms(){
+  const known = FIX_ROOMS.map(r=>r.name);
+  const extra = [...new Set(liveFix().map(f=>f.room))].filter(n=>!known.includes(n)).sort((a,b)=>a.localeCompare(b,'nb'));
+  return known.concat(extra);
+}
+function roomEmoji(name){ const r = FIX_ROOMS.find(x=>x.name===name); return r ? r.emoji : '🏠'; }
+
+function addFix(title, room, kind, extra){
+  title = (title||'').trim();
+  if(!title) return null;
+  const now = Date.now();
+  const it = normalizeFix(uid(), Object.assign({title, room:room||'Diverse', kind:kind||'fix',
+    order:now, createdAt:now, updatedAt:now}, extra||{}));
+  fix.push(it);
+  saveFix();
+  syncPush('fix', it.id, it);
+  return it;
+}
+function updateFix(id, patch){
+  const it = fix.find(x=>x.id===id);
+  if(!it) return null;
+  Object.assign(it, patch, {updatedAt:Date.now()});
+  if(!it.start){ it.start=null; it.end=null; }
+  else if(!it.end || it.end<it.start){ it.end = it.start; }
+  saveFix();
+  syncPush('fix', it.id, it);
+  return it;
+}
+function toggleFix(id){
+  const it = fix.find(x=>x.id===id);
+  if(!it) return;
+  updateFix(id, {done:!it.done, doneAt:!it.done?Date.now():null});
+}
+/* Myk sletting: punktet merkes som slettet (med tidsstempel) i stedet for å fjernes,
+   slik at en telefon som var lukket ikke laster det opp igjen ved neste oppstart. */
+function deleteFix(id){
+  const it = fix.find(x=>x.id===id);
+  if(!it) return;
+  it.deleted = true; it.updatedAt = Date.now();
+  saveFix();
+  syncPush('fix', it.id, it);
+}
+function liveFix(){ return fix.filter(x=>!x.deleted); }
+
+/* Dato-hjelpere for punktene */
+function fixCovers(it, d){ return !!it.start && it.start<=d && d<=(it.end||it.start); }
+function fixForDate(d){ return liveFix().filter(it=>fixCovers(it,d)); }
+function fixOverdue(it){ return !it.done && !!it.start && (it.end||it.start) < todayISO(); }
+function fmtShort(s){ const d=parseISO(s); return `${DAYS_SHORT[d.getDay()]} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`; }
+function fmtRange(it){
+  if(!it.start) return '';
+  const s = parseISO(it.start), e = parseISO(it.end||it.start);
+  if(it.start===(it.end||it.start)){
+    if(it.start===todayISO()) return 'I dag';
+    if(it.start===tomorrowISO()) return 'I morgen';
+    return fmtShort(it.start);
+  }
+  if(s.getMonth()===e.getMonth()) return `${s.getDate()}.–${e.getDate()}. ${MONTHS_SHORT[e.getMonth()]}`;
+  return `${s.getDate()}. ${MONTHS_SHORT[s.getMonth()]} – ${e.getDate()}. ${MONTHS_SHORT[e.getMonth()]}`;
+}
+function rangeDays(it){ return it.start ? Math.round((parseISO(it.end||it.start)-parseISO(it.start))/864e5)+1 : 0; }
+
+/* Ett punkt i lista */
+function fixNode(it, opts){
+  opts = opts || {};
+  const el = document.createElement('div');
+  el.className = 'fx-item'+(it.done?' done':'');
+  el.dataset.id = it.id;
+
+  const check = document.createElement('button');
+  check.type='button';
+  check.className = 'check'+(it.done?' on':'');
+  check.innerHTML = checkSvg();
+  check.setAttribute('aria-label', it.done?'Angre fullført':'Merk som gjort');
+  if(opts.readOnly){ check.disabled = true; }
+  else check.addEventListener('click',(ev)=>{
+    ev.stopPropagation();
+    const was = it.done;
+    toggleFix(it.id);
+    if(!was){
+      try{navigator.vibrate && navigator.vibrate(15);}catch(e){}
+      burstConfetti(ev.clientX, ev.clientY);
+      const roomLeft = liveFix().filter(x=>x.room===it.room && !x.done).length;
+      if(roomLeft===0) showToast(`${it.room} er ferdig! 🎉`);
+    }
+    renderAll();
+  });
+
+  const body = document.createElement('div');
+  body.className='fx-item-body';
+  const title = document.createElement('div');
+  title.className='fx-title';
+  title.textContent = it.title;
+  const meta = document.createElement('div');
+  meta.className='fx-meta';
+  if(opts.showRoom){
+    const r = document.createElement('span');
+    r.textContent = `${roomEmoji(it.room)} ${it.room}`;
+    meta.appendChild(r);
+  }
+  if(opts.showKind){
+    const k = document.createElement('span');
+    k.className = 'fx-kind-tag '+it.kind;
+    k.textContent = it.kind==='buy' ? 'Kjøpe' : 'Fikse';
+    meta.appendChild(k);
+  }
+  if(opts.dayOf){
+    const n = rangeDays(it);
+    const idx = Math.round((parseISO(opts.dayOf)-parseISO(it.start))/864e5)+1;
+    if(n>1){ const s=document.createElement('span'); s.className='fx-date'; s.textContent=`Dag ${idx} av ${n}`; meta.appendChild(s); }
+  }else if(it.start){
+    const s = document.createElement('span');
+    const od = fixOverdue(it);
+    s.className = 'fx-date'+(od?' warn':'');
+    s.textContent = (od?'⏰ ':'📅 ')+fmtRange(it);
+    meta.appendChild(s);
+  }
+  if(opts.readOnly && it.doneAt){
+    const d = new Date(it.doneAt);
+    const s = document.createElement('span');
+    s.textContent = `fullført kl. ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    meta.appendChild(s);
+  }
+  body.appendChild(title);
+  if(meta.childNodes.length) body.appendChild(meta);
+  if(it.note){
+    const n = document.createElement('div');
+    n.className='fx-note';
+    n.textContent = it.note;
+    body.appendChild(n);
+  }
+  el.append(check, body);
+  if(!opts.readOnly){
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label', `Rediger «${it.title}»`);
+    el.addEventListener('click',(ev)=>{ if(ev.target.closest('.check')) return; openFixSheet(it.id); });
+  }
+  return el;
+}
+
+function fixSort(a,b){ return (a.done-b.done) || (a.order-b.order) || (a.createdAt-b.createdAt); }
+function fixVisible(it){
+  if(fixUI.kind!=='all' && it.kind!==fixUI.kind) return false;
+  if(!fixUI.showDone && it.done) return false;
+  return true;
+}
+
+function renderFixSummary(){
+  const fix = liveFix();
+  const total = fix.length, done = fix.filter(x=>x.done).length;
+  const C = 2*Math.PI*24;
+  document.getElementById('fxRingFg').style.strokeDashoffset = String(C*(1-(total?done/total:0)));
+  document.getElementById('fxRingLabel').textContent = total ? `${Math.round(done/total*100)}%` : '0%';
+  document.getElementById('fxMain').textContent = total ? `${done} av ${total} punkter gjort` : 'Ingen punkter enda';
+  const pills = document.getElementById('fxPills');
+  pills.innerHTML = '';
+  const add = (cls, txt)=>{ const s=document.createElement('span'); s.className='fx-pill '+cls; s.textContent=txt; pills.appendChild(s); };
+  const fixLeft = fix.filter(x=>!x.done && x.kind==='fix').length;
+  const buyLeft = fix.filter(x=>!x.done && x.kind==='buy').length;
+  const planned = fix.filter(x=>!x.done && x.start).length;
+  const od = fix.filter(fixOverdue).length;
+  add('fix', `🔧 ${fixLeft} å fikse`);
+  add('buy', `🛒 ${buyLeft} å kjøpe`);
+  add('', `📅 ${planned} planlagt`);
+  if(od) add('warn', `⏰ ${od} forfalt`);
+}
+
+function renderFixToolbar(){
+  document.getElementById('fxModeRoom').classList.toggle('active', fixUI.mode==='room');
+  document.getElementById('fxModeDate').classList.toggle('active', fixUI.mode==='date');
+  document.querySelectorAll('.fx-filter[data-kind]').forEach(b=> b.classList.toggle('on', b.dataset.kind===fixUI.kind));
+  document.getElementById('fxShowDone').classList.toggle('on', !!fixUI.showDone);
+  // Rom-velger i hurtig-innleggingen
+  const sel = document.getElementById('fxRoomSel');
+  const rooms = fixRooms();
+  if(!rooms.includes(fixUI.room)) fixUI.room = rooms[0];
+  const want = rooms.join('|');
+  if(sel.dataset.rooms !== want){
+    sel.innerHTML = '';
+    rooms.forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=`${roomEmoji(r)} ${r}`; sel.appendChild(o); });
+    sel.dataset.rooms = want;
+  }
+  sel.value = fixUI.room;
+  document.querySelectorAll('#fxKindQuick button').forEach(b=> b.classList.toggle('active', b.dataset.kind===fixUI.quickKind));
+}
+
+function renderFixByRoom(list){
+  const fix = liveFix();
+  fixRooms().forEach(room=>{
+    const all = fix.filter(x=>x.room===room);
+    if(!all.length) return;
+    const shown = all.filter(fixVisible).sort(fixSort);
+    const done = all.filter(x=>x.done).length;
+    const allDone = done===all.length;
+    const card = document.createElement('section');
+    const collapsed = fixUI.collapsed[room]!==undefined ? !!fixUI.collapsed[room] : allDone;
+    card.className = 'fx-room'+(collapsed?' collapsed':'');
+
+    const head = document.createElement('button');
+    head.type='button'; head.className='fx-room-head';
+    head.setAttribute('aria-expanded', collapsed?'false':'true');
+    const em = document.createElement('span'); em.className='fx-room-emoji'; em.textContent = roomEmoji(room);
+    const main = document.createElement('span'); main.className='fx-room-main';
+    const nm = document.createElement('span'); nm.className='fx-room-name'; nm.textContent = room;
+    const bar = document.createElement('span'); bar.className='fx-bar';
+    const fill = document.createElement('span'); fill.style.width = `${Math.round(done/all.length*100)}%`; if(allDone) fill.className='full';
+    bar.appendChild(fill); main.append(nm, bar);
+    const cnt = document.createElement('span'); cnt.className='fx-room-count'; cnt.textContent = allDone ? '✓ Ferdig' : `${done}/${all.length}`;
+    const chev = document.createElement('span'); chev.className='fx-room-chev'; chev.textContent='▾';
+    head.append(em, main, cnt, chev);
+    head.addEventListener('click',()=>{
+      const c = !card.classList.contains('collapsed');
+      card.classList.toggle('collapsed', c);
+      head.setAttribute('aria-expanded', c?'false':'true');
+      fixUI.collapsed[room] = c; saveFixUI();
+    });
+
+    const bodyEl = document.createElement('div'); bodyEl.className='fx-room-body';
+    const groups = [['fix','🔧 Fikse'],['buy','🛒 Kjøpe']];
+    let any = false;
+    groups.forEach(([k,label])=>{
+      const g = shown.filter(x=>x.kind===k);
+      if(!g.length) return;
+      any = true;
+      if(fixUI.kind==='all'){ const h=document.createElement('div'); h.className='fx-sub'; h.textContent=label; bodyEl.appendChild(h); }
+      g.forEach(it=> bodyEl.appendChild(fixNode(it)));
+    });
+    if(!any){
+      const e = document.createElement('div'); e.className='fx-empty-room';
+      e.textContent = allDone ? 'Alt er gjort her. Trykk «Vis fullførte» for å se punktene.' : 'Ingen punkter med dette filteret.';
+      bodyEl.appendChild(e);
+    }
+    card.append(head, bodyEl);
+    list.appendChild(card);
+  });
+}
+
+function renderFixByDate(list){
+  const items = liveFix().filter(fixVisible);
+  const od = items.filter(fixOverdue).sort((a,b)=>a.start.localeCompare(b.start));
+  const planned = items.filter(x=>x.start && !fixOverdue(x)).sort((a,b)=> a.start.localeCompare(b.start) || fixSort(a,b));
+  const unplanned = items.filter(x=>!x.start).sort((a,b)=> fixRooms().indexOf(a.room)-fixRooms().indexOf(b.room) || fixSort(a,b));
+  const header = (txt)=>{ const h=document.createElement('div'); h.className='day-header'; h.textContent=txt; list.appendChild(h); };
+  if(od.length){ header(`⏰ Forfalt (${od.length})`); od.forEach(it=> list.appendChild(fixNode(it,{showRoom:true, showKind:true}))); }
+  let cur = null;
+  planned.forEach(it=>{
+    if(it.start!==cur){ cur = it.start; header(relDayLabel(it.start)); }
+    list.appendChild(fixNode(it,{showRoom:true, showKind:true}));
+  });
+  if(!od.length && !planned.length){
+    list.appendChild(emptyNode('📅','Ingenting er planlagt enda','Trykk på et punkt og velg «Én dag» eller «Flere dager».'));
+  }
+  if(unplanned.length){
+    header(`Ikke planlagt (${unplanned.length})`);
+    unplanned.forEach(it=> list.appendChild(fixNode(it,{showRoom:true, showKind:true})));
+  }
+}
+
+function renderFix(){
+  renderFixSummary();
+  renderFixToolbar();
+  const list = document.getElementById('fxList');
+  list.innerHTML = '';
+  if(!liveFix().length){
+    list.appendChild(emptyNode('🛠️','Ingen punkter enda','Skriv et punkt over og velg rom. Lista deles med alle på den delte lista.'));
+    return;
+  }
+  if(fixUI.mode==='date') renderFixByDate(list); else renderFixByRoom(list);
+}
+
+/* Punkter som er planlagt på valgt dag (vises under Planlagt) */
+function renderFixDay(){
+  const wrap = document.getElementById('fixDayWrap');
+  if(!wrap) return;
+  const items = fixForDate(selectedDate).sort((a,b)=> (a.done-b.done) || a.start.localeCompare(b.start) || fixSort(a,b));
+  wrap.hidden = !items.length;
+  if(!items.length) return;
+  const left = items.filter(x=>!x.done).length;
+  document.getElementById('fixDayLabel').textContent = `🛠️ Fikse denne dagen (${left} igjen)`;
+  const list = document.getElementById('fixDayList');
+  list.innerHTML = '';
+  items.forEach(it=> list.appendChild(fixNode(it,{showRoom:true, showKind:true, dayOf:selectedDate})));
+}
+function updateFixBadge(){
+  const b = document.getElementById('fixBadge');
+  if(!b) return;
+  const n = liveFix().filter(fixOverdue).length;
+  b.hidden = !n; b.textContent = String(n);
+}
+
+/* --- Ark for nytt/redigert punkt --- */
+let fxEditId = null, fxDraft = null;
+function weekendRange(){
+  const d = new Date(); const wd = d.getDay();           // 0 søn … 6 lør
+  if(wd===6) return [iso(d), iso(addDays(d,1))];
+  if(wd===0) return [iso(addDays(d,6)), iso(addDays(d,7))];
+  return [iso(addDays(d,6-wd)), iso(addDays(d,7-wd))];
+}
+function openFixSheet(id, preset){
+  const it = id ? fix.find(x=>x.id===id && !x.deleted) : null;
+  if(id && !it) return;
+  fxEditId = it ? it.id : null;
+  fxLastTrigger = document.activeElement;
+  fxDraft = it ? {title:it.title, room:it.room, kind:it.kind, note:it.note, start:it.start, end:it.end}
+               : Object.assign({title:'', room:fixUI.room, kind:fixUI.quickKind, note:'', start:null, end:null}, preset||{});
+  fxDraft.mode = !fxDraft.start ? 'none' : (fxDraft.end && fxDraft.end!==fxDraft.start ? 'multi' : 'one');
+  document.getElementById('fixSheetTitle').textContent = it ? 'Rediger punkt' : 'Nytt punkt';
+  document.getElementById('fxDeleteBtn').hidden = !it;
+  document.getElementById('fxDoneChip').hidden = !(it && it.done);
+  document.getElementById('fxTitle').value = fxDraft.title;
+  document.getElementById('fxNote').value = fxDraft.note;
+  document.getElementById('fxNewRoom').value = '';
+  renderFixSheet();
+  const bd = document.getElementById('sheetBackdrop'), sh = document.getElementById('fixSheet');
+  bd.classList.add('show');
+  sh.scrollTop = 0;
+  requestAnimationFrame(()=> sh.classList.add('show'));
+  if(!it) setTimeout(()=>{ try{ document.getElementById('fxTitle').focus(); }catch(e){} }, 320);
+}
+let fxLastTrigger = null;
+function closeFixSheet(){
+  document.getElementById('fixSheet').classList.remove('show');
+  if(fxLastTrigger && fxLastTrigger.focus && document.body.contains(fxLastTrigger)){ try{ fxLastTrigger.focus({preventScroll:true}); }catch(e){} }
+  if(!editId) document.getElementById('sheetBackdrop').classList.remove('show');
+  fxEditId = null; fxDraft = null;
+}
+function setFxMode(mode){
+  const base = fxDraft.start || (selectedDate>=todayISO() ? selectedDate : todayISO());
+  fxDraft.mode = mode;
+  if(mode==='none'){ fxDraft.start=null; fxDraft.end=null; }
+  else if(mode==='one'){ fxDraft.start=base; fxDraft.end=base; }
+  else { fxDraft.start=base; if(!fxDraft.end || fxDraft.end<=base) fxDraft.end = iso(addDays(parseISO(base),1)); }
+  renderFixSheet();
+}
+function renderFixSheet(){
+  // Type
+  document.querySelectorAll('#fxKindSheet button').forEach(b=> b.classList.toggle('active', b.dataset.kind===fxDraft.kind));
+  // Rom
+  const picker = document.getElementById('fxRoomPicker');
+  picker.innerHTML = '';
+  const rooms = fixRooms();
+  if(fxDraft.room && !rooms.includes(fxDraft.room)) rooms.push(fxDraft.room);
+  rooms.forEach(r=>{
+    const b = document.createElement('button');
+    b.type='button'; b.className='fx-room-opt'+(r===fxDraft.room?' sel':'');
+    b.textContent = `${roomEmoji(r)} ${r}`;
+    b.addEventListener('click',()=>{ fxDraft.room = r; document.getElementById('fxNewRoom').value=''; renderFixSheet(); });
+    picker.appendChild(b);
+  });
+  // Når
+  document.querySelectorAll('#fxWhen button').forEach(b=> b.classList.toggle('active', b.dataset.mode===fxDraft.mode));
+  const area = document.getElementById('fxDateArea');
+  area.hidden = fxDraft.mode==='none';
+  document.getElementById('fxEndWrap').hidden = fxDraft.mode!=='multi';
+  document.getElementById('fxStartLabel').textContent = fxDraft.mode==='multi' ? 'Fra' : 'Dato';
+  document.getElementById('fxStart').value = fxDraft.start || '';
+  document.getElementById('fxEnd').value = fxDraft.end || '';
+  // Hurtigvalg for dato
+  const q = document.getElementById('fxDateQuick');
+  q.innerHTML = '';
+  const opts = fxDraft.mode==='multi'
+    ? [{label:'Helgen', val:weekendRange()},
+       {label:'I dag + i morgen', val:[todayISO(), tomorrowISO()]},
+       {label:'Neste 7 dager', val:[todayISO(), iso(addDays(new Date(),6))]}]
+    : [{label:'I dag', val:[todayISO(),todayISO()]},
+       {label:'I morgen', val:[tomorrowISO(),tomorrowISO()]},
+       {label:'Lørdag', val:[weekendRange()[0],weekendRange()[0]]}];
+  if(fxDraft.mode!=='none') opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type='button';
+    b.className = 'q-primary'+((o.val[0]===fxDraft.start && o.val[1]===fxDraft.end)?' sel':'');
+    b.textContent = o.label;
+    b.addEventListener('click',()=>{ fxDraft.start=o.val[0]; fxDraft.end=o.val[1]; renderFixSheet(); });
+    q.appendChild(b);
+  });
+  // Oppsummering
+  const hint = document.getElementById('fxRangeHint');
+  if(fxDraft.mode==='multi' && fxDraft.start && fxDraft.end){
+    const n = Math.round((parseISO(fxDraft.end)-parseISO(fxDraft.start))/864e5)+1;
+    hint.textContent = `${fmtShort(fxDraft.start)} – ${fmtShort(fxDraft.end)} · ${n} dager. Vises på hver av dagene i kalenderen.`;
+  }else if(fxDraft.mode==='one' && fxDraft.start){
+    hint.textContent = `Vises under Planlagt ${relDayLabel(fxDraft.start)}.`;
+  }else hint.textContent = '';
+  document.getElementById('fxToShop').hidden = !(fxEditId && fxDraft.kind==='buy');
+}
+function saveFixSheet(){
+  if(!fxDraft) return;
+  const title = (document.getElementById('fxTitle').value||'').trim();
+  if(!title){ showToast('Skriv hva som skal gjøres'); document.getElementById('fxTitle').focus(); return; }
+  const newRoom = (document.getElementById('fxNewRoom').value||'').trim();
+  const room = newRoom || fxDraft.room || 'Diverse';
+  let start = fxDraft.mode==='none' ? null : (document.getElementById('fxStart').value || fxDraft.start);
+  let end = fxDraft.mode==='multi' ? (document.getElementById('fxEnd').value || fxDraft.end) : start;
+  if(fxDraft.mode!=='none' && !start){ showToast('Velg en dato'); return; }
+  if(start && end && end<start){ const t=start; start=end; end=t; }
+  if(fxDraft.mode==='multi' && start===end){ fxDraft.mode='one'; }
+  const patch = {title, room, kind:fxDraft.kind, note:(document.getElementById('fxNote').value||'').trim(), start, end:start?end:null};
+  const wasNew = !fxEditId;
+  if(fxEditId) updateFix(fxEditId, patch);
+  else addFix(title, room, fxDraft.kind, patch);
+  fixUI.room = room; saveFixUI();
+  closeFixSheet();
+  renderAll();
+  showToast(wasNew ? (start ? `Lagt til – ${fmtRange({start,end})}` : 'Punkt lagt til') : (start ? `Planlagt ${fmtRange({start,end})}` : 'Punkt oppdatert'));
+}
+
+/* ============================================================
    Rendring
    ============================================================ */
 function fmtHeaderDate(isoStr){
@@ -1206,16 +1932,24 @@ function renderCalendar(){
 
     // Prikker per kategori
     const dt = tasksForDate(dISO);
-    if(dt.length){
+    const fd = fixForDate(dISO);
+    if(dt.length || fd.length){
       const dots = document.createElement('div');
       dots.className = 'cal-dots';
-      const cats = [...new Set(dt.map(t=>t.category))].slice(0,3);
+      const cats = [...new Set(dt.map(t=>t.category))].slice(0, fd.length?2:3);
       cats.forEach(c=>{
         const dot=document.createElement('span');
         dot.className='cal-dot';
         dot.style.background = dt.every(t=>t.done) ? 'var(--success)' : catById(c).ink;
         dots.appendChild(dot);
       });
+      if(fd.length){
+        const dot=document.createElement('span');
+        dot.className='cal-dot';
+        dot.title='Fikse hjemme';
+        dot.style.background = fd.every(x=>x.done) ? 'var(--success)' : 'var(--fix-ink)';
+        dots.appendChild(dot);
+      }
       cell.appendChild(dots);
     }
     cell.addEventListener('click',()=>{
@@ -1382,19 +2116,21 @@ function renderHistory(){
   const list = document.getElementById('histList');
   list.innerHTML='';
   const done = tasks.filter(t=>t.done && t.doneAt).sort((a,b)=> b.doneAt - a.doneAt);
-  if(!done.length){
+  const fixDone = liveFix().filter(x=>x.done && x.doneAt).sort((a,b)=> b.doneAt - a.doneAt);
+  if(!done.length && !fixDone.length){
     list.appendChild(emptyNode('🗂️','Ingen historikk enda','Fullførte oppgaver dukker opp her.'));
     return;
   }
-  // Grupper etter oppgavens dato
+  // Grupper etter oppgavens dato (fiksepunkter etter dagen de ble gjort)
   const groups = {};
-  done.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
+  done.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push({t}); });
+  fixDone.forEach(x=>{ const k = iso(new Date(x.doneAt)); (groups[k] = groups[k]||[]).push({f:x}); });
   Object.keys(groups).sort((a,b)=> b.localeCompare(a)).forEach(dateStr=>{
     const h = document.createElement('div');
     h.className='day-header';
     h.textContent = fmtHeaderDate(dateStr);
     list.appendChild(h);
-    groups[dateStr].forEach(t=> list.appendChild(taskNode(t,true)));
+    groups[dateStr].forEach(e=> list.appendChild(e.t ? taskNode(e.t,true) : fixNode(e.f,{readOnly:true, showRoom:true, showKind:true})));
   });
 }
 
@@ -1414,13 +2150,15 @@ function updateShopBadge(){
 }
 function renderAll(){
   updateShopBadge();
+  updateFixBadge();
   renderOverdue();
   if(currentView==='settings'){ renderSettings(); return; }
   if(currentView==='shop'){ renderShop(); return; }
   renderHeader();
+  if(currentView==='fix'){ renderFix(); return; }
   renderCalendar();
   renderChips();
-  if(currentView==='plan'){ renderDaySwitch(); renderCatPicker(); renderTaskList(); }
+  if(currentView==='plan'){ renderDaySwitch(); renderCatPicker(); renderTaskList(); renderFixDay(); }
   else if(currentView==='hist'){ renderHistory(); }
 }
 
@@ -1751,13 +2489,13 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureD
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
 document.getElementById('editCancelBtn').addEventListener('click', closeEditSheet);
 document.getElementById('editDeleteBtn').addEventListener('click', deleteFromSheet);
-document.getElementById('sheetBackdrop').addEventListener('click', closeEditSheet);
+document.getElementById('sheetBackdrop').addEventListener('click',()=>{ if(fxDraft) closeFixSheet(); else closeEditSheet(); });
 document.getElementById('editDate').addEventListener('change',(e)=>{
   if(!editDraft) return;
   editDraft.date = e.target.value || editDraft.date;
   renderDateQuick();
 });
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && editId) closeEditSheet(); });
+document.addEventListener('keydown',(e)=>{ if(e.key!=='Escape') return; if(fxDraft) closeFixSheet(); else if(editId) closeEditSheet(); });
 // Dra ned for å lukke (fra håndtaket/toppen)
 (function(){
   const sh = document.getElementById('editSheet');
@@ -1797,13 +2535,15 @@ document.getElementById('customInput').addEventListener('keydown',(e)=>{
 function showView(v){
   currentView = v;
   const isSettings = v==='settings';
-  const hideCal = isSettings || v==='shop';   // kalender er ikke relevant for handleliste
+  const hideCal = isSettings || v==='shop' || v==='fix';   // fikse har egen dato-visning
   document.getElementById('settingsView').style.display = isSettings?'':'none';
   document.querySelector('.segment').style.display = isSettings?'none':'';
   document.querySelector('.calendar').style.display = hideCal?'none':'';
   document.getElementById('planView').style.display = (v==='plan')?'':'none';
   document.getElementById('histView').style.display = (v==='hist')?'':'none';
   document.getElementById('shopView').style.display = (v==='shop')?'':'none';
+  document.getElementById('fixView').style.display = (v==='fix')?'':'none';
+  document.getElementById('tabFix').classList.toggle('active', v==='fix');
   document.getElementById('tabPlan').classList.toggle('active', v==='plan');
   document.getElementById('tabHist').classList.toggle('active', v==='hist');
   document.getElementById('tabShop').classList.toggle('active', v==='shop');
@@ -1813,6 +2553,71 @@ function showView(v){
 document.getElementById('tabPlan').addEventListener('click',()=>showView('plan'));
 document.getElementById('tabHist').addEventListener('click',()=>showView('hist'));
 document.getElementById('tabShop').addEventListener('click',()=>showView('shop'));
+document.getElementById('tabFix').addEventListener('click',()=>showView('fix'));
+
+/* Fikse hjemme-interaksjoner */
+function submitFix(){
+  const input = document.getElementById('fxInput');
+  const raw = input.value.trim();
+  if(!raw) return;
+  const room = document.getElementById('fxRoomSel').value || fixUI.room;
+  const names = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  names.forEach(n=> addFix(n, room, fixUI.quickKind));
+  fixUI.room = room; fixUI.collapsed[room] = false; saveFixUI();
+  input.value='';
+  input.focus();
+  renderAll();
+  showToast(names.length>1 ? `${names.length} punkter lagt til i ${room}` : `Lagt til i ${room}`);
+}
+document.getElementById('fxAddBtn').addEventListener('click', submitFix);
+document.getElementById('fxInput').addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); submitFix(); } });
+document.getElementById('fxRoomSel').addEventListener('change',(e)=>{ fixUI.room = e.target.value; saveFixUI(); });
+document.querySelectorAll('#fxKindQuick button').forEach(b=> b.addEventListener('click',()=>{ fixUI.quickKind=b.dataset.kind; saveFixUI(); renderFixToolbar(); }));
+document.getElementById('fxNewWithDate').addEventListener('click',()=>{
+  const title = document.getElementById('fxInput').value.trim();
+  document.getElementById('fxInput').value = '';
+  openFixSheet(null, {title, room:document.getElementById('fxRoomSel').value||fixUI.room});
+});
+document.getElementById('fxModeRoom').addEventListener('click',()=>{ fixUI.mode='room'; saveFixUI(); renderFix(); });
+document.getElementById('fxModeDate').addEventListener('click',()=>{ fixUI.mode='date'; saveFixUI(); renderFix(); });
+document.querySelectorAll('.fx-filter[data-kind]').forEach(b=> b.addEventListener('click',()=>{ fixUI.kind=b.dataset.kind; saveFixUI(); renderFix(); }));
+document.getElementById('fxShowDone').addEventListener('click',()=>{ fixUI.showDone=!fixUI.showDone; saveFixUI(); renderFix(); });
+// Arket
+document.querySelectorAll('#fxKindSheet button').forEach(b=> b.addEventListener('click',()=>{ if(!fxDraft) return; fxDraft.kind=b.dataset.kind; renderFixSheet(); }));
+document.querySelectorAll('#fxWhen button').forEach(b=> b.addEventListener('click',()=>{ if(!fxDraft) return; setFxMode(b.dataset.mode); }));
+document.getElementById('fxStart').addEventListener('change',(e)=>{
+  if(!fxDraft || !e.target.value) return;
+  fxDraft.start = e.target.value;
+  if(fxDraft.mode!=='multi' || !fxDraft.end || fxDraft.end<fxDraft.start) fxDraft.end = fxDraft.mode==='multi' ? iso(addDays(parseISO(fxDraft.start),1)) : fxDraft.start;
+  renderFixSheet();
+});
+document.getElementById('fxEnd').addEventListener('change',(e)=>{
+  if(!fxDraft || !e.target.value) return;
+  fxDraft.end = e.target.value < fxDraft.start ? fxDraft.start : e.target.value;
+  if(e.target.value < fxDraft.start) showToast('Sluttdato kan ikke være før startdato');
+  renderFixSheet();
+});
+document.getElementById('fxTitle').addEventListener('input',(e)=>{ if(fxDraft) fxDraft.title = e.target.value; });
+document.getElementById('fxNote').addEventListener('input',(e)=>{ if(fxDraft) fxDraft.note = e.target.value; });
+document.getElementById('fxNewRoom').addEventListener('input',(e)=>{
+  if(!fxDraft) return;
+  const v = e.target.value.trim();
+  document.querySelectorAll('#fxRoomPicker .fx-room-opt').forEach(b=> b.classList.toggle('sel', !v && b.textContent.endsWith(' '+fxDraft.room)));
+});
+document.getElementById('fxSaveBtn').addEventListener('click', saveFixSheet);
+document.getElementById('fxCancelBtn').addEventListener('click', closeFixSheet);
+document.getElementById('fxDeleteBtn').addEventListener('click',()=>{
+  if(!fxEditId) return;
+  const id = fxEditId;
+  closeFixSheet(); deleteFix(id); renderAll(); showToast('Punkt slettet');
+});
+document.getElementById('fxToShop').addEventListener('click',()=>{
+  const t = (document.getElementById('fxTitle').value||'').trim();
+  if(!t) return;
+  addShopItem(t);
+  updateShopBadge();
+  showToast(`«${t}» lagt i handlelista 🛒`);
+});
 
 /* Handleliste-interaksjoner */
 function submitShop(){
@@ -1958,6 +2763,8 @@ function ingestMap(coll, map){
   else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
   else if(coll==='shop') shop = ent.map(([id,d])=>normalizeShop(id,d));
   else if(coll==='routines') routines = ent.map(([id,d])=>normalizeRoutine(id,d));
+  else if(coll==='fix') fix = ent.map(([id,d])=>normalizeFix(id,d));
+  else if(coll==='fixmeta'){ if(map && map.seeded){ fixMeta.seeded = true; saveFixMeta(); } }
   else customPresets = ent.map(([id,d])=>normalizePreset(id,d));
 }
 function replaceFromDoc(doc){
@@ -1967,6 +2774,8 @@ function replaceFromDoc(doc){
   if(doc.categories!==undefined) ingestMap('categories', doc.categories||{});
   if(doc.shop!==undefined) ingestMap('shop', doc.shop||{});
   if(doc.routines!==undefined) ingestMap('routines', doc.routines||{});
+  if(doc.fix!==undefined) ingestMap('fix', doc.fix||{});
+  if(doc.fixmeta!==undefined) ingestMap('fixmeta', doc.fixmeta||{});
 }
 function unionRemote(remote){
   remote = remote || {};
@@ -1997,6 +2806,14 @@ function unionRemote(remote){
     if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) rById[id]=r;
   });
   routines = Object.values(rById);
+  // Fikse hjemme: nyeste vinner per id
+  const fById = {}; fix.forEach(i=>fById[i.id]=i);
+  Object.entries(remote.fix||{}).forEach(([id,d])=>{
+    const r = normalizeFix(id,d), l = fById[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) fById[id]=r;
+  });
+  fix = Object.values(fById);
+  if(remote.fixmeta && remote.fixmeta.seeded){ fixMeta.seeded = true; saveFixMeta(); }
 }
 function upsertRemote(coll, id, data){
   if(coll==='tasks'){
@@ -2012,6 +2829,12 @@ function upsertRemote(coll, id, data){
     if(data==null){ shop = shop.filter(s=>s.id!==id); return; }
     const it = normalizeShop(id,data), i = shop.findIndex(x=>x.id===id);
     if(i>=0) shop[i]=it; else shop.push(it);
+  }else if(coll==='fix'){
+    if(data==null){ fix = fix.filter(x=>x.id!==id); return; }
+    const it = normalizeFix(id,data), i = fix.findIndex(x=>x.id===id);
+    if(i>=0) fix[i]=it; else fix.push(it);
+  }else if(coll==='fixmeta'){
+    if(id==='seeded' && data){ fixMeta.seeded = true; saveFixMeta(); }
   }else if(coll==='routines'){
     if(data==null){ routines = routines.filter(r=>r.id!==id); return; }
     const r = normalizeRoutine(id,data), i = routines.findIndex(x=>x.id===id);
@@ -2026,7 +2849,7 @@ function applyPut(path, data){
   if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
   const seg = path.replace(/^\//,'').split('/');
   const coll = seg[0], id = seg[1];
-  if(coll!=='tasks' && coll!=='presets' && coll!=='categories' && coll!=='shop' && coll!=='routines') return;
+  if(!['tasks','presets','categories','shop','routines','fix','fixmeta'].includes(coll)) return;
   if(id) upsertRemote(coll, id, data);
   else ingestMap(coll, data||{});
 }
@@ -2046,6 +2869,7 @@ async function pushAllLocal(){
   categories.forEach(c=> jobs.push(rawPut('categories/'+c.id, c)));
   shop.forEach(i=> jobs.push(rawPut('shop/'+i.id, i)));
   routines.forEach(r=> jobs.push(rawPut('routines/'+r.id, r)));
+  fix.forEach(i=> jobs.push(rawPut('fix/'+i.id, i)));
   await Promise.allSettled(jobs);
 }
 function syncPush(coll, id, obj){
@@ -2064,10 +2888,16 @@ function onStream(raw, isPatch){
   applyingRemote = true;
   if(!isPatch && (path==='/' || path==='') && pendingMerge){
     // Første snapshot: flett inn lokale elementer, last dem så opp.
-    unionRemote(p.data || {});
+    const rd = p.data || {};
+    if(fixMeta.localSeedAt && rd.fixmeta && rd.fixmeta.seeded){
+      fix = fix.filter(i=> !(i.id.indexOf('fx_s')===0 && (i.updatedAt||0) <= fixMeta.localSeedAt));
+    }
+    if(fixMeta.localSeedAt){ delete fixMeta.localSeedAt; saveFixMeta(); }
+    unionRemote(rd);
     pendingMerge = false;
     applyingRemote = false;
-    save(); savePresets(); saveCategories(); saveShop(); saveRoutines();
+    save(); savePresets(); saveCategories(); saveShop(); saveRoutines(); saveFix();
+    maybeSeedFix(p.data || {});     // legg inn startlista én gang for hele husholdningen
     ensureDailyTasks();             // generer dagens rutine-oppgaver for synkede rutiner
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
     setSyncState('on');
@@ -2078,7 +2908,7 @@ function onStream(raw, isPatch){
   if(isPatch) applyPatch(path, p.data);
   else applyPut(path, p.data);
   applyingRemote = false;
-  save(); savePresets(); saveCategories(); saveShop(); saveRoutines();
+  save(); savePresets(); saveCategories(); saveShop(); saveRoutines(); saveFix();
   setSyncState('on');
   renderAll();
 }
@@ -2182,6 +3012,9 @@ shop = loadShop();
 routines = loadRoutines();
 seedRoutinesOnce();      // forhåndsfyll de faste daglige rutinene (kun første gang)
 ensureDailyTasks();      // legg inn dagens forekomster
+fix = loadFix();
+const _inv = (location.hash||'').indexOf('sync=')>=0;
+if(!(syncConf.enabled && syncConf.url && syncConf.code) && !_inv) maybeSeedFix(null);   // med synk: venter på første snapshot
 renderAll();
 
 /* Invitasjon via delt lenke (#sync=…) */
