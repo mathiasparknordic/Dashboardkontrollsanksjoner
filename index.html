@@ -203,6 +203,28 @@ input{font-family:inherit;}
   display:flex;align-items:center;justify-content:center;transition:transform .12s var(--ease-std);
 }
 .add-btn:active{transform:scale(.92);}
+/* Emoji-velger for egne oppgaver */
+.emoji-btn{
+  flex:0 0 auto;width:48px;height:48px;border-radius:var(--radius-sm);
+  background:var(--card-sunken);border:1.5px solid var(--border);font-size:22px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .12s var(--ease-std),border-color .12s;
+}
+.emoji-btn:active{transform:scale(.92);}
+.emoji-btn.open{border-color:var(--custom-ink);}
+.composer-row .field-input{flex:1;min-width:0;}
+.emoji-picker{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;
+  background:var(--card-sunken);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;
+}
+.emoji-opt{
+  width:40px;height:40px;border-radius:10px;background:var(--card);border:2px solid transparent;
+  font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:transform .1s var(--ease-std);
+}
+.emoji-opt:active{transform:scale(.9);}
+.emoji-opt.sel{border-color:var(--custom-ink);}
+.emoji-opt.auto{background:var(--custom);}
 .cat-picker{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
 .cat-picker .cp-label{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
 .cat-dot{
@@ -683,10 +705,12 @@ input{font-family:inherit;}
 
     <div class="composer">
       <div class="composer-row">
+        <button class="emoji-btn" type="button" id="customEmojiBtn" aria-label="Velg emoji">📝</button>
         <input type="text" id="customInput" placeholder="Skriv egen oppgave …" maxlength="240"
                autocomplete="off" enterkeyhint="done" />
         <button class="add-btn" id="addBtn" aria-label="Legg til oppgave">+</button>
       </div>
+      <div class="emoji-picker" id="customEmojiPicker" hidden></div>
       <div class="cat-picker" id="catPicker">
         <span class="cp-label">Kategori</span>
       </div>
@@ -899,7 +923,11 @@ input{font-family:inherit;}
   <input type="date" class="field-input" id="editDate" />
 
   <label class="field-label" for="editTitle">Tittel</label>
-  <input type="text" class="field-input" id="editTitle" maxlength="80" enterkeyhint="done" autocomplete="off" />
+  <div class="composer-row">
+    <button class="emoji-btn" type="button" id="editEmojiBtn" aria-label="Velg emoji">📝</button>
+    <input type="text" class="field-input" id="editTitle" maxlength="80" enterkeyhint="done" autocomplete="off" />
+  </div>
+  <div class="emoji-picker" id="editEmojiPicker" hidden></div>
 
   <label class="field-label" for="subInput">Underpunkter <span id="subCount"></span></label>
   <div class="sub-list" id="subList"></div>
@@ -2037,7 +2065,7 @@ function buildCatPicker(wrapId, current, onPick){
     wrap.appendChild(b);
   });
 }
-function renderCatPicker(){ buildCatPicker('catPicker', selectedCat, k=>{ selectedCat=k; renderCatPicker(); }); }
+function renderCatPicker(){ buildCatPicker('catPicker', selectedCat, k=>{ selectedCat=k; renderCatPicker(); if(composerEmoji===null) updateComposerEmojiBtn(); }); }
 function renderPresetCatPicker(){ buildCatPicker('presetCatPicker', presetCat, k=>{ presetCat=k; renderPresetCatPicker(); }); }
 
 function checkSvg(){
@@ -2457,10 +2485,13 @@ function openEditSheet(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   editId = id;
-  editDraft = {date:t.date, title:t.title, category:t.category};
+  editDraft = {date:t.date, title:t.title, category:t.category, emoji:t.emoji||'📝'};
   lastTrigger = document.activeElement;
   document.getElementById('editDate').value = t.date;
   document.getElementById('editTitle').value = t.title;
+  document.getElementById('editEmojiBtn').textContent = editDraft.emoji;
+  document.getElementById('editEmojiPicker').hidden = true;
+  document.getElementById('editEmojiBtn').classList.remove('open');
   document.getElementById('editDoneChip').hidden = !t.done;
   document.getElementById('subInput').value = '';
   renderDateQuick();
@@ -2539,21 +2570,39 @@ function submitSub(){
 function closeEditSheet(){
   document.getElementById('editSheet').classList.remove('show');
   document.getElementById('sheetBackdrop').classList.remove('show');
+  document.getElementById('editEmojiPicker').hidden = true;
+  document.getElementById('editEmojiBtn').classList.remove('open');
   editId = null; editDraft = null;
   if(lastTrigger && lastTrigger.focus){ try{ lastTrigger.focus(); }catch(e){} }
+}
+function toggleEditPicker(force){
+  const pk = document.getElementById('editEmojiPicker'), b = document.getElementById('editEmojiBtn');
+  const show = (force!==undefined) ? force : pk.hidden;
+  if(show){
+    buildEmojiPicker('editEmojiPicker', editDraft ? editDraft.emoji : null, (e)=>{
+      if(!editDraft) return;
+      editDraft.emoji = (e===null) ? guessTaskEmoji(document.getElementById('editTitle').value, editDraft.category) : e;
+      document.getElementById('editEmojiBtn').textContent = editDraft.emoji;
+      toggleEditPicker(false);
+    });
+    pk.hidden = false; b.classList.add('open');
+  }else{
+    pk.hidden = true; b.classList.remove('open');
+  }
 }
 function saveEdit(){
   if(!editId || !editDraft) return;
   const t = tasks.find(x=>x.id===editId);
   if(!t){ closeEditSheet(); return; }
-  const orig = {date:t.date, title:t.title, category:t.category};
+  const orig = {date:t.date, title:t.title, category:t.category, emoji:t.emoji||'📝'};
   const newDate = document.getElementById('editDate').value || editDraft.date;
   const newTitle = (document.getElementById('editTitle').value||'').trim() || orig.title;
   const newCat = editDraft.category;
+  const newEmoji = editDraft.emoji || orig.emoji;
   const dateChanged = newDate !== orig.date;
-  const anyChange = dateChanged || newTitle !== orig.title || newCat !== orig.category;
+  const anyChange = dateChanged || newTitle !== orig.title || newCat !== orig.category || newEmoji !== orig.emoji;
   if(!anyChange){ closeEditSheet(); return; }
-  updateTask(editId, {date:newDate, title:newTitle, category:newCat});
+  updateTask(editId, {date:newDate, title:newTitle, category:newCat, emoji:newEmoji});
   closeEditSheet();
   renderAll();
   showToast(dateChanged ? `Flyttet til ${relDayLabel(newDate)}` : 'Oppgave oppdatert');
@@ -2610,6 +2659,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureD
 // Rediger-oppgave-ark
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
 document.getElementById('editCancelBtn').addEventListener('click', closeEditSheet);
+document.getElementById('editEmojiBtn').addEventListener('click',()=> toggleEditPicker());
 document.getElementById('editDeleteBtn').addEventListener('click', deleteFromSheet);
 document.getElementById('subAddBtn').addEventListener('click', submitSub);
 document.getElementById('subInput').addEventListener('keydown',(e)=>{
@@ -2643,11 +2693,86 @@ document.getElementById('nextMonth').addEventListener('click',()=>{
   viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar();
 });
 
+/* Gjetter en passende emoji ut fra oppgaveteksten, så egne oppgaver ikke blir like.
+   Faller tilbake til et kategori-ikon, så til 📝. */
+const TASK_EMOJI = [
+  [/charlie|hund|valp/,'🐕'],
+  [/\btur\b|gå ?tur|spasér|spaser|lufte/,'🚶'],
+  [/puss.*tenn|tannpuss|tenner/,'🪥'],
+  [/inhal|medisin|tablett|pille|dråp|drap/,'💊'],
+  [/william|baby|bleie|amme|smokk|tåteflask|tateflask/,'🍼'],
+  [/\bbade\b|\bbader\b|dusj/,'🛁'],
+  [/oppvask|skylle/,'🍽️'],
+  [/klesvask|vaske klær|vask.*klær|tøyvask|henge.*tøy|brette tøy/,'🧺'],
+  [/støvsug/,'🧹'],
+  [/vindu/,'🪟'],
+  [/vaske|\bvask\b|rengjør|rengjor|skure|moppe|tørke støv|tørk støv/,'🧽'],
+  [/rydde|\brydd\b|ordne/,'🧺'],
+  [/søppel|avfall|resirk|panter|\bpant\b|retur|kaste/,'🗑️'],
+  [/handle|butikk|kjøpe|kjope|købe|innkjøp|dagligvare/,'🛒'],
+  [/\bring(e|er)?\b|telefon/,'📞'],
+  [/\bmail\b|e-?post|epost|melding|\bsms\b/,'✉️'],
+  [/betal|regning|faktura|\bbank\b/,'💳'],
+  [/\blege\b|tannlege|legetime|\btime\b|frisør|frisor/,'🩺'],
+  [/\bbil\b|dekk|bensin|diesel|\blade\b|verksted/,'🚗'],
+  [/hage|plen|gress|klippe|vanne|blomst|luke|rake|måke|snømåk/,'🌱'],
+  [/lyspære|\blampe\b|\bpære\b|skifte lys/,'💡'],
+  [/\bmate\b|fôr|kattemat|hundemat|mat til/,'🐾'],
+  [/koke|lage mat|middag|\bbake\b|matlaging|lunsj|frokost/,'🍳'],
+  [/seng|sengetøy|re opp|skift.*seng/,'🛏️'],
+  [/hente pakke|\bpakke\b|\bpost\b|levere/,'📦'],
+  [/trene|\btren\b|løpe|\bløp\b|\bgym\b|jogg/,'🏃'],
+  [/møte|avtale|booke|bestille/,'📅']
+];
+function guessTaskEmoji(title, category){
+  const n = (title||'').toLowerCase();
+  for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; }
+  const catMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
+  return catMap[category] || '📝';
+}
+const EMOJI_CHOICES = ['📝','✅','⭐','❤️','🧹','🧽','🧺','🧻','🍽️','🗑️','♻️','🛁','🚿','🪥','🍼','👶','🐕','🐾','🚶','🏃','🛒','🍳','🌱','🌼','💡','🔧','🔨','🚗','📞','✉️','💳','💊','🩺','📅','📦','🛏️','🪟','💧'];
+function buildEmojiPicker(pickerId, current, onPick){
+  const wrap = document.getElementById(pickerId);
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const auto = document.createElement('button');
+  auto.type='button'; auto.className = 'emoji-opt auto'+(current===null?' sel':'');
+  auto.textContent = '🪄'; auto.title = 'Velg automatisk'; auto.setAttribute('aria-label','Velg automatisk');
+  auto.addEventListener('click',()=> onPick(null));
+  wrap.appendChild(auto);
+  EMOJI_CHOICES.forEach(e=>{
+    const b = document.createElement('button');
+    b.type='button'; b.className = 'emoji-opt'+(e===current?' sel':'');
+    b.textContent = e;
+    b.addEventListener('click',()=> onPick(e));
+    wrap.appendChild(b);
+  });
+}
+
+/* Emoji-velger i skrivefeltet for egne oppgaver (null = automatisk) */
+let composerEmoji = null;
+function currentComposerEmoji(){
+  return composerEmoji || guessTaskEmoji(document.getElementById('customInput').value, selectedCat);
+}
+function updateComposerEmojiBtn(){
+  const b = document.getElementById('customEmojiBtn');
+  if(b) b.textContent = currentComposerEmoji();
+}
+function toggleComposerPicker(force){
+  const pk = document.getElementById('customEmojiPicker'), b = document.getElementById('customEmojiBtn');
+  const show = (force!==undefined) ? force : pk.hidden;
+  if(show){
+    buildEmojiPicker('customEmojiPicker', composerEmoji, (e)=>{ composerEmoji = e; updateComposerEmojiBtn(); toggleComposerPicker(false); });
+    pk.hidden = false; b.classList.add('open');
+  }else{
+    pk.hidden = true; b.classList.remove('open');
+  }
+}
+
 function submitCustom(){
   const input = document.getElementById('customInput');
   const val = input.value.trim();
   if(!val) return;
-  const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
   // Snarvei: «Avfallsstasjonen: brannslukker, kurv, hageavfall» → hovedpunkt + underpunkter
   let title = val, subs = [];
   const ci = val.indexOf(':');
@@ -2655,8 +2780,10 @@ function submitCustom(){
     const rest = splitSubs(val.slice(ci+1));
     if(rest.length){ title = val.slice(0,ci).trim(); subs = rest; }
   }
-  addTask(title, emojiMap[selectedCat]||'📝', selectedCat, selectedDate, subs);
+  const emoji = composerEmoji || guessTaskEmoji(title, selectedCat);
+  addTask(title, emoji, selectedCat, selectedDate, subs);
   input.value='';
+  composerEmoji = null; toggleComposerPicker(false); updateComposerEmojiBtn();
   renderAll();
   showToast(subs.length ? `«${title}» lagt til med ${subs.length} underpunkter` : `«${title}» lagt til`);
 }
@@ -2664,6 +2791,9 @@ document.getElementById('addBtn').addEventListener('click', submitCustom);
 document.getElementById('customInput').addEventListener('keydown',(e)=>{
   if(e.key==='Enter'){ e.preventDefault(); submitCustom(); }
 });
+// Emoji-velger for egne oppgaver: live-gjetting mens man skriver + manuelt valg
+document.getElementById('customInput').addEventListener('input',()=>{ if(composerEmoji===null) updateComposerEmojiBtn(); });
+document.getElementById('customEmojiBtn').addEventListener('click',()=> toggleComposerPicker());
 
 function showView(v){
   currentView = v;
@@ -3137,6 +3267,7 @@ function seedIfFirstRun(){
 
 renderChips();
 renderCatPicker();
+updateComposerEmojiBtn();
 renderShopChips();
 seedIfFirstRun();
 tasks = load();

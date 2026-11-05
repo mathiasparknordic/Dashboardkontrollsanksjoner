@@ -15,10 +15,13 @@ mellom flere (f.eks. deg og partneren din).
 - **Hurtigvalg** for de vanligste oppgavene:
   🐕 Gå tur med Charlie · 🧹 Vaske huset · 🌀 Støvsuge ·
   🍼 Bade William · 🛁 Bade Charlie · 🧺 Vaske klær
-- **Egendefinert oppgave** med kategori-velger.
+- **Egendefinert oppgave** med kategori-velger og **emoji**: appen gjetter en
+  passende emoji automatisk ut fra teksten (f.eks. «gå tur» → 🚶, «vaske bad» →
+  🧽, «ringe» → 📞) mens du skriver, så egne oppgaver ikke blir like. Trykk
+  emoji-knappen for å velge en selv, eller 🪄 for å la appen velge.
 - **Rediger oppgave:** trykk på et gjøremål for å åpne et redigerings-ark –
-  endre **dato** (hurtigvalg I dag / I morgen / ±1 dag + datovelger), tittel og
-  kategori, eller slett. Flyttede oppgaver dukker opp på ny dato hos begge.
+  endre **dato** (hurtigvalg I dag / I morgen / ±1 dag + datovelger), tittel,
+  **emoji** og kategori, eller slett. Flyttede oppgaver dukker opp på ny dato hos begge.
 - **Underpunkter:** åpne en oppgave og legg inn en sjekkliste (f.eks.
   «Avfallsstasjonen» → brannslukker, kurv, hageavfall). Skill flere med komma,
   huk av underveis, × fjerner. Kortet viser fremdrift (☑ 2/5) og hva som
