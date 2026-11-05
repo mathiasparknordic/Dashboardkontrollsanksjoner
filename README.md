@@ -52,6 +52,16 @@ mellom flere (f.eks. deg og partneren din).
   Fikse/Kjøpe, og kjøpepunkter kan sendes rett til handlelista. Synkes som
   `fix` i Firebase; startlista legges inn én gang per husholdning, og slettinger
   lagres som myk sletting så de ikke dukker opp igjen fra en annen telefon.
+- **Renovasjon / kildesortering** (⚙️ Innstillinger) – henter faktiske
+  tømmedatoer for adressen fra Min Renovasjon (Horten kommune) og viser en
+  **diskret, men tydelig stripe** øverst i Planlagt de dagene det hentes
+  (restavfall 🗑️, papp/papir 📦, glass/metall 🫙, plast 🛍️), med chips for hver
+  fraksjon og et «sett fram i kveld»-hint kvelden før. Hentedager får en liten
+  ♻-markering i kalenderen. Matavfall hentes ofte og er skjult som standard
+  (kan slås på). Ingen avkryssing – påminnelsen er ren informasjon og blir
+  aldri forfalt. Datoene hentes på telefonen og caches lokalt, og appen
+  **sjekker automatisk** (uten godkjenning) at ventedagene fortsatt stemmer og
+  oppdaterer dem når de blir gamle.
 - **Historikk** over alt som er gjort, gruppert per dag med tidspunkt (og en
   merknad hvis noe ble fullført på en annen dag enn planlagt).
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database

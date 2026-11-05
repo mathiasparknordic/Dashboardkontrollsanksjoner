@@ -468,6 +468,28 @@ input{font-family:inherit;}
 .ov-today:active{background:var(--warning);color:#fff;transform:scale(.95);}
 .ov-bulk{margin-top:10px;background:var(--warning);color:#fff;}
 
+/* ---------- Renovasjon (tømmedager) ---------- */
+.renov-strip{
+  margin:14px 0 4px;border-radius:14px;padding:11px 14px;
+  background:rgba(44,111,181,.10);          /* dempet info-blå, bevisst uten skygge/ramme */
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  animation:ovIn .28s var(--ease-pop);
+}
+.renov-strip.soon{background:rgba(44,111,181,.06);}   /* kvelden før: enda lettere */
+.renov-title{font-size:13px;font-weight:800;color:#2C6FB5;margin-right:2px;}
+.renov-strip.soon .renov-title{color:var(--muted);}
+.renov-chip{
+  display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;
+  background:var(--card);font-size:12.5px;font-weight:800;color:var(--text);
+}
+.renov-chip .rc-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.renov-sub{flex-basis:100%;font-size:12px;font-weight:700;color:var(--muted);margin-top:2px;}
+/* Kalendermarkør: liten ♻ i hjørnet, egen kanal (kolliderer ikke med oppgaveprikker) */
+.cal-renov{position:absolute;top:3px;left:4px;font-size:9px;line-height:1;opacity:.55;}
+.cal-day.selected .cal-renov,.cal-day.today .cal-renov{opacity:.8;}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:14px;font-weight:700;color:var(--text);}
+.switch-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--custom-ink);}
+
 /* ---------- Rediger-oppgave-ark ---------- */
 .task.tappable{cursor:pointer;}
 .task.tappable:active{transform:scale(.994);}
@@ -695,6 +717,9 @@ input{font-family:inherit;}
       </div>
     </section>
 
+    <!-- Renovasjon: diskret påminnelse om tømmedager -->
+    <section id="renovStrip" class="renov-strip" hidden></section>
+
     <div class="dayswitch" id="dayswitch">
       <button data-day="today">I dag</button>
       <button data-day="tomorrow">I morgen</button>
@@ -858,6 +883,22 @@ input{font-family:inherit;}
         </div>
         <button class="wide-btn" id="addCatBtn">Legg til kategori</button>
       </div>
+    </div>
+
+    <!-- Renovasjon -->
+    <div class="settings-card">
+      <div class="settings-title">♻️ Renovasjon</div>
+      <div class="settings-sub">Diskret påminnelse i Planlagt på dagene de henter avfall (Tokerødveien 21, Skoppum). Hentedatoer hentes fra Min&nbsp;Renovasjon og oppdateres automatisk.</div>
+      <div class="segment day-default" role="tablist" style="margin-top:12px;">
+        <button id="renovOn">På</button>
+        <button id="renovOff">Av</button>
+      </div>
+      <label class="switch-row" for="renovMat">
+        <span>Vis matavfall òg (hentes ofte)</span>
+        <input type="checkbox" id="renovMat" />
+      </label>
+      <div class="sync-status" id="renovStatus"><span class="sync-dot" id="renovDot"></span><span id="renovStatusText">—</span></div>
+      <button class="wide-btn ghost" id="renovRefreshBtn">Oppdater hentedatoer nå</button>
     </div>
 
     <!-- Deling og synk -->
@@ -1997,6 +2038,13 @@ function renderCalendar(){
     num.textContent = d.getDate();
     cell.appendChild(num);
 
+    // Renovasjon: liten ♻ i hjørnet på tømmedager
+    if(renovForDate(dISO).length){
+      const rc = document.createElement('span');
+      rc.className = 'cal-renov'; rc.textContent = '♻';
+      cell.appendChild(rc);
+    }
+
     // Prikker per kategori
     const dt = tasksForDate(dISO);
     const fd = fixForDate(dISO);
@@ -2231,6 +2279,140 @@ function updateShopBadge(){
   const remaining = shop.filter(i=>!i.done).length;
   if(remaining>0){ badge.hidden=false; badge.textContent=String(remaining); } else { badge.hidden=true; }
 }
+/* ============================================================
+   Renovasjon – diskret påminnelse om tømmedager (Min Renovasjon / Vesar)
+   Henter fra telefonen (ikke synket – offentlig, lik for begge), cacher lokalt,
+   oppdaterer seg selv automatisk. Påminnelsen er rent avledet av datoene + i dag.
+   ============================================================ */
+const RENOV = {
+  kommunenr:'3901', gatenavn:'Tokerødveien', husnr:'21', postnr:'3185', poststed:'Skoppum',
+  appKey:'AE13DEEC-804F-4615-A74E-B4FAC11F0A30',
+  proxy:'https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server=',
+  api:'https://komteksky.norkart.no/MinRenovasjon.Api/api/',
+  geonorge:'https://ws.geonorge.no/adresser/v1/sok'
+};
+const RENOV_KEY = 'hjemme_renovasjon_v1';     // {updatedAt, gatekode, events:[{date,type}]}
+const RENOV_PREF_KEY = 'hjemme_renov_pref_v1'; // {enabled, matavfall}
+const RENOV_FRAKS = {
+  rest:  {match:/rest/i,               emoji:'🗑️', label:'Restavfall',      color:'#8A879B'},
+  mat:   {match:/\bmat/i,              emoji:'🍎', label:'Matavfall',       color:'#34C77B'},
+  papp:  {match:/papp|papir|kartong/i, emoji:'📦', label:'Papp og papir',   color:'#C08A1E'},
+  glass: {match:/glass|metall/i,       emoji:'🫙', label:'Glass og metall', color:'#2C6FB5'},
+  plast: {match:/plast/i,              emoji:'🛍️', label:'Plast',           color:'#C43D78'}
+};
+function fraksType(navn){ for(const [k,v] of Object.entries(RENOV_FRAKS)){ if(v.match.test(navn||'')) return k; } return null; }
+
+let renovData = loadRenov();
+let renovPref = loadRenovPref();
+let renovStatus = 'idle';   // idle | loading | ok | err
+let renovErr = '';
+let renovFetching = false;
+
+function loadRenov(){ try{ const o=JSON.parse(localStorage.getItem(RENOV_KEY)); return (o&&Array.isArray(o.events))?o:null; }catch(e){ return null; } }
+function saveRenov(){ try{ localStorage.setItem(RENOV_KEY, JSON.stringify(renovData)); }catch(e){} }
+function loadRenovPref(){ try{ const o=JSON.parse(localStorage.getItem(RENOV_PREF_KEY)); return {enabled:o?o.enabled!==false:true, matavfall:o?!!o.matavfall:false}; }catch(e){ return {enabled:true, matavfall:false}; } }
+function saveRenovPref(){ try{ localStorage.setItem(RENOV_PREF_KEY, JSON.stringify(renovPref)); }catch(e){} }
+
+function renovProxied(url){ return RENOV.proxy + encodeURIComponent(url); }
+async function renovResolveGatekode(){
+  const u = `${RENOV.geonorge}?sok=${encodeURIComponent(RENOV.gatenavn+' '+RENOV.husnr)}&kommunenummer=${RENOV.kommunenr}&treffPerSide=10`;
+  const r = await fetch(u, {cache:'no-store'});
+  if(!r.ok) throw new Error('Geonorge '+r.status);
+  const j = await r.json();
+  const list = j.adresser||[];
+  const hit = list.find(a=> String(a.nummer)===RENOV.husnr && new RegExp('^'+RENOV.gatenavn+'$','i').test(a.adressenavn||'')) || list[0];
+  if(!hit || !hit.adressekode) throw new Error('Fant ikke adressen');
+  return String(hit.adressekode);
+}
+async function renovFetchJson(url, headers){
+  const r = await fetch(renovProxied(url), {headers, cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function fetchRenovasjon(){
+  const headers = {'Kommunenr':RENOV.kommunenr, 'RenovasjonAppKey':RENOV.appKey};
+  const gatekode = (renovData && renovData.gatekode) || await renovResolveGatekode();
+  const fraksjoner = await renovFetchJson(RENOV.api+'fraksjoner/', headers);
+  const idToType = {};
+  (fraksjoner||[]).forEach(f=>{ const t=fraksType(f.Navn||f.navn); if(t) idToType[f.Id!=null?f.Id:f.id]=t; });
+  const cal = await renovFetchJson(`${RENOV.api}tommekalender?kommunenr=${RENOV.kommunenr}&gatenavn=${encodeURIComponent(RENOV.gatenavn)}&gatekode=${encodeURIComponent(gatekode)}&husnr=${RENOV.husnr}`, headers);
+  const events = [];
+  (cal||[]).forEach(c=>{
+    const type = idToType[c.FraksjonId!=null?c.FraksjonId:c.fraksjonId]; if(!type) return;
+    (c.Tommedatoer||c.TommeDatoer||c.tommedatoer||[]).forEach(d=>{ const day=String(d).slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(day)) events.push({date:day, type}); });
+  });
+  events.sort((a,b)=> a.date.localeCompare(b.date));
+  return {updatedAt:Date.now(), gatekode, events};
+}
+async function refreshRenovasjon(force){
+  if(renovFetching || !renovPref.enabled) return;
+  const upcoming = renovData ? (renovData.events||[]).filter(e=> e.date>=todayISO()).length : 0;
+  const stale = !renovData || (Date.now()-(renovData.updatedAt||0) > 12*864e5);  // ~12 dager
+  if(!force && !stale && upcoming>=4) return;
+  renovFetching = true; renovStatus='loading'; renderRenovSettings();
+  try{
+    const d = await fetchRenovasjon();
+    if((d.events||[]).length){ renovData = d; saveRenov(); }
+    renovStatus = 'ok'; renovErr='';
+  }catch(e){ renovStatus='err'; renovErr = String(e && e.message || e); }
+  finally{ renovFetching=false; renderRenovSettings(); renderAll(); }
+}
+/* Fraksjoner for en gitt dato (respekterer matavfall-av) */
+function renovForDate(dateStr){
+  if(!renovPref.enabled || !renovData) return [];
+  let types = (renovData.events||[]).filter(e=> e.date===dateStr).map(e=>e.type);
+  if(!renovPref.matavfall) types = types.filter(t=> t!=='mat');
+  return [...new Set(types)];
+}
+function renovHasAny(){ return renovPref.enabled && renovData && (renovData.events||[]).some(e=> e.date>=todayISO()); }
+
+function renovChip(type){
+  const f = RENOV_FRAKS[type]; if(!f) return null;
+  const c = document.createElement('span');
+  c.className = 'renov-chip';
+  c.innerHTML = `<span class="rc-dot" style="background:${f.color}"></span>${f.emoji} ${f.label}`;
+  return c;
+}
+function renderRenovStrip(){
+  const box = document.getElementById('renovStrip');
+  if(!box) return;
+  box.className = 'renov-strip'; box.innerHTML = '';
+  if(!renovPref.enabled){ box.hidden = true; return; }
+  const onDay = renovForDate(selectedDate);
+  const t = todayISO(), tm = tomorrowISO();
+  // Hoved: tømming på valgt dag
+  if(onDay.length){
+    const lbl = selectedDate===t ? 'Tømming i dag' : (selectedDate===tm ? 'Tømming i morgen' : 'Tømming denne dagen');
+    const title = document.createElement('span'); title.className='renov-title'; title.textContent = lbl;
+    box.appendChild(title);
+    onDay.forEach(ty=>{ const c=renovChip(ty); if(c) box.appendChild(c); });
+    // Kveld-før-hint når man ser i dag og det er tømming i morgen
+    if(selectedDate===t){
+      const tomo = renovForDate(tm);
+      if(tomo.length){
+        const sub=document.createElement('span'); sub.className='renov-sub';
+        sub.textContent = 'I morgen: ' + tomo.map(x=>RENOV_FRAKS[x].label).join(', ') + ' – sett fram i kveld';
+        box.appendChild(sub);
+      }
+    }
+    box.hidden = false; return;
+  }
+  // Ingen tømming på valgt dag, men i morgen (når man ser i dag): dempet kveld-før-stripe
+  if(selectedDate===t){
+    const tomo = renovForDate(tm);
+    if(tomo.length){
+      box.classList.add('soon');
+      const title=document.createElement('span'); title.className='renov-title'; title.textContent='I morgen';
+      box.appendChild(title);
+      tomo.forEach(ty=>{ const c=renovChip(ty); if(c) box.appendChild(c); });
+      const sub=document.createElement('span'); sub.className='renov-sub'; sub.textContent='Sett fram i kveld';
+      box.appendChild(sub);
+      box.hidden=false; return;
+    }
+  }
+  box.hidden = true;
+}
+
 function renderAll(){
   updateShopBadge();
   updateFixBadge();
@@ -2241,7 +2423,7 @@ function renderAll(){
   if(currentView==='fix'){ renderFix(); return; }
   renderCalendar();
   renderChips();
-  if(currentView==='plan'){ renderDaySwitch(); renderCatPicker(); renderTaskList(); renderFixDay(); }
+  if(currentView==='plan'){ renderRenovStrip(); renderDaySwitch(); renderCatPicker(); renderTaskList(); renderFixDay(); }
   else if(currentView==='hist'){ renderHistory(); }
 }
 
@@ -2277,7 +2459,28 @@ function renderSettings(){
   // Standard-dag segment
   document.getElementById('defToday').classList.toggle('active', prefs.defaultDay==='today');
   document.getElementById('defTomorrow').classList.toggle('active', prefs.defaultDay==='tomorrow');
+  renderRenovSettings();
   renderSyncUI();
+}
+
+function renderRenovSettings(){
+  const on = document.getElementById('renovOn'); if(!on) return;
+  on.classList.toggle('active', renovPref.enabled);
+  document.getElementById('renovOff').classList.toggle('active', !renovPref.enabled);
+  document.getElementById('renovMat').checked = renovPref.matavfall;
+  const dot = document.getElementById('renovDot'), txt = document.getElementById('renovStatusText');
+  let cls='', msg='';
+  if(!renovPref.enabled){ cls=''; msg='Av'; }
+  else if(renovStatus==='loading'){ cls='wait'; msg='Henter hentedatoer …'; }
+  else if(renovStatus==='err'){ cls='err'; msg='Kunne ikke hente automatisk'+(renovErr?(' ('+renovErr+')'):''); }
+  else if(renovData && (renovData.events||[]).some(e=>e.date>=todayISO())){
+    const next = (renovData.events||[]).filter(e=>e.date>=todayISO()).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    const upd = renovData.updatedAt ? new Date(renovData.updatedAt) : null;
+    const f = next ? RENOV_FRAKS[next.type] : null;
+    cls='on'; msg = (next&&f ? `Neste: ${f.label} ${relDayLabel(next.date)}` : 'Oppdatert') + (upd?` · oppdatert ${upd.getDate()}.${upd.getMonth()+1}`:'');
+  } else { cls='wait'; msg='Ingen datoer ennå – trykk «Oppdater»'; }
+  dot.className = 'sync-dot'+(cls?(' '+cls):'');
+  txt.textContent = msg;
 }
 
 function renderRoutineCatPicker(){ buildCatPicker('routineCatPicker', routineCat, k=>{ routineCat=k; renderRoutineCatPicker(); }); }
@@ -2630,6 +2833,11 @@ document.querySelectorAll('#dayswitch button').forEach(btn=>{
 // Standard-dag innstilling
 document.getElementById('defToday').addEventListener('click',()=>{ prefs.defaultDay='today'; savePrefs(); renderSettings(); });
 document.getElementById('defTomorrow').addEventListener('click',()=>{ prefs.defaultDay='tomorrow'; savePrefs(); renderSettings(); });
+// Renovasjon
+document.getElementById('renovOn').addEventListener('click',()=>{ renovPref.enabled=true; saveRenovPref(); renderRenovSettings(); refreshRenovasjon(false); renderAll(); });
+document.getElementById('renovOff').addEventListener('click',()=>{ renovPref.enabled=false; saveRenovPref(); renderRenovSettings(); renderAll(); });
+document.getElementById('renovMat').addEventListener('change',(e)=>{ renovPref.matavfall=e.target.checked; saveRenovPref(); renderRenovSettings(); renderAll(); });
+document.getElementById('renovRefreshBtn').addEventListener('click',()=>{ refreshRenovasjon(true); });
 // Legg til kategori
 document.getElementById('newCatColor').addEventListener('input',(e)=>{ newCatColor = e.target.value; });
 document.getElementById('addCatBtn').addEventListener('click',()=>{
@@ -2654,7 +2862,7 @@ document.getElementById('addCatBtn').addEventListener('click',()=>{
   document.getElementById('overdueMoveAll').addEventListener('click', moveAllOverdueToToday);
 })();
 // Oppdater «i dag»-grensen (og dermed forfalt) når appen kommer i forgrunnen
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureDailyTasks(); renderAll(); } });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureDailyTasks(); renderAll(); try{ refreshRenovasjon(false); }catch(e){} } });
 
 // Rediger-oppgave-ark
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
@@ -3281,6 +3489,9 @@ fix = loadFix();
 const _inv = (location.hash||'').indexOf('sync=')>=0;
 if(!(syncConf.enabled && syncConf.url && syncConf.code) && !_inv) maybeSeedFix(null);   // med synk: venter på første snapshot
 renderAll();
+
+/* Renovasjon: oppfrisk hentedatoer i bakgrunnen (henter kun ved behov) */
+try{ refreshRenovasjon(false); }catch(e){}
 
 /* Invitasjon via delt lenke (#sync=…) */
 const invite = parseInvite();
