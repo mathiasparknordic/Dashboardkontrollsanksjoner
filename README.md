@@ -19,6 +19,11 @@ mellom flere (f.eks. deg og partneren din).
 - **Rediger oppgave:** trykk på et gjøremål for å åpne et redigerings-ark –
   endre **dato** (hurtigvalg I dag / I morgen / ±1 dag + datovelger), tittel og
   kategori, eller slett. Flyttede oppgaver dukker opp på ny dato hos begge.
+- **Underpunkter:** åpne en oppgave og legg inn en sjekkliste (f.eks.
+  «Avfallsstasjonen» → brannslukker, kurv, hageavfall). Skill flere med komma,
+  huk av underveis, × fjerner. Kortet viser fremdrift (☑ 2/5) og hva som
+  gjenstår. Snarvei: skriv «Avfallsstasjonen: kurv, hageavfall» i feltet for
+  egen oppgave. Underpunkter lagres med en gang og synkes som del av oppgaven.
 - **Egne hurtigvalg** (⚙️ Innstillinger) som deles med alle på lista.
 - **Daglige rutiner** (⚙️ Innstillinger): oppgaver som legges inn automatisk
   hver dag (forhåndsfylt med pusse tenner William, gå tur med Charlie, oppvask,

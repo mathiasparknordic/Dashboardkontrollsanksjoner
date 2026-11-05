@@ -463,7 +463,29 @@ input{font-family:inherit;}
   transition:transform .30s var(--ease-pop);will-change:transform;
 }
 #editSheet.show,#fixSheet.show{transform:translateX(-50%) translateY(0);}
-#fixSheet{max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#fixSheet,#editSheet{max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* Underpunkter (sjekkliste inni en oppgave) */
+.sub-list{display:flex;flex-direction:column;gap:6px;margin:4px 0 8px;}
+.sub-item{
+  display:flex;align-items:center;gap:10px;background:var(--card-sunken);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 8px 8px 10px;
+}
+.sub-item .check{width:24px;height:24px;border-width:2px;}
+.sub-item .check svg{transform:scale(.85);}
+.sub-text{flex:1;min-width:0;font-size:15px;font-weight:700;word-break:break-word;}
+.sub-item.done .sub-text{text-decoration:line-through;color:var(--muted);}
+.sub-x{flex:0 0 auto;width:30px;height:30px;border-radius:8px;color:var(--muted);font-size:18px;font-weight:800;}
+.sub-x:active{background:var(--danger-soft);color:var(--danger);}
+.sub-empty{font-size:13px;font-weight:600;color:var(--muted);margin:2px 0 8px;}
+.sub-add{display:flex;gap:8px;}
+.sub-add .field-input{flex:1;min-width:0;}
+.sub-add .add-btn{flex:0 0 auto;}
+.sub-pill{
+  display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
+  background:var(--card-sunken);color:var(--muted);font-size:11px;font-weight:800;vertical-align:1px;
+}
+.sub-pill.all{background:var(--success-soft);color:#1E8A5C;}
+.sub-preview{font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.35;word-break:break-word;}
 .sheet-grab{width:40px;height:5px;border-radius:999px;background:var(--border-strong);margin:8px auto 10px;}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;}
 .sheet-head h2{font-size:18px;font-weight:800;margin:0;}
@@ -661,7 +683,7 @@ input{font-family:inherit;}
 
     <div class="composer">
       <div class="composer-row">
-        <input type="text" id="customInput" placeholder="Skriv egen oppgave …" maxlength="80"
+        <input type="text" id="customInput" placeholder="Skriv egen oppgave …" maxlength="240"
                autocomplete="off" enterkeyhint="done" />
         <button class="add-btn" id="addBtn" aria-label="Legg til oppgave">+</button>
       </div>
@@ -879,6 +901,14 @@ input{font-family:inherit;}
   <label class="field-label" for="editTitle">Tittel</label>
   <input type="text" class="field-input" id="editTitle" maxlength="80" enterkeyhint="done" autocomplete="off" />
 
+  <label class="field-label" for="subInput">Underpunkter <span id="subCount"></span></label>
+  <div class="sub-list" id="subList"></div>
+  <div class="sub-add">
+    <input type="text" class="field-input" id="subInput" maxlength="80" enterkeyhint="done" autocomplete="off"
+           placeholder="Legg til (skill flere med komma) …" />
+    <button type="button" class="add-btn" id="subAddBtn" aria-label="Legg til underpunkt">+</button>
+  </div>
+
   <label class="field-label">Kategori</label>
   <div class="cat-picker" id="editCatPicker"></div>
 
@@ -1052,12 +1082,21 @@ function savePresets(){
 }
 function uid(){ return 't' + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
 
-function addTask(title, emoji, category, date){
+/* Underpunkter: [{id,text,done}]. Firebase kan levere lister som objekt – normaliser. */
+function normSubs(v){
+  const arr = Array.isArray(v) ? v : (v && typeof v==='object' ? Object.values(v) : []);
+  return arr.filter(x=>x && (x.text||'').trim())
+            .map(x=>({id:x.id||uid(), text:String(x.text).trim(), done:!!x.done}));
+}
+function splitSubs(str){ return (str||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean); }
+function addTask(title, emoji, category, date, subs){
   title = (title||'').trim();
   if(!title) return null;
   const now = Date.now();
   const t = {id:uid(), title, emoji:emoji||'📝', category:category||'custom',
-             date:date||selectedDate, done:false, doneAt:null, createdAt:now, updatedAt:now};
+             date:date||selectedDate, done:false, doneAt:null,
+             subs:(subs||[]).map(x=>({id:uid(), text:x, done:false})),
+             createdAt:now, updatedAt:now};
   tasks.push(t);
   save();
   syncPush('tasks', t.id, t);
@@ -2059,6 +2098,22 @@ function taskNode(t, readOnly, overdue){
   }
   body.appendChild(title);
   body.appendChild(meta);
+  // Underpunkter: fremdrift + kort forhåndsvisning av det som gjenstår
+  const subs = t.subs||[];
+  if(subs.length){
+    const nDone = subs.filter(x=>x.done).length;
+    const pill = document.createElement('span');
+    pill.className = 'sub-pill'+(nDone===subs.length?' all':'');
+    pill.textContent = `☑ ${nDone}/${subs.length}`;
+    meta.appendChild(pill);
+    const left = subs.filter(x=>!x.done).map(x=>x.text);
+    if(left.length && !t.done && !readOnly){
+      const pv = document.createElement('div');
+      pv.className = 'sub-preview';
+      pv.textContent = left.slice(0,4).join(' · ') + (left.length>4 ? ` · +${left.length-4}` : '');
+      body.appendChild(pv);
+    }
+  }
 
   el.appendChild(check);
   el.appendChild(emoji);
@@ -2407,12 +2462,79 @@ function openEditSheet(id){
   document.getElementById('editDate').value = t.date;
   document.getElementById('editTitle').value = t.title;
   document.getElementById('editDoneChip').hidden = !t.done;
+  document.getElementById('subInput').value = '';
   renderDateQuick();
   renderEditCat();
+  renderSubs();
   const bd = document.getElementById('sheetBackdrop'), sh = document.getElementById('editSheet');
   bd.classList.add('show');
   requestAnimationFrame(()=> sh.classList.add('show'));
   try{ navigator.vibrate && navigator.vibrate(8); }catch(e){}
+}
+/* Underpunkter lagres med en gang (som en sjekkliste) – uavhengig av Lagre/Avbryt */
+function setSubs(id, subs){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  updateTask(id, {subs});
+  renderSubs();
+  renderAll();
+}
+function renderSubs(){
+  const t = tasks.find(x=>x.id===editId);
+  const list = document.getElementById('subList');
+  list.innerHTML = '';
+  const subs = t ? (t.subs||[]) : [];
+  const nDone = subs.filter(x=>x.done).length;
+  document.getElementById('subCount').textContent = subs.length ? `· ${nDone}/${subs.length}` : '';
+  if(!subs.length){
+    const e = document.createElement('div');
+    e.className = 'sub-empty';
+    e.textContent = 'Ingen underpunkter ennå – f.eks. ting som skal med.';
+    list.appendChild(e);
+    return;
+  }
+  subs.forEach(sub=>{
+    const row = document.createElement('div');
+    row.className = 'sub-item'+(sub.done?' done':'');
+    const ck = document.createElement('button');
+    ck.type='button';
+    ck.className = 'check'+(sub.done?' on':'');
+    ck.innerHTML = checkSvg();
+    ck.setAttribute('aria-label', sub.done ? `Angre «${sub.text}»` : `Huk av «${sub.text}»`);
+    ck.addEventListener('click',()=>{
+      const cur = (tasks.find(x=>x.id===editId)||{}).subs||[];
+      const next = cur.map(x=> x.id===sub.id ? {...x, done:!x.done} : x);
+      try{ navigator.vibrate && navigator.vibrate(10); }catch(e){}
+      setSubs(editId, next);
+      if(!sub.done && next.length && next.every(x=>x.done)){
+        const p = tasks.find(x=>x.id===editId);
+        if(p && !p.done) showToast('Alle underpunkter gjort – huk av hovedpunktet? ✅');
+      }
+    });
+    const txt = document.createElement('div');
+    txt.className = 'sub-text';
+    txt.textContent = sub.text;
+    const x = document.createElement('button');
+    x.type='button';
+    x.className = 'sub-x';
+    x.textContent = '×';
+    x.setAttribute('aria-label', `Fjern «${sub.text}»`);
+    x.addEventListener('click',()=>{
+      const cur = (tasks.find(y=>y.id===editId)||{}).subs||[];
+      setSubs(editId, cur.filter(y=>y.id!==sub.id));
+    });
+    row.appendChild(ck); row.appendChild(txt); row.appendChild(x);
+    list.appendChild(row);
+  });
+}
+function submitSub(){
+  if(!editId) return;
+  const input = document.getElementById('subInput');
+  const parts = splitSubs(input.value);
+  if(!parts.length) return;
+  const cur = (tasks.find(x=>x.id===editId)||{}).subs||[];
+  setSubs(editId, cur.concat(parts.map(p=>({id:uid(), text:p, done:false}))));
+  input.value = '';
+  input.focus();
 }
 function closeEditSheet(){
   document.getElementById('editSheet').classList.remove('show');
@@ -2489,6 +2611,10 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureD
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
 document.getElementById('editCancelBtn').addEventListener('click', closeEditSheet);
 document.getElementById('editDeleteBtn').addEventListener('click', deleteFromSheet);
+document.getElementById('subAddBtn').addEventListener('click', submitSub);
+document.getElementById('subInput').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); submitSub(); }
+});
 document.getElementById('sheetBackdrop').addEventListener('click',()=>{ if(fxDraft) closeFixSheet(); else closeEditSheet(); });
 document.getElementById('editDate').addEventListener('change',(e)=>{
   if(!editDraft) return;
@@ -2522,10 +2648,17 @@ function submitCustom(){
   const val = input.value.trim();
   if(!val) return;
   const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
-  addTask(val, emojiMap[selectedCat]||'📝', selectedCat, selectedDate);
+  // Snarvei: «Avfallsstasjonen: brannslukker, kurv, hageavfall» → hovedpunkt + underpunkter
+  let title = val, subs = [];
+  const ci = val.indexOf(':');
+  if(ci>0 && ci<val.length-1){
+    const rest = splitSubs(val.slice(ci+1));
+    if(rest.length){ title = val.slice(0,ci).trim(); subs = rest; }
+  }
+  addTask(title, emojiMap[selectedCat]||'📝', selectedCat, selectedDate, subs);
   input.value='';
   renderAll();
-  showToast(`«${val}» lagt til`);
+  showToast(subs.length ? `«${title}» lagt til med ${subs.length} underpunkter` : `«${title}» lagt til`);
 }
 document.getElementById('addBtn').addEventListener('click', submitCustom);
 document.getElementById('customInput').addEventListener('keydown',(e)=>{
@@ -2750,6 +2883,7 @@ function normalizeTask(id, d){
   d = d || {};
   return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom',
           date:d.date||todayISO(), done:!!d.done, doneAt:d.doneAt||null,
+          subs:normSubs(d.subs),
           createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
 }
 function normalizePreset(id, d){
