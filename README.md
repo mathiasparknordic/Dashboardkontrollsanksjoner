@@ -75,6 +75,9 @@ mellom flere (f.eks. deg og partneren din).
 - **Deling og sanntids-synk** (⚙️ Innstillinger) via Firebase Realtime Database
   (REST + `EventSource`, ingen SDK/CDN).
 - **Fremdriftsring**, streak og konfetti når du huker av. 🎉
+- **Sveip tilbake** – dra fingeren fra venstre kant mot høyre for å gå tilbake
+  (lukker et åpent ark, forlater innstillinger til fanen du kom fra, eller går
+  tilbake til Planlagt), slik man er vant til i iOS-apper.
 - **iPhone-tilpasset PWA** – kan legges til på hjem-skjermen som en app/widget.
 
 ## Kjøre appen

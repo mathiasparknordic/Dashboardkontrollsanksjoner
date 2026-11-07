@@ -3559,7 +3559,9 @@ document.getElementById('customInput').addEventListener('keydown',(e)=>{
 document.getElementById('customInput').addEventListener('input',()=>{ if(composerEmoji===null) updateComposerEmojiBtn(); });
 document.getElementById('customEmojiBtn').addEventListener('click',()=> toggleComposerPicker());
 
+let settingsReturn = 'plan';   // hvilken fane ⚙️ ble åpnet fra
 function showView(v){
+  if(v==='settings' && currentView!=='settings') settingsReturn = currentView;
   currentView = v;
   const isSettings = v==='settings';
   const hideCal = isSettings || v==='shop' || v==='fix' || v==='med';   // disse har egen visning
@@ -3686,7 +3688,52 @@ document.getElementById('shopInput').addEventListener('keydown',(e)=>{
 });
 document.getElementById('clearCheckedBtn').addEventListener('click',()=>{ clearCheckedShop(); renderShop(); });
 document.getElementById('settingsBtn').addEventListener('click',()=>showView('settings'));
-document.getElementById('backBtn').addEventListener('click',()=>showView('plan'));
+document.getElementById('backBtn').addEventListener('click',()=> goBack());
+
+/* «Gå tilbake»: lukk åpent ark, forlat innstillinger, ev. tilbake til Planlagt.
+   Returnerer true hvis noe faktisk ble gjort. */
+function goBack(){
+  const bd = document.getElementById('sheetBackdrop');
+  if(bd && bd.classList.contains('show')){
+    if(medTakeCtx) closeMedTakeSheet();
+    else if(medDraft) closeMedSheet();
+    else if(fxDraft) closeFixSheet();
+    else closeEditSheet();
+    return true;
+  }
+  if(currentView==='settings'){ showView(settingsReturn||'plan'); return true; }
+  if(currentView!=='plan'){ showView('plan'); return true; }
+  return false;
+}
+
+/* Sveip fra venstre kant mot høyre = gå tilbake (som i iOS-apper).
+   Kun fra venstre kant, og aldri inne i et vannrett-scrollbart felt. */
+(function(){
+  let sx=0, sy=0, t0=0, armed=false;
+  const EDGE = Math.min(60, Math.max(28, Math.round(window.innerWidth*0.12)));
+  function inHorizScroll(el){
+    while(el && el.nodeType===1 && el!==document.body){
+      const ox = getComputedStyle(el).overflowX;
+      if((ox==='auto'||ox==='scroll') && el.scrollWidth > el.clientWidth+4) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+  document.addEventListener('touchstart',(e)=>{
+    if(e.touches.length!==1){ armed=false; return; }
+    const t=e.touches[0];
+    sx=t.clientX; sy=t.clientY; t0=Date.now();
+    armed = (sx<=EDGE) && !inHorizScroll(e.target);
+  }, {passive:true});
+  document.addEventListener('touchend',(e)=>{
+    if(!armed) return; armed=false;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-sx, dy=t.clientY-sy, dt=Date.now()-t0;
+    if(dx>70 && Math.abs(dy)<55 && dt<700){
+      if(goBack()){ try{ navigator.vibrate && navigator.vibrate(8); }catch(_){} }
+    }
+  }, {passive:true});
+})();
 
 /* Egne hurtigvalg */
 document.getElementById('addPresetBtn').addEventListener('click',()=>{
