@@ -23,9 +23,16 @@ const VAPID_PRIVATE = (process.env.VAPID_PRIVATE_KEY || '').trim();
 const VAPID_SUBJECT = (process.env.VAPID_SUBJECT || '').trim() || 'mailto:hjemmetavla@example.com';
 
 function fail(msg) { console.error('FEIL:', msg); process.exit(1); }
-if (!DB) fail('mangler FIREBASE_DB_URL');
-if (!HOUSEHOLDS.length) fail('mangler FIREBASE_HOUSEHOLD');
-if (!VAPID_PRIVATE) fail('mangler VAPID_PRIVATE_KEY');
+// Hvis oppsettet ikke er lagt inn enda: hopp over stille (grønn kjøring),
+// slik at jobben ikke spammer med feil før varsler er satt opp.
+const missing = [];
+if (!DB) missing.push('FIREBASE_DB_URL');
+if (!HOUSEHOLDS.length) missing.push('FIREBASE_HOUSEHOLD');
+if (!VAPID_PRIVATE) missing.push('VAPID_PRIVATE_KEY');
+if (missing.length) {
+  console.log('Hopper over – varsler ikke satt opp enda. Mangler secret(s): ' + missing.join(', '));
+  process.exit(0);
+}
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
