@@ -1,6 +1,6 @@
 /* Enkel service worker: cacher app-skallet slik at appen kan legges til
    på hjem-skjermen og fungere uten nett. */
-const CACHE = 'hjemme-v6';
+const CACHE = 'hjemme-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -62,6 +62,39 @@ self.addEventListener('fetch', (e) => {
           return res;
         })
         .catch(() => cached);
+    })
+  );
+});
+
+/* ---------- Push-varsler (medisiner) ---------- */
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) {
+    try { d = { title: 'Hjemmetavla', body: e.data ? e.data.text() : '' }; } catch (__) { d = {}; }
+  }
+  const title = d.title || '💊 Medisin';
+  const opts = {
+    body: d.body || 'Tid for medisinen',
+    tag: d.tag || 'hjemmetavla-med',
+    renotify: true,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    data: { url: d.url || './index.html', slot: d.slot || null },
+    requireInteraction: false,
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || './index.html';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        // Fokuser et åpent vindu hvis vi har ett
+        if ('focus' in c) { c.focus(); if ('navigate' in c) c.navigate(target).catch(() => {}); return; }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
     })
   );
 });

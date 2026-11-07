@@ -52,6 +52,14 @@ mellom flere (f.eks. deg og partneren din).
   Fikse/Kjøpe, og kjøpepunkter kan sendes rett til handlelista. Synkes som
   `fix` i Firebase; startlista legges inn én gang per husholdning, og slettinger
   lagres som myk sletting så de ikke dukker opp igjen fra en annen telefon.
+- **Medisiner** (💊-fanen) – en enkel medisin-sporing i stil med Medisafe:
+  legg inn medisiner med dose, antall, ikon, ett eller flere tidspunkt og hvilke
+  dager. Dagens doser vises gruppert per klokkeslett; trykk sjekk-knappen og velg
+  **Nå / På planlagt tid / Velg tidspunkt** for å registrere at den er tatt
+  (grønn markering med «Tatt kl …»). Forfalte doser får en diskret gul utheving,
+  og et tall-merke på fanen viser hvor mange som gjenstår i dag. Egen logg over
+  nylig tatt, pause-bryter per medisin, og alt synkes mellom telefonene.
+  **Push-varsel** (valgfritt, se under) minner deg på når det er tid.
 - **Renovasjon / kildesortering** (⚙️ Innstillinger) – henter faktiske
   tømmedatoer for adressen fra Min Renovasjon (Horten kommune) og viser en
   **diskret, men tydelig stripe** øverst i Planlagt de dagene det hentes
@@ -107,12 +115,44 @@ Teknisk: skriving med `fetch` (PUT/DELETE) mot REST-endepunktet, sanntid via
 som helst med URL **og** kode kan se/endre listen, så bruk en kode som er
 vanskelig å gjette.
 
+## Medisin-varsler (push) – oppsett
+
+Selve medisin-sporingen virker uten noe oppsett. For å få **push-varsel** på
+telefonen når det er tid for en medisin (også når appen er lukket), sender en
+gratis, planlagt **GitHub Actions**-jobb varslene. Du setter det opp én gang:
+
+**Forutsetninger:** appen må være lagt til på **Hjem-skjerm** (iOS 16.4+) og åpnet
+derfra, og **delt liste** må være tilkoblet (⚙️ → Deling og synk) – medisinene og
+abonnementene ligger i den samme Firebase-basen som jobben leser fra.
+
+1. **Legg inn tre «repository secrets»** i GitHub: repoet → **Settings → Secrets
+   and variables → Actions → New repository secret**:
+   - `FIREBASE_DB_URL` – database-URL-en din (⚙️ → 💊 Medisin & varsler viser
+     verdien med «Kopier» når synk er tilkoblet).
+   - `FIREBASE_HOUSEHOLD` – husholdnings-koden din (samme sted).
+   - `VAPID_PRIVATE_KEY` – den private nøkkelen (få den av den som satte opp
+     appen; den **må ikke** sjekkes inn i koden).
+2. **Slå på varsler i appen:** ⚙️ → 💊 Medisin & varsler → **Slå på varsler**
+   (eller «Få påminnelse» øverst i 💊-fanen), og godta varsler. Gjenta på hver
+   telefon som skal få varsel.
+3. Ferdig. Jobben kjører hvert 5. minutt (`.github/workflows/med-reminders.yml`)
+   og sender et varsel når en dose er forfalt og ikke registrert som tatt. Den
+   sender aldri samme dose to ganger, og rydder bort abonnement som er utløpt.
+   Du kan kjøre den manuelt fra **Actions**-fanen (workflow_dispatch) for å teste.
+
+Teknisk: web-push med VAPID, abonnement lagres i Firebase under husholdningen
+(`pushSubs`), avsenderkoden ligger i `push/` (`send.mjs` + ren, testbar
+`due.mjs`, `node test.mjs`). Den offentlige VAPID-nøkkelen er innebygd i appen og
+jobben; kun den private nøkkelen er hemmelig.
+
 ## Filer
 
 | Fil | Rolle |
 |-----|-------|
 | `index.html` | Hele appen (HTML + CSS + JS) |
 | `manifest.webmanifest` | PWA-manifest (navn, farger, ikoner) |
-| `sw.js` | Service worker – offline-cache av app-skallet |
+| `sw.js` | Service worker – offline-cache + mottak av push-varsler |
+| `push/` | Avsender for medisin-varsler (`send.mjs`, `due.mjs`, `test.mjs`) |
+| `.github/workflows/med-reminders.yml` | Planlagt jobb som sender push-varslene |
 | `icon-180/192/512.png`, `icon-maskable-512.png` | Hjem-skjerm-ikoner |
 | `.nojekyll` | Deaktiverer Jekyll på GitHub Pages |

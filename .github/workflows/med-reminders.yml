@@ -1,0 +1,37 @@
+name: Medisin-varsler
+
+# Sender push-varsler for forfalte medisin-doser i Hjemmetavla.
+# Kjører hvert 5. minutt (GitHub kan forsinke noen minutter under last).
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}   # lar deg kjøre manuelt fra Actions-fanen
+
+# Unngå overlappende kjøringer
+concurrency:
+  group: med-reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer avhengigheter
+        working-directory: push
+        run: npm ci
+      - name: Send varsler
+        working-directory: push
+        env:
+          FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          FIREBASE_HOUSEHOLD: ${{ secrets.FIREBASE_HOUSEHOLD }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          # Offentlig nøkkel og emne er ikke hemmelige – innebygd i koden,
+          # men kan overstyres med secrets om ønskelig.
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+        run: node send.mjs

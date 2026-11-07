@@ -1,0 +1,14 @@
+{
+  "name": "hjemmetavla-push",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sender web-push medisin-varsler for Hjemmetavla (GitHub Actions cron).",
+  "scripts": {
+    "send": "node send.mjs",
+    "test": "node test.mjs"
+  },
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}

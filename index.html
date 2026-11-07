@@ -490,6 +490,105 @@ input{font-family:inherit;}
 .switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:14px;font-weight:700;color:var(--text);}
 .switch-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--custom-ink);}
 
+/* ---------- Medisiner ---------- */
+.med-today-head{display:flex;align-items:baseline;justify-content:space-between;margin-top:6px;}
+.med-today-date{font-size:12.5px;font-weight:700;color:var(--muted);}
+.med-timegroup{margin:4px 0 14px;}
+.med-time{font-size:13px;font-weight:800;color:var(--custom-ink);margin:0 0 7px 2px;letter-spacing:.2px;}
+.med-dose{
+  display:flex;align-items:center;gap:12px;background:var(--card);
+  border:1px solid var(--border);border-radius:16px;padding:11px 12px;margin-bottom:8px;
+  box-shadow:var(--shadow-card);animation:ovIn .24s var(--ease-pop);
+}
+.med-dose .md-ico{font-size:24px;line-height:1;flex:0 0 auto;width:30px;text-align:center;}
+.med-dose .md-main{flex:1;min-width:0;}
+.med-dose .md-name{font-size:15.5px;font-weight:800;color:var(--text);word-break:break-word;}
+.med-dose .md-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:1px;}
+.med-check{
+  flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:2.5px solid var(--border-strong);
+  background:var(--card);display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:19px;transition:transform .14s var(--ease-std),background .2s,border-color .2s;
+}
+.med-check:active{transform:scale(.9);}
+.med-dose.taken{background:var(--success-soft);border-color:transparent;box-shadow:none;}
+.med-dose.taken .md-name{color:#1E8A5C;}
+.med-dose.taken .md-sub{color:#2FA06B;}
+.med-dose.taken .med-check{background:var(--success);border-color:var(--success);color:#fff;}
+.med-dose.overdue:not(.taken){border-color:#F0C98A;background:rgba(240,170,60,.08);}
+.md-taken-at{font-size:11.5px;font-weight:700;color:#2FA06B;}
+.med-sec-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 2px;}
+.med-add-btn{
+  font-size:13px;font-weight:800;color:var(--custom-ink);background:var(--custom);
+  padding:7px 13px;border-radius:999px;transition:transform .12s var(--ease-std);
+}
+.med-add-btn:active{transform:scale(.95);}
+.med-item{
+  display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer;
+  transition:transform .12s var(--ease-std);
+}
+.med-item:active{transform:scale(.994);}
+.med-item .md-ico{font-size:22px;flex:0 0 auto;width:28px;text-align:center;}
+.med-item .mi-main{flex:1;min-width:0;}
+.med-item .mi-name{font-size:15px;font-weight:800;color:var(--text);word-break:break-word;}
+.med-item .mi-sub{font-size:12px;font-weight:600;color:var(--muted);margin-top:1px;}
+.med-item .mi-chev{color:var(--border-strong);font-size:20px;font-weight:800;flex:0 0 auto;}
+.med-item.paused{opacity:.6;}
+.med-pause-pill{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--card-sunken);color:var(--muted);font-size:10.5px;font-weight:800;vertical-align:1px;}
+.med-log-item{display:flex;align-items:center;gap:10px;padding:7px 2px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);}
+.med-log-item .ml-ico{font-size:16px;}
+.med-log-item .ml-txt{flex:1;min-width:0;color:var(--text);font-weight:600;}
+.med-log-item .ml-txt b{font-weight:800;}
+.med-log-item .ml-time{font-weight:700;}
+.med-empty{text-align:center;color:var(--muted);font-size:13.5px;font-weight:600;padding:18px 10px;line-height:1.5;}
+.med-push-banner{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:rgba(138,107,224,.10);border-radius:14px;padding:11px 14px;margin:6px 0 14px;
+}
+.med-push-banner .mpb-txt{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--text);line-height:1.4;}
+.med-push-banner .mpb-txt small{display:block;font-weight:600;color:var(--muted);margin-top:2px;}
+.med-push-banner button{
+  flex:0 0 auto;font-size:13px;font-weight:800;color:#fff;background:var(--custom-ink);
+  padding:8px 14px;border-radius:999px;transition:transform .12s var(--ease-std);
+}
+.med-push-banner button:active{transform:scale(.95);}
+.med-push-banner.ok{background:var(--success-soft);}
+.med-push-banner.ok .mpb-txt{color:#1E8A5C;}
+.med-push-banner.ok button{background:var(--card);color:var(--custom-ink);border:1.5px solid var(--border);}
+/* Medisin-ark */
+.med-row2{display:flex;gap:12px;align-items:flex-end;}
+.med-stepper{display:flex;align-items:center;gap:0;background:var(--card-sunken);border-radius:var(--radius-sm);height:48px;overflow:hidden;}
+.med-stepper button{width:44px;height:48px;font-size:22px;font-weight:800;color:var(--custom-ink);}
+.med-stepper button:active{background:var(--custom);}
+.med-stepper span{flex:1;text-align:center;font-size:17px;font-weight:800;min-width:34px;}
+.med-icon-picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.med-icon{width:42px;height:42px;border-radius:12px;background:var(--card-sunken);display:flex;align-items:center;justify-content:center;font-size:21px;border:2.5px solid transparent;transition:transform .12s var(--ease-std);}
+.med-icon:active{transform:scale(.92);}
+.med-icon.sel{border-color:var(--custom-ink);background:var(--custom);}
+.med-times{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.med-time-row{display:flex;align-items:center;gap:10px;}
+.med-time-row input[type=time]{flex:1;}
+.med-time-row .mt-del{width:40px;height:40px;border-radius:10px;color:var(--muted);font-size:20px;font-weight:800;flex:0 0 auto;}
+.med-time-row .mt-del:active{background:var(--danger-soft);color:var(--danger);}
+.med-addtime{margin-top:10px;font-size:13.5px;font-weight:800;color:var(--custom-ink);padding:8px 2px;}
+.med-days{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.med-day{flex:1;min-width:38px;height:42px;border-radius:12px;background:var(--card-sunken);color:var(--text);font-size:13px;font-weight:800;border:2px solid transparent;transition:transform .12s var(--ease-std);}
+.med-day.sel{background:var(--custom);color:var(--custom-ink);border-color:var(--custom-ink);}
+.med-day:active{transform:scale(.94);}
+/* «Tatt»-ark */
+.med-take-head{text-align:center;font-size:14px;font-weight:700;color:var(--muted);padding:6px 0 12px;}
+.med-take-opt{display:block;width:100%;text-align:center;font-size:17px;font-weight:800;color:var(--custom-ink);padding:15px 0;border-top:1px solid var(--border);}
+.med-take-opt:active{background:var(--card-sunken);}
+/* Oppsett-boks for varsler (GitHub secrets) */
+.med-setup{margin-top:14px;padding:12px;border-radius:12px;background:var(--card-sunken);border:1px dashed var(--border-strong);}
+.med-setup-h{font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.med-setup-note{font-size:12px;font-weight:600;color:var(--muted);line-height:1.45;margin-bottom:10px;}
+.med-copy-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mcr-label{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--muted);width:130px;word-break:break-all;}
+.mcr-val{flex:1;min-width:0;font-size:11.5px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.mcr-copy{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--custom-ink);background:var(--custom);padding:6px 11px;border-radius:999px;}
+.mcr-copy:active{transform:scale(.95);}
+
 /* ---------- Rediger-oppgave-ark ---------- */
 .task.tappable{cursor:pointer;}
 .task.tappable:active{transform:scale(.994);}
@@ -498,7 +597,7 @@ input{font-family:inherit;}
   opacity:0;pointer-events:none;transition:opacity .26s var(--ease-std);z-index:60;
 }
 #sheetBackdrop.show{opacity:1;pointer-events:auto;}
-#editSheet,#fixSheet{
+#editSheet,#fixSheet,#medSheet,#medTakeSheet{
   position:fixed;left:50%;bottom:0;width:100%;max-width:520px;
   transform:translateX(-50%) translateY(110%);
   background:var(--card);border-radius:22px 22px 0 0;
@@ -506,8 +605,8 @@ input{font-family:inherit;}
   padding:6px 18px calc(env(safe-area-inset-bottom) + 18px);
   transition:transform .30s var(--ease-pop);will-change:transform;
 }
-#editSheet.show,#fixSheet.show{transform:translateX(-50%) translateY(0);}
-#fixSheet,#editSheet{max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#editSheet.show,#fixSheet.show,#medSheet.show,#medTakeSheet.show{transform:translateX(-50%) translateY(0);}
+#fixSheet,#editSheet,#medSheet{max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 /* Underpunkter (sjekkliste inni en oppgave) */
 .sub-list{display:flex;flex-direction:column;gap:6px;margin:4px 0 8px;}
 .sub-item{
@@ -549,13 +648,17 @@ input{font-family:inherit;}
 .sheet-actions .wide-btn{flex:1;margin-top:0;}
 .sheet-actions .wide-btn:last-child{flex:1.3;}
 
-/* ---------- Fire faner (ikon over tekst) ---------- */
-.segment-4 button{
+/* ---------- Faner (ikon over tekst) ---------- */
+.segment-4 button,.segment-5 button{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   padding:7px 2px 6px;font-size:11.5px;position:relative;white-space:nowrap;min-width:0;
 }
-.segment-4 .seg-ico{font-size:17px;line-height:1.1;}
-.segment-4 .tab-badge{position:absolute;top:3px;right:4px;margin:0;}
+.segment-4 .seg-ico,.segment-5 .seg-ico{font-size:17px;line-height:1.1;}
+.segment-4 .tab-badge,.segment-5 .tab-badge{position:absolute;top:3px;right:4px;margin:0;}
+/* Fem faner: litt strammere så etikettene får plass på smale skjermer */
+.segment-5 button{padding:7px 1px 6px;font-size:10px;letter-spacing:-.2px;}
+.segment-5 .seg-ico{font-size:16px;}
+.segment-5 .tab-badge{top:2px;right:2px;}
 
 /* ---------- Fikse hjemme ---------- */
 :root{ --fix-ink:#0E8C93; --fix:#D3F1F2; }
@@ -694,8 +797,9 @@ input{font-family:inherit;}
   </section>
 
   <!-- Visningsvalg -->
-  <div class="segment segment-4" id="mainTabs" role="tablist">
+  <div class="segment segment-5" id="mainTabs" role="tablist">
     <button id="tabPlan" class="active" role="tab"><span class="seg-ico">📋</span><span>Planlagt</span><span class="tab-badge warn" id="planBadge" hidden></span></button>
+    <button id="tabMed" role="tab"><span class="seg-ico">💊</span><span>Medisin</span><span class="tab-badge warn" id="medBadge" hidden></span></button>
     <button id="tabFix" role="tab"><span class="seg-ico">🛠️</span><span>Fikse</span><span class="tab-badge warn" id="fixBadge" hidden></span></button>
     <button id="tabShop" role="tab"><span class="seg-ico">🛒</span><span>Handleliste</span><span class="tab-badge" id="shopBadge" hidden></span></button>
     <button id="tabHist" role="tab"><span class="seg-ico">🗂️</span><span>Historikk</span></button>
@@ -748,6 +852,25 @@ input{font-family:inherit;}
       <div class="section-label" id="fixDayLabel">🛠️ Fikse denne dagen</div>
       <div class="list" id="fixDayList"></div>
     </div>
+  </div>
+
+  <!-- Medisin-visning -->
+  <div id="medView" style="display:none;">
+    <div id="medPushBanner" class="med-push-banner" hidden></div>
+    <div class="med-today-head">
+      <span class="section-label" id="medTodayLabel">💊 I dag</span>
+      <span class="med-today-date" id="medTodayDate"></span>
+    </div>
+    <section id="medToday"></section>
+
+    <div class="med-sec-head">
+      <span class="section-label">Mine medisiner</span>
+      <button class="med-add-btn" id="medAddBtn" type="button">➕ Legg til</button>
+    </div>
+    <section id="medList"></section>
+
+    <div class="section-label" id="medLogLabel" hidden style="margin-top:18px;">🕒 Nylig tatt</div>
+    <section id="medLogRecent"></section>
   </div>
 
   <!-- Fikse hjemme-visning -->
@@ -886,6 +1009,15 @@ input{font-family:inherit;}
     </div>
 
     <!-- Renovasjon -->
+    <!-- Medisin & varsler -->
+    <div class="settings-card">
+      <div class="settings-title">💊 Medisin &amp; varsler</div>
+      <div class="settings-sub">Push-varsel når det er tid for en medisin. Varslene sendes av en gratis planlagt GitHub-jobb og krever at delt liste er tilkoblet.</div>
+      <div class="sync-status" id="medPushStatus"><span class="sync-dot" id="medPushDot"></span><span id="medPushStatusText">—</span></div>
+      <button class="wide-btn" id="medPushToggleBtn" style="background:var(--custom-ink)">Slå på varsler</button>
+      <div id="medSetupBox" class="med-setup" hidden></div>
+    </div>
+
     <div class="settings-card">
       <div class="settings-title">♻️ Renovasjon</div>
       <div class="settings-sub">Diskret påminnelse i Planlagt på dagene de henter avfall (Tokerødveien 21, Skoppum). Hentedatoer hentes fra Min&nbsp;Renovasjon og oppdateres automatisk.</div>
@@ -1043,6 +1175,64 @@ input{font-family:inherit;}
   </div>
 </div>
 
+<!-- Medisin-ark (legg til / rediger) -->
+<div id="medSheet" role="dialog" aria-modal="true" aria-labelledby="medSheetTitle">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <h2 id="medSheetTitle">Ny medisin</h2>
+    <button type="button" class="sheet-del" id="medDeleteBtn" hidden>Slett</button>
+  </div>
+
+  <label class="field-label" for="medName">Navn</label>
+  <input type="text" class="field-input" id="medName" maxlength="60" autocomplete="off" placeholder="F.eks. Escitalopram" enterkeyhint="next" />
+
+  <div class="med-row2">
+    <div style="flex:1.3;min-width:0;">
+      <label class="field-label" for="medDose">Dose / styrke</label>
+      <input type="text" class="field-input" id="medDose" maxlength="40" autocomplete="off" placeholder="F.eks. 15 mg" />
+    </div>
+    <div style="flex:1;min-width:0;">
+      <label class="field-label">Antall</label>
+      <div class="med-stepper">
+        <button type="button" id="medPillsMinus" aria-label="Færre">−</button>
+        <span id="medPillsVal">1</span>
+        <button type="button" id="medPillsPlus" aria-label="Flere">+</button>
+      </div>
+    </div>
+  </div>
+
+  <label class="field-label">Ikon</label>
+  <div class="med-icon-picker" id="medIconPicker"></div>
+
+  <label class="field-label">Tidspunkt</label>
+  <div class="med-times" id="medTimes"></div>
+  <button type="button" class="med-addtime" id="medAddTime">＋ Legg til tidspunkt</button>
+
+  <label class="field-label">Dager</label>
+  <div class="med-days" id="medDays"></div>
+
+  <label class="switch-row" for="medPauseChk" style="margin-top:16px;">
+    <span>Sett på pause (ingen doser/varsler)</span>
+    <input type="checkbox" id="medPauseChk" />
+  </label>
+
+  <div class="sheet-actions">
+    <button type="button" class="wide-btn ghost" id="medCancelBtn">Avbryt</button>
+    <button type="button" class="wide-btn" id="medSaveBtn" style="background:var(--custom-ink)">Lagre</button>
+  </div>
+</div>
+
+<!-- Medisin «tatt»-ark -->
+<div id="medTakeSheet" role="dialog" aria-modal="true" aria-labelledby="medTakeTitle">
+  <div class="sheet-grab"></div>
+  <div class="med-take-head" id="medTakeTitle">Når tok du medisinen?</div>
+  <button type="button" class="med-take-opt" id="medTakeNow">Nå</button>
+  <button type="button" class="med-take-opt" id="medTakeOnTime">På planlagt tid</button>
+  <button type="button" class="med-take-opt" id="medTakeSet">Velg tidspunkt …</button>
+  <input type="time" id="medTakeTimeInput" class="field-input" style="display:none;margin-top:10px;" />
+  <button type="button" class="wide-btn ghost" id="medTakeCancel" style="margin-top:12px;">Avbryt</button>
+</div>
+
 <script>
 /* ============================================================
    Datamodell & lagring
@@ -1053,6 +1243,8 @@ const SYNC_KEY = 'hjemme_sync_v1';
 const CAT_KEY = 'hjemme_categories_v1';
 const PREFS_KEY = 'hjemme_prefs_v1';
 const SHOP_KEY = 'hjemme_handleliste_v1';
+const MED_KEY = 'hjemme_medisiner_v1';
+const MEDLOG_KEY = 'hjemme_medisinlogg_v1';
 const ROUTINE_KEY = 'hjemme_rutiner_v1';
 const ROUTINE_SEED_FLAG = 'hjemme_rutiner_seedet_v1';
 const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
@@ -1105,6 +1297,8 @@ let prefs = loadPrefs();
 let tasks = load();
 let customPresets = loadPresets();
 let shop = loadShop();
+let meds = loadMeds();
+let medLog = loadMedLog();
 let routines = loadRoutines();
 let routineCat = 'custom';
 let selectedCat = 'custom';
@@ -1283,6 +1477,107 @@ function clearCheckedShop(){
   shop = shop.filter(i=>!i.done);
   saveShop();
   done.forEach(i=> syncDelete('shop', i.id));
+}
+
+/* --- Medisiner (sporing som Medisafe + grunnlag for push-varsler) --- */
+const MED_ICONS = ['💊','🟡','🔵','🔴','💉','🩹','🫙','🧴','🌿','🫀','🩸','😴'];
+const WD_SHORT = ['Søn','Man','Tir','Ons','Tor','Fre','Lør']; // getDay(): 0=søn
+const WD_ORDER = [1,2,3,4,5,6,0]; // vis man→søn i velgeren
+
+function loadMeds(){ try{ const a=JSON.parse(localStorage.getItem(MED_KEY)); if(Array.isArray(a)) return a.map(x=>normalizeMed(x.id,x)); }catch(e){} return []; }
+function saveMeds(){ try{ localStorage.setItem(MED_KEY, JSON.stringify(meds)); }catch(e){} }
+function loadMedLog(){ try{ const a=JSON.parse(localStorage.getItem(MEDLOG_KEY)); if(Array.isArray(a)) return a.map(x=>normalizeMedLog(x.id,x)); }catch(e){} return []; }
+function saveMedLog(){ try{ localStorage.setItem(MEDLOG_KEY, JSON.stringify(medLog)); }catch(e){} }
+
+function normMedTimes(t){
+  if(!Array.isArray(t)) return ['08:00'];
+  const seen=new Set(), out=[];
+  t.forEach(x=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(String(x).trim()); if(!m) return;
+    const v = String(Math.min(23,+m[1])).padStart(2,'0')+':'+String(Math.min(59,+m[2])).padStart(2,'0');
+    if(!seen.has(v)){ seen.add(v); out.push(v); } });
+  out.sort();
+  return out.length?out:['08:00'];
+}
+function normMedDays(d){
+  if(!Array.isArray(d)) return null;                 // null = hver dag
+  const out = Array.from(new Set(d.map(Number).filter(n=>n>=0&&n<=6))).sort();
+  return (out.length && out.length<7) ? out : null;  // alle 7 = hver dag = null
+}
+function normalizeMed(id, d){
+  d = d||{};
+  return {id, name:d.name||'', dose:d.dose||'', pills:(d.pills==null?1:(+d.pills||1)),
+          icon:d.icon||'💊', times:normMedTimes(d.times), days:normMedDays(d.days),
+          active:d.active!==false, deleted:!!d.deleted,
+          createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+function normalizeMedLog(id, d){
+  d = d||{};
+  return {id, medId:d.medId||'', slot:d.slot||null, takenAt:d.takenAt||Date.now(),
+          deleted:!!d.deleted, createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
+}
+
+function addMed(data){
+  const now=Date.now();
+  const m = normalizeMed(uid(), Object.assign({createdAt:now, updatedAt:now}, data));
+  meds.push(m); saveMeds(); syncPush('meds', m.id, m); return m;
+}
+function updateMed(id, patch){
+  const cur = meds.find(x=>x.id===id); if(!cur) return null;
+  const merged = Object.assign({}, cur, patch, {updatedAt:Date.now()});
+  const nm = normalizeMed(id, merged);
+  const i = meds.findIndex(x=>x.id===id); meds[i]=nm;
+  saveMeds(); syncPush('meds', id, nm); return nm;
+}
+function deleteMed(id){
+  meds = meds.filter(x=>x.id!==id);
+  const gone = medLog.filter(l=>l.medId===id);
+  medLog = medLog.filter(l=>l.medId!==id);
+  saveMeds(); saveMedLog();
+  syncDelete('meds', id);
+  gone.forEach(l=> syncDelete('medLog', l.id));
+}
+
+function medSlotId(medId, dateISO, time){ return medId+'|'+dateISO+'|'+time; }
+function medTakenEntry(sid){ return medLog.find(l=>!l.deleted && l.slot===sid) || null; }
+function markTaken(medId, dateISO, time, takenAt){
+  const sid = medSlotId(medId, dateISO, time), now=Date.now();
+  let e = medTakenEntry(sid);
+  if(e){ e.takenAt = takenAt||now; e.updatedAt=now; saveMedLog(); syncPush('medLog', e.id, e); return e; }
+  e = normalizeMedLog(uid(), {medId, slot:sid, takenAt:takenAt||now, createdAt:now, updatedAt:now});
+  medLog.push(e); saveMedLog(); syncPush('medLog', e.id, e); return e;
+}
+function unmarkTaken(medId, dateISO, time){
+  const e = medTakenEntry(medSlotId(medId, dateISO, time));
+  if(!e) return;
+  medLog = medLog.filter(l=>l.id!==e.id);
+  saveMedLog(); syncDelete('medLog', e.id);
+}
+
+// Alle planlagte doser for en dato: [{med,time,slotId,taken}]
+function dosesForDate(dateISO){
+  const dow = parseISO(dateISO).getDay();
+  const out = [];
+  meds.filter(m=>!m.deleted && m.active).forEach(m=>{
+    if(m.days && !m.days.includes(dow)) return;
+    m.times.forEach(t=>{
+      const sid = medSlotId(m.id, dateISO, t);
+      out.push({med:m, time:t, slotId:sid, taken: medTakenEntry(sid)});
+    });
+  });
+  out.sort((a,b)=> a.time<b.time?-1 : a.time>b.time?1 : (a.med.name||'').localeCompare(b.med.name||''));
+  return out;
+}
+function nowHM(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+// Antall doser i dag som er forfalt (tid passert) og ikke tatt
+function medDueCount(){
+  const hm = nowHM();
+  return dosesForDate(todayISO()).filter(d=> !d.taken && d.time<=hm).length;
+}
+function medDaysLabel(m){
+  if(!m.days) return 'Hver dag';
+  if(m.days.length===5 && [1,2,3,4,5].every(x=>m.days.includes(x))) return 'Hverdager';
+  if(m.days.length===2 && m.days.includes(0) && m.days.includes(6)) return 'Helg';
+  return WD_ORDER.filter(x=>m.days.includes(x)).map(x=>WD_SHORT[x]).join(', ');
 }
 
 /* --- Daglige rutiner (auto-genererer én oppgave per dag) --- */
@@ -2413,12 +2708,231 @@ function renderRenovStrip(){
   box.hidden = true;
 }
 
+/* ============================================================
+   Medisiner – visning, ark og interaksjon
+   ============================================================ */
+function fmtClock(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function tsFromDateTime(dateISO, hm){ const [y,m,d]=dateISO.split('-').map(Number); const [H,M]=(hm||'00:00').split(':').map(Number); return new Date(y,m-1,d,H||0,M||0,0,0).getTime(); }
+function medLogWhenLabel(ts){
+  const d=new Date(ts), di=iso(d), t=fmtClock(ts);
+  if(di===todayISO()) return 'I dag '+t;
+  if(di===iso(addDays(new Date(),-1))) return 'I går '+t;
+  return `${d.getDate()}.${d.getMonth()+1}. ${t}`;
+}
+
+function updateMedBadge(){
+  const b=document.getElementById('medBadge'); if(!b) return;
+  const n=medDueCount();
+  if(n>0){ b.textContent=n>9?'9+':String(n); b.hidden=false; } else b.hidden=true;
+}
+
+function renderMedView(){ renderMedPushState(); renderMedToday(); renderMedList(); renderMedLogRecent(); }
+
+function renderMedPushState(){
+  const host=document.getElementById('medPushBanner'); if(!host) return;
+  if(!pushSupported()){ host.hidden=true; return; }
+  host.hidden=false; host.className='med-push-banner'; host.innerHTML='';
+  const txt=document.createElement('div'); txt.className='mpb-txt';
+  const btn=document.createElement('button'); btn.type='button';
+  const on = pushOn() && (typeof Notification!=='undefined') && Notification.permission==='granted';
+  if(on){
+    host.classList.add('ok');
+    txt.innerHTML='🔔 Varsler er på<small>Du får en push når det er tid for medisinen.</small>';
+    btn.textContent='Skru av'; btn.addEventListener('click', disablePush);
+  }else{
+    txt.innerHTML='🔔 Få påminnelse<small>Slå på push-varsel så du ikke glemmer en dose.</small>';
+    btn.textContent='Slå på'; btn.addEventListener('click', enablePush);
+  }
+  host.appendChild(txt); host.appendChild(btn);
+}
+
+function renderMedToday(){
+  const host=document.getElementById('medToday'); if(!host) return;
+  const dateEl=document.getElementById('medTodayDate');
+  if(dateEl){ const d=new Date(); dateEl.textContent=`${DAYS_FULL[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()].slice(0,3)}`; }
+  host.innerHTML='';
+  const doses=dosesForDate(todayISO());
+  if(!doses.length){ host.appendChild(emptyNode('💊','Ingen doser i dag','Legg til en medisin nedenfor, så dukker dagens doser opp her.')); return; }
+  const groups={}; doses.forEach(d=>{ (groups[d.time]=groups[d.time]||[]).push(d); });
+  Object.keys(groups).sort().forEach(t=>{
+    const g=document.createElement('div'); g.className='med-timegroup';
+    const tl=document.createElement('div'); tl.className='med-time'; tl.textContent=t;
+    g.appendChild(tl);
+    groups[t].forEach(d=> g.appendChild(doseCardNode(d)));
+    host.appendChild(g);
+  });
+}
+
+function doseCardNode(d){
+  const card=document.createElement('div'); card.className='med-dose'+(d.taken?' taken':'');
+  if(!d.taken && d.time<=nowHM()) card.classList.add('overdue');
+  const ico=document.createElement('div'); ico.className='md-ico'; ico.textContent=d.med.icon||'💊';
+  const main=document.createElement('div'); main.className='md-main';
+  const nm=document.createElement('div'); nm.className='md-name'; nm.textContent=d.med.name||'Medisin';
+  const sub=document.createElement('div'); sub.className='md-sub';
+  if(d.taken){ sub.textContent='✓ Tatt kl '+fmtClock(d.taken.takenAt); sub.classList.add('md-taken-at'); }
+  else{ const p=[]; if(d.med.dose) p.push(d.med.dose); const n=d.med.pills||1; p.push('ta '+n+' pille'+(n>1?'r':'')); sub.textContent=p.join(' · '); }
+  main.appendChild(nm); main.appendChild(sub);
+  const btn=document.createElement('button'); btn.className='med-check'; btn.type='button';
+  btn.textContent=d.taken?'✓':'';
+  btn.setAttribute('aria-label', d.taken?'Angre registrering':'Marker som tatt');
+  btn.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    try{ navigator.vibrate && navigator.vibrate(12); }catch(_){}
+    if(d.taken){ unmarkTaken(d.med.id, todayISO(), d.time); renderAll(); showToast('Angret'); }
+    else openMedTakeSheet(d.med.id, todayISO(), d.time, d.med.name);
+  });
+  card.appendChild(ico); card.appendChild(main); card.appendChild(btn);
+  return card;
+}
+
+function renderMedList(){
+  const host=document.getElementById('medList'); if(!host) return;
+  host.innerHTML='';
+  const list=meds.filter(m=>!m.deleted).sort((a,b)=> (a.name||'').localeCompare(b.name||'','no'));
+  if(!list.length){ host.appendChild(emptyNode('💊','Ingen medisiner enda','Trykk «Legg til» for å legge inn en medisin med tidspunkt og dager.')); return; }
+  list.forEach(m=>{
+    const it=document.createElement('div'); it.className='med-item'+(m.active?'':' paused');
+    const ico=document.createElement('div'); ico.className='md-ico'; ico.textContent=m.icon||'💊';
+    const main=document.createElement('div'); main.className='mi-main';
+    const nm=document.createElement('div'); nm.className='mi-name'; nm.textContent=m.name||'Uten navn';
+    if(!m.active){ const p=document.createElement('span'); p.className='med-pause-pill'; p.textContent='på pause'; nm.appendChild(p); }
+    const sub=document.createElement('div'); sub.className='mi-sub';
+    const bits=[]; if(m.dose) bits.push(m.dose); bits.push(m.times.join(', ')); bits.push(medDaysLabel(m));
+    sub.textContent=bits.join(' · ');
+    main.appendChild(nm); main.appendChild(sub);
+    const chev=document.createElement('div'); chev.className='mi-chev'; chev.textContent='›';
+    it.appendChild(ico); it.appendChild(main); it.appendChild(chev);
+    it.addEventListener('click',()=> openMedSheet(m.id));
+    host.appendChild(it);
+  });
+}
+
+function renderMedLogRecent(){
+  const host=document.getElementById('medLogRecent'); const label=document.getElementById('medLogLabel');
+  if(!host) return; host.innerHTML='';
+  const entries=medLog.filter(l=>!l.deleted).sort((a,b)=> (b.takenAt||0)-(a.takenAt||0)).slice(0,8);
+  if(!entries.length){ if(label) label.hidden=true; return; }
+  if(label) label.hidden=false;
+  entries.forEach(l=>{
+    const med=meds.find(m=>m.id===l.medId);
+    const row=document.createElement('div'); row.className='med-log-item';
+    const ico=document.createElement('span'); ico.className='ml-ico'; ico.textContent=(med&&med.icon)||'💊';
+    const txt=document.createElement('span'); txt.className='ml-txt';
+    const b=document.createElement('b'); b.textContent=(med&&med.name)||'Medisin'; txt.appendChild(b);
+    if(med&&med.dose){ txt.appendChild(document.createTextNode(' · '+med.dose)); }
+    const time=document.createElement('span'); time.className='ml-time'; time.textContent=medLogWhenLabel(l.takenAt);
+    row.appendChild(ico); row.appendChild(txt); row.appendChild(time);
+    host.appendChild(row);
+  });
+}
+
+/* «Tatt»-ark */
+let medTakeCtx=null;
+function openMedTakeSheet(medId, dateISO, time, name){
+  medTakeCtx={medId, dateISO, time};
+  document.getElementById('medTakeTitle').textContent = name ? ('Når tok du '+name+'?') : 'Når tok du medisinen?';
+  const inp=document.getElementById('medTakeTimeInput'); inp.style.display='none';
+  const bd=document.getElementById('sheetBackdrop'), sh=document.getElementById('medTakeSheet');
+  bd.classList.add('show');
+  requestAnimationFrame(()=> sh.classList.add('show'));
+}
+function closeMedTakeSheet(){
+  document.getElementById('medTakeSheet').classList.remove('show');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  medTakeCtx=null;
+}
+function medTakeApply(ts){
+  if(!medTakeCtx) return; const c=medTakeCtx;
+  markTaken(c.medId, c.dateISO, c.time, ts);
+  closeMedTakeSheet(); renderAll(); showToast('Registrert ✓');
+}
+
+/* Legg til / rediger-ark */
+let medDraft=null, medEditId=null, medLastTrigger=null;
+function openMedSheet(id){
+  const m = id ? meds.find(x=>x.id===id && !x.deleted) : null;
+  if(id && !m) return;
+  medEditId = m?m.id:null;
+  medLastTrigger=document.activeElement;
+  medDraft = m ? {name:m.name,dose:m.dose,pills:m.pills,icon:m.icon,times:m.times.slice(),days:m.days?m.days.slice():null,active:m.active}
+               : {name:'',dose:'',pills:1,icon:'💊',times:['08:00'],days:null,active:true};
+  document.getElementById('medSheetTitle').textContent = m?'Rediger medisin':'Ny medisin';
+  document.getElementById('medDeleteBtn').hidden = !m;
+  document.getElementById('medName').value = medDraft.name;
+  document.getElementById('medDose').value = medDraft.dose;
+  renderMedSheet();
+  const bd=document.getElementById('sheetBackdrop'), sh=document.getElementById('medSheet');
+  bd.classList.add('show'); sh.scrollTop=0;
+  requestAnimationFrame(()=> sh.classList.add('show'));
+  if(!m) setTimeout(()=>{ try{ document.getElementById('medName').focus(); }catch(e){} },320);
+}
+function closeMedSheet(){
+  document.getElementById('medSheet').classList.remove('show');
+  if(medLastTrigger && medLastTrigger.focus && document.body.contains(medLastTrigger)){ try{ medLastTrigger.focus({preventScroll:true}); }catch(e){} }
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  medDraft=null; medEditId=null;
+}
+function renderMedSheet(){
+  if(!medDraft) return;
+  const ip=document.getElementById('medIconPicker'); ip.innerHTML='';
+  MED_ICONS.forEach(ic=>{
+    const b=document.createElement('button'); b.type='button'; b.className='med-icon'+(ic===medDraft.icon?' sel':''); b.textContent=ic;
+    b.addEventListener('click',()=>{ medDraft.icon=ic; renderMedSheet(); });
+    ip.appendChild(b);
+  });
+  document.getElementById('medPillsVal').textContent=String(medDraft.pills);
+  const tc=document.getElementById('medTimes'); tc.innerHTML='';
+  medDraft.times.forEach((t,idx)=>{
+    const row=document.createElement('div'); row.className='med-time-row';
+    const inp=document.createElement('input'); inp.type='time'; inp.className='field-input'; inp.value=t;
+    inp.addEventListener('change',()=>{ medDraft.times[idx]=inp.value||t; });
+    row.appendChild(inp);
+    if(medDraft.times.length>1){
+      const del=document.createElement('button'); del.type='button'; del.className='mt-del'; del.textContent='×'; del.setAttribute('aria-label','Fjern tidspunkt');
+      del.addEventListener('click',()=>{ medDraft.times.splice(idx,1); renderMedSheet(); });
+      row.appendChild(del);
+    }
+    tc.appendChild(row);
+  });
+  const dc=document.getElementById('medDays'); dc.innerHTML='';
+  const every=document.createElement('button'); every.type='button'; every.className='med-day'+(medDraft.days?'':' sel');
+  every.textContent='Hver dag'; every.style.flex='1 1 100%';
+  every.addEventListener('click',()=>{ medDraft.days=null; renderMedSheet(); });
+  dc.appendChild(every);
+  WD_ORDER.forEach(wd=>{
+    const sel=medDraft.days && medDraft.days.includes(wd);
+    const b=document.createElement('button'); b.type='button'; b.className='med-day'+(sel?' sel':''); b.textContent=WD_SHORT[wd];
+    b.addEventListener('click',()=>{
+      let d = medDraft.days ? medDraft.days.slice() : [0,1,2,3,4,5,6];
+      if(d.includes(wd)) d=d.filter(x=>x!==wd); else d.push(wd);
+      medDraft.days = d.length ? normMedDays(d) : null;
+      renderMedSheet();
+    });
+    dc.appendChild(b);
+  });
+  const pz=document.getElementById('medPauseChk'); if(pz) pz.checked = !medDraft.active;
+}
+function saveMedFromSheet(){
+  if(!medDraft) return;
+  medDraft.name=document.getElementById('medName').value.trim();
+  medDraft.dose=document.getElementById('medDose').value.trim();
+  if(!medDraft.name){ showToast('Gi medisinen et navn'); try{ document.getElementById('medName').focus(); }catch(e){} return; }
+  const pz=document.getElementById('medPauseChk'); if(pz) medDraft.active=!pz.checked;
+  if(medEditId){ updateMed(medEditId, medDraft); showToast('Medisin oppdatert'); }
+  else { addMed(medDraft); showToast('Medisin lagt til 💊'); }
+  closeMedSheet(); renderAll();
+  refreshPushSubscription();
+}
+
 function renderAll(){
   updateShopBadge();
   updateFixBadge();
+  updateMedBadge();
   renderOverdue();
   if(currentView==='settings'){ renderSettings(); return; }
   if(currentView==='shop'){ renderShop(); return; }
+  if(currentView==='med'){ renderMedView(); return; }
   renderHeader();
   if(currentView==='fix'){ renderFix(); return; }
   renderCalendar();
@@ -2459,8 +2973,41 @@ function renderSettings(){
   // Standard-dag segment
   document.getElementById('defToday').classList.toggle('active', prefs.defaultDay==='today');
   document.getElementById('defTomorrow').classList.toggle('active', prefs.defaultDay==='tomorrow');
+  renderMedSettings();
   renderRenovSettings();
   renderSyncUI();
+}
+
+function renderMedSettings(){
+  const txt=document.getElementById('medPushStatusText'); if(!txt) return;
+  const dot=document.getElementById('medPushDot'), btn=document.getElementById('medPushToggleBtn');
+  const supported=pushSupported();
+  const granted = supported && (typeof Notification!=='undefined') && Notification.permission==='granted';
+  const on = pushOn() && granted;
+  dot.className='sync-dot'+(on?' on':'');
+  if(!supported){ txt.textContent='Varsler støttes ikke i denne nettleseren'; btn.hidden=true; }
+  else if(on){ txt.textContent='Varsler er på for denne enheten'; btn.hidden=false; btn.textContent='Skru av varsler'; btn.style.background='var(--card-sunken)'; btn.style.color='var(--text)'; }
+  else{ txt.textContent=(!syncConf.url||!syncConf.code)?'Koble til delt liste først (under)':'Varsler er av'; btn.hidden=false; btn.textContent='Slå på varsler'; btn.style.background='var(--custom-ink)'; btn.style.color='#fff'; }
+  const box=document.getElementById('medSetupBox');
+  if(box){
+    if(syncConf.url && syncConf.code){
+      box.hidden=false; box.innerHTML='';
+      const h=document.createElement('div'); h.className='med-setup-h'; h.textContent='⚙️ Oppsett for varsler (GitHub → Settings → Secrets → Actions)';
+      const note=document.createElement('div'); note.className='med-setup-note'; note.textContent='Legg inn disse to som «repository secrets». Den tredje, VAPID_PRIVATE_KEY, får du av Claude.';
+      box.appendChild(h); box.appendChild(note);
+      box.appendChild(medCopyRow('FIREBASE_DB_URL', dbBase()));
+      box.appendChild(medCopyRow('FIREBASE_HOUSEHOLD', (syncConf.code||'').trim()));
+    } else box.hidden=true;
+  }
+}
+function medCopyRow(label, value){
+  const row=document.createElement('div'); row.className='med-copy-row';
+  const l=document.createElement('div'); l.className='mcr-label'; l.textContent=label;
+  const v=document.createElement('code'); v.className='mcr-val'; v.textContent=value||'—';
+  const b=document.createElement('button'); b.type='button'; b.className='mcr-copy'; b.textContent='Kopier';
+  b.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(value||''); showToast(label+' kopiert'); }catch(e){ showToast('Kunne ikke kopiere'); } });
+  row.appendChild(l); row.appendChild(v); row.appendChild(b);
+  return row;
 }
 
 function renderRenovSettings(){
@@ -2834,6 +3381,10 @@ document.querySelectorAll('#dayswitch button').forEach(btn=>{
 document.getElementById('defToday').addEventListener('click',()=>{ prefs.defaultDay='today'; savePrefs(); renderSettings(); });
 document.getElementById('defTomorrow').addEventListener('click',()=>{ prefs.defaultDay='tomorrow'; savePrefs(); renderSettings(); });
 // Renovasjon
+document.getElementById('medPushToggleBtn').addEventListener('click',()=>{
+  const granted = (typeof Notification!=='undefined') && Notification.permission==='granted';
+  if(pushOn() && granted) disablePush(); else enablePush();
+});
 document.getElementById('renovOn').addEventListener('click',()=>{ renovPref.enabled=true; saveRenovPref(); renderRenovSettings(); refreshRenovasjon(false); renderAll(); });
 document.getElementById('renovOff').addEventListener('click',()=>{ renovPref.enabled=false; saveRenovPref(); renderRenovSettings(); renderAll(); });
 document.getElementById('renovMat').addEventListener('change',(e)=>{ renovPref.matavfall=e.target.checked; saveRenovPref(); renderRenovSettings(); renderAll(); });
@@ -2862,7 +3413,7 @@ document.getElementById('addCatBtn').addEventListener('click',()=>{
   document.getElementById('overdueMoveAll').addEventListener('click', moveAllOverdueToToday);
 })();
 // Oppdater «i dag»-grensen (og dermed forfalt) når appen kommer i forgrunnen
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureDailyTasks(); renderAll(); try{ refreshRenovasjon(false); }catch(e){} } });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ensureDailyTasks(); renderAll(); try{ refreshRenovasjon(false); }catch(e){} try{ refreshPushSubscription(); }catch(e){} } });
 
 // Rediger-oppgave-ark
 document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
@@ -2873,7 +3424,12 @@ document.getElementById('subAddBtn').addEventListener('click', submitSub);
 document.getElementById('subInput').addEventListener('keydown',(e)=>{
   if(e.key==='Enter'){ e.preventDefault(); submitSub(); }
 });
-document.getElementById('sheetBackdrop').addEventListener('click',()=>{ if(fxDraft) closeFixSheet(); else closeEditSheet(); });
+document.getElementById('sheetBackdrop').addEventListener('click',()=>{
+  if(medTakeCtx) closeMedTakeSheet();
+  else if(medDraft) closeMedSheet();
+  else if(fxDraft) closeFixSheet();
+  else closeEditSheet();
+});
 document.getElementById('editDate').addEventListener('change',(e)=>{
   if(!editDraft) return;
   editDraft.date = e.target.value || editDraft.date;
@@ -3006,25 +3562,49 @@ document.getElementById('customEmojiBtn').addEventListener('click',()=> toggleCo
 function showView(v){
   currentView = v;
   const isSettings = v==='settings';
-  const hideCal = isSettings || v==='shop' || v==='fix';   // fikse har egen dato-visning
+  const hideCal = isSettings || v==='shop' || v==='fix' || v==='med';   // disse har egen visning
   document.getElementById('settingsView').style.display = isSettings?'':'none';
   document.querySelector('.segment').style.display = isSettings?'none':'';
   document.querySelector('.calendar').style.display = hideCal?'none':'';
   document.getElementById('planView').style.display = (v==='plan')?'':'none';
+  document.getElementById('medView').style.display = (v==='med')?'':'none';
   document.getElementById('histView').style.display = (v==='hist')?'':'none';
   document.getElementById('shopView').style.display = (v==='shop')?'':'none';
   document.getElementById('fixView').style.display = (v==='fix')?'':'none';
   document.getElementById('tabFix').classList.toggle('active', v==='fix');
   document.getElementById('tabPlan').classList.toggle('active', v==='plan');
+  document.getElementById('tabMed').classList.toggle('active', v==='med');
   document.getElementById('tabHist').classList.toggle('active', v==='hist');
   document.getElementById('tabShop').classList.toggle('active', v==='shop');
   renderAll();
   window.scrollTo(0,0);
 }
 document.getElementById('tabPlan').addEventListener('click',()=>showView('plan'));
+document.getElementById('tabMed').addEventListener('click',()=>showView('med'));
 document.getElementById('tabHist').addEventListener('click',()=>showView('hist'));
 document.getElementById('tabShop').addEventListener('click',()=>showView('shop'));
 document.getElementById('tabFix').addEventListener('click',()=>showView('fix'));
+
+/* Medisin-interaksjoner */
+document.getElementById('medAddBtn').addEventListener('click',()=> openMedSheet(null));
+document.getElementById('medCancelBtn').addEventListener('click', closeMedSheet);
+document.getElementById('medSaveBtn').addEventListener('click', saveMedFromSheet);
+document.getElementById('medDeleteBtn').addEventListener('click',()=>{
+  if(!medEditId) return;
+  const m=meds.find(x=>x.id===medEditId);
+  if(m && confirm('Slette «'+(m.name||'medisin')+'»? Loggen for denne fjernes også.')){
+    deleteMed(medEditId); closeMedSheet(); renderAll(); showToast('Medisin slettet');
+  }
+});
+document.getElementById('medPillsMinus').addEventListener('click',()=>{ if(!medDraft) return; medDraft.pills=Math.max(1,(medDraft.pills||1)-1); document.getElementById('medPillsVal').textContent=String(medDraft.pills); });
+document.getElementById('medPillsPlus').addEventListener('click',()=>{ if(!medDraft) return; medDraft.pills=Math.min(20,(medDraft.pills||1)+1); document.getElementById('medPillsVal').textContent=String(medDraft.pills); });
+document.getElementById('medAddTime').addEventListener('click',()=>{ if(!medDraft) return; medDraft.times.push('12:00'); renderMedSheet(); });
+// «Tatt»-ark
+document.getElementById('medTakeNow').addEventListener('click',()=> medTakeApply(Date.now()));
+document.getElementById('medTakeOnTime').addEventListener('click',()=>{ if(medTakeCtx) medTakeApply(tsFromDateTime(medTakeCtx.dateISO, medTakeCtx.time)); });
+document.getElementById('medTakeSet').addEventListener('click',()=>{ const inp=document.getElementById('medTakeTimeInput'); inp.style.display='block'; inp.value=medTakeCtx?medTakeCtx.time:nowHM(); try{ inp.focus(); inp.showPicker&&inp.showPicker(); }catch(e){} });
+document.getElementById('medTakeTimeInput').addEventListener('change',()=>{ if(!medTakeCtx) return; const v=document.getElementById('medTakeTimeInput').value||medTakeCtx.time; medTakeApply(tsFromDateTime(medTakeCtx.dateISO, v)); });
+document.getElementById('medTakeCancel').addEventListener('click', closeMedTakeSheet);
 
 /* Fikse hjemme-interaksjoner */
 function submitFix(){
@@ -3234,6 +3814,8 @@ function ingestMap(coll, map){
   if(coll==='tasks') tasks = ent.map(([id,d])=>normalizeTask(id,d));
   else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
   else if(coll==='shop') shop = ent.map(([id,d])=>normalizeShop(id,d));
+  else if(coll==='meds') meds = ent.map(([id,d])=>normalizeMed(id,d));
+  else if(coll==='medLog') medLog = ent.map(([id,d])=>normalizeMedLog(id,d));
   else if(coll==='routines') routines = ent.map(([id,d])=>normalizeRoutine(id,d));
   else if(coll==='fix') fix = ent.map(([id,d])=>normalizeFix(id,d));
   else if(coll==='fixmeta'){ if(map && map.seeded){ fixMeta.seeded = true; saveFixMeta(); } }
@@ -3245,6 +3827,8 @@ function replaceFromDoc(doc){
   if(doc.presets!==undefined) ingestMap('presets', doc.presets||{});
   if(doc.categories!==undefined) ingestMap('categories', doc.categories||{});
   if(doc.shop!==undefined) ingestMap('shop', doc.shop||{});
+  if(doc.meds!==undefined) ingestMap('meds', doc.meds||{});
+  if(doc.medLog!==undefined) ingestMap('medLog', doc.medLog||{});
   if(doc.routines!==undefined) ingestMap('routines', doc.routines||{});
   if(doc.fix!==undefined) ingestMap('fix', doc.fix||{});
   if(doc.fixmeta!==undefined) ingestMap('fixmeta', doc.fixmeta||{});
@@ -3271,6 +3855,20 @@ function unionRemote(remote){
     if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) sById[id]=r;
   });
   shop = Object.values(sById);
+  // Medisiner: nyeste vinner per id
+  const mById = {}; meds.forEach(m=>mById[m.id]=m);
+  Object.entries(remote.meds||{}).forEach(([id,d])=>{
+    const r = normalizeMed(id,d), l = mById[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) mById[id]=r;
+  });
+  meds = Object.values(mById);
+  // Medisin-logg: nyeste vinner per id
+  const mlById = {}; medLog.forEach(l=>mlById[l.id]=l);
+  Object.entries(remote.medLog||{}).forEach(([id,d])=>{
+    const r = normalizeMedLog(id,d), l = mlById[id];
+    if(!l || (r.updatedAt||0) >= (l.updatedAt||l.createdAt||0)) mlById[id]=r;
+  });
+  medLog = Object.values(mlById);
   // Rutiner: nyeste vinner per id (bevarer siste lastGen)
   const rById = {}; routines.forEach(r=>rById[r.id]=r);
   Object.entries(remote.routines||{}).forEach(([id,d])=>{
@@ -3301,6 +3899,14 @@ function upsertRemote(coll, id, data){
     if(data==null){ shop = shop.filter(s=>s.id!==id); return; }
     const it = normalizeShop(id,data), i = shop.findIndex(x=>x.id===id);
     if(i>=0) shop[i]=it; else shop.push(it);
+  }else if(coll==='meds'){
+    if(data==null){ meds = meds.filter(m=>m.id!==id); return; }
+    const it = normalizeMed(id,data), i = meds.findIndex(x=>x.id===id);
+    if(i>=0) meds[i]=it; else meds.push(it);
+  }else if(coll==='medLog'){
+    if(data==null){ medLog = medLog.filter(l=>l.id!==id); return; }
+    const it = normalizeMedLog(id,data), i = medLog.findIndex(x=>x.id===id);
+    if(i>=0) medLog[i]=it; else medLog.push(it);
   }else if(coll==='fix'){
     if(data==null){ fix = fix.filter(x=>x.id!==id); return; }
     const it = normalizeFix(id,data), i = fix.findIndex(x=>x.id===id);
@@ -3321,7 +3927,7 @@ function applyPut(path, data){
   if(path==='/' || path===''){ replaceFromDoc(data||{}); return; }
   const seg = path.replace(/^\//,'').split('/');
   const coll = seg[0], id = seg[1];
-  if(!['tasks','presets','categories','shop','routines','fix','fixmeta'].includes(coll)) return;
+  if(!['tasks','presets','categories','shop','meds','medLog','routines','fix','fixmeta'].includes(coll)) return;
   if(id) upsertRemote(coll, id, data);
   else ingestMap(coll, data||{});
 }
@@ -3340,6 +3946,8 @@ async function pushAllLocal(){
   customPresets.forEach(p=> jobs.push(rawPut('presets/'+p.id, p)));
   categories.forEach(c=> jobs.push(rawPut('categories/'+c.id, c)));
   shop.forEach(i=> jobs.push(rawPut('shop/'+i.id, i)));
+  meds.forEach(m=> jobs.push(rawPut('meds/'+m.id, m)));
+  medLog.forEach(l=> jobs.push(rawPut('medLog/'+l.id, l)));
   routines.forEach(r=> jobs.push(rawPut('routines/'+r.id, r)));
   fix.forEach(i=> jobs.push(rawPut('fix/'+i.id, i)));
   await Promise.allSettled(jobs);
@@ -3368,7 +3976,7 @@ function onStream(raw, isPatch){
     unionRemote(rd);
     pendingMerge = false;
     applyingRemote = false;
-    save(); savePresets(); saveCategories(); saveShop(); saveRoutines(); saveFix();
+    save(); savePresets(); saveCategories(); saveShop(); saveMeds(); saveMedLog(); saveRoutines(); saveFix();
     maybeSeedFix(p.data || {});     // legg inn startlista én gang for hele husholdningen
     ensureDailyTasks();             // generer dagens rutine-oppgaver for synkede rutiner
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
@@ -3380,7 +3988,7 @@ function onStream(raw, isPatch){
   if(isPatch) applyPatch(path, p.data);
   else applyPut(path, p.data);
   applyingRemote = false;
-  save(); savePresets(); saveCategories(); saveShop(); saveRoutines(); saveFix();
+  save(); savePresets(); saveCategories(); saveShop(); saveMeds(); saveMedLog(); saveRoutines(); saveFix();
   setSyncState('on');
   renderAll();
 }
@@ -3522,10 +4130,117 @@ renderSyncUI();
   showToast(added ? `La til ${added} ${added===1?'vare':'varer'} i handlelista 🛒` : 'Varene lå allerede i lista');
 })();
 
+/* ============================================================
+   Push-varsler (medisiner) – abonnement lagres i Firebase under
+   husholdningen, og en planlagt GitHub Actions-jobb sender varslene.
+   ============================================================ */
+const PUSH_VAPID_PUBLIC = 'BDwqaA3cAWw6DwZ5LgGfszFvkZJR56Pmk8M9VEaF0EChrDrYcu73SeHMwBTZo15R6D1KgSdiNmfHybNz64mxGzM';
+const PUSH_ON_KEY = 'hjemme_push_on_v1';
+const DEVICE_ID_KEY = 'hjemme_device_id_v1';
+
+function getDeviceId(){
+  let id = '';
+  try{ id = localStorage.getItem(DEVICE_ID_KEY) || ''; }catch(e){}
+  if(!id){
+    id = 'dev_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+    try{ localStorage.setItem(DEVICE_ID_KEY, id); }catch(e){}
+  }
+  return id;
+}
+function pushSupported(){
+  return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+}
+function pushOn(){ try{ return localStorage.getItem(PUSH_ON_KEY)==='1'; }catch(e){ return false; } }
+function setPushOn(v){ try{ localStorage.setItem(PUSH_ON_KEY, v?'1':'0'); }catch(e){} }
+function isStandalonePWA(){
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+}
+function urlB64ToUint8(base64){
+  const pad = '='.repeat((4 - base64.length % 4) % 4);
+  const b64 = (base64 + pad).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(b64);
+  const arr = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+// Lagrer/fjerner abonnementet i husholdningen (krever tilkoblet synk)
+function pushSubSave(sub){
+  const obj = Object.assign({}, sub.toJSON ? sub.toJSON() : sub, {
+    ua: (navigator.userAgent||'').slice(0,160),
+    enabledAt: Date.now(),
+    device: getDeviceId(),
+  });
+  return rawPut('pushSubs/'+getDeviceId(), obj);
+}
+function pushSubDelete(){
+  try{ return fetch(nodeUrl('pushSubs/'+getDeviceId()), {method:'DELETE'}); }
+  catch(e){ return Promise.resolve(); }
+}
+
+async function enablePush(){
+  if(!pushSupported()){ showToast('Varsler støttes ikke i denne nettleseren'); return false; }
+  if(!syncConf.url || !syncConf.code){
+    showToast('Koble til delt liste først (⚙️ Deling og synk)');
+    return false;
+  }
+  if(/iPhone|iPad|iPod/.test(navigator.userAgent) && !isStandalonePWA()){
+    showToast('Legg appen til på Hjem-skjerm og åpne den derfra for å få varsler');
+    return false;
+  }
+  try{
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){ showToast('Varsler ble ikke tillatt'); return false; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey: urlB64ToUint8(PUSH_VAPID_PUBLIC),
+      });
+    }
+    await pushSubSave(sub);
+    setPushOn(true);
+    renderMedPushState(); renderMedSettings();
+    showToast('Varsler er på 🔔');
+    return true;
+  }catch(e){
+    setPushOn(false);
+    renderMedPushState(); renderMedSettings();
+    showToast('Kunne ikke slå på varsler');
+    return false;
+  }
+}
+async function disablePush(){
+  setPushOn(false);
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(sub) await sub.unsubscribe().catch(()=>{});
+  }catch(e){}
+  try{ await pushSubDelete(); }catch(e){}
+  renderMedPushState(); renderMedSettings();
+  showToast('Varsler er av');
+}
+// Holder abonnementet friskt hvis nettleseren bytter det ut
+async function refreshPushSubscription(){
+  if(!pushOn() || !pushSupported()) return;
+  if(!syncConf.url || !syncConf.code) return;
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(sub){ await pushSubSave(sub); }
+    else if(Notification.permission==='granted'){
+      const ns = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToUint8(PUSH_VAPID_PUBLIC)});
+      await pushSubSave(ns);
+    }
+  }catch(e){}
+}
+
 /* Registrer service worker (kun når appen kjøres via http/https, f.eks. GitHub Pages) */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').then(()=>{ refreshPushSubscription(); }).catch(()=>{});
   });
 }
 </script>
