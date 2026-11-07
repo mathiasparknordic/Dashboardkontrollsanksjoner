@@ -615,10 +615,14 @@ input{font-family:inherit;}
 }
 .sub-item .check{width:24px;height:24px;border-width:2px;}
 .sub-item .check svg{transform:scale(.85);}
-.sub-text{flex:1;min-width:0;font-size:15px;font-weight:700;word-break:break-word;}
+.sub-text{flex:1;min-width:0;font-size:15px;font-weight:700;word-break:break-word;cursor:pointer;}
 .sub-item.done .sub-text{text-decoration:line-through;color:var(--muted);}
+.sub-edit{flex:0 0 auto;width:30px;height:30px;border-radius:8px;color:var(--muted);font-size:15px;}
+.sub-edit:active{background:var(--card-sunken);color:var(--custom-ink);}
 .sub-x{flex:0 0 auto;width:30px;height:30px;border-radius:8px;color:var(--muted);font-size:18px;font-weight:800;}
 .sub-x:active{background:var(--danger-soft);color:var(--danger);}
+.sub-edit-input{flex:1;min-width:0;height:38px;font-size:15px;font-weight:700;}
+.sub-item.editing{border-color:var(--custom-ink);}
 .sub-empty{font-size:13px;font-weight:600;color:var(--muted);margin:2px 0 8px;}
 .sub-add{display:flex;gap:8px;}
 .sub-add .field-input{flex:1;min-width:0;}
@@ -3235,6 +3239,7 @@ function openEditSheet(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   editId = id;
+  editingSubId = null;
   editDraft = {date:t.date, title:t.title, category:t.category, emoji:t.emoji||'📝'};
   lastTrigger = document.activeElement;
   document.getElementById('editDate').value = t.date;
@@ -3259,6 +3264,7 @@ function setSubs(id, subs){
   renderSubs();
   renderAll();
 }
+let editingSubId = null;   // hvilket underpunkt som redigeres inline
 function renderSubs(){
   const t = tasks.find(x=>x.id===editId);
   const list = document.getElementById('subList');
@@ -3275,7 +3281,7 @@ function renderSubs(){
   }
   subs.forEach(sub=>{
     const row = document.createElement('div');
-    row.className = 'sub-item'+(sub.done?' done':'');
+    row.className = 'sub-item'+(sub.done?' done':'')+(editingSubId===sub.id?' editing':'');
     const ck = document.createElement('button');
     ck.type='button';
     ck.className = 'check'+(sub.done?' on':'');
@@ -3291,9 +3297,38 @@ function renderSubs(){
         if(p && !p.done) showToast('Alle underpunkter gjort – huk av hovedpunktet? ✅');
       }
     });
+    row.appendChild(ck);
+
+    if(editingSubId===sub.id){
+      // Rediger inline
+      const inp = document.createElement('input');
+      inp.type='text'; inp.className='field-input sub-edit-input';
+      inp.value = sub.text; inp.maxLength = 80;
+      inp.setAttribute('enterkeyhint','done'); inp.autocomplete='off';
+      let done=false;
+      const commit = ()=>{ if(done) return; done=true; commitSubEdit(sub.id, inp.value); };
+      inp.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); commit(); }
+        else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); done=true; editingSubId=null; renderSubs(); }
+      });
+      inp.addEventListener('blur', commit);
+      row.appendChild(inp);
+      list.appendChild(row);
+      setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(e){} }, 0);
+      return;
+    }
+
     const txt = document.createElement('div');
     txt.className = 'sub-text';
     txt.textContent = sub.text;
+    txt.title = 'Trykk for å endre';
+    txt.addEventListener('click',()=>{ editingSubId = sub.id; renderSubs(); });
+
+    const ed = document.createElement('button');
+    ed.type='button'; ed.className='sub-edit'; ed.textContent='✎';
+    ed.setAttribute('aria-label', `Endre «${sub.text}»`);
+    ed.addEventListener('click',()=>{ editingSubId = sub.id; renderSubs(); });
+
     const x = document.createElement('button');
     x.type='button';
     x.className = 'sub-x';
@@ -3303,9 +3338,18 @@ function renderSubs(){
       const cur = (tasks.find(y=>y.id===editId)||{}).subs||[];
       setSubs(editId, cur.filter(y=>y.id!==sub.id));
     });
-    row.appendChild(ck); row.appendChild(txt); row.appendChild(x);
+    row.appendChild(txt); row.appendChild(ed); row.appendChild(x);
     list.appendChild(row);
   });
+}
+function commitSubEdit(subId, val){
+  const cur = (tasks.find(y=>y.id===editId)||{}).subs||[];
+  const v = (val||'').trim();
+  editingSubId = null;
+  if(!v){ renderSubs(); return; }                 // tomt = behold gammel tekst
+  const sub = cur.find(x=>x.id===subId);
+  if(sub && sub.text===v){ renderSubs(); return; } // uendret
+  setSubs(editId, cur.map(x=> x.id===subId ? {...x, text:v} : x));
 }
 function submitSub(){
   if(!editId) return;
@@ -3322,7 +3366,7 @@ function closeEditSheet(){
   document.getElementById('sheetBackdrop').classList.remove('show');
   document.getElementById('editEmojiPicker').hidden = true;
   document.getElementById('editEmojiBtn').classList.remove('open');
-  editId = null; editDraft = null;
+  editId = null; editDraft = null; editingSubId = null;
   if(lastTrigger && lastTrigger.focus){ try{ lastTrigger.focus(); }catch(e){} }
 }
 function toggleEditPicker(force){
