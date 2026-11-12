@@ -216,6 +216,7 @@ input{font-family:inherit;}
 .emoji-picker{
   display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;
   background:var(--card-sunken);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;
+  max-height:236px;overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .emoji-opt{
   width:40px;height:40px;border-radius:10px;background:var(--card);border:2px solid transparent;
@@ -3605,7 +3606,40 @@ function guessTaskEmoji(title, category){
   const catMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
   return catMap[category] || '📝';
 }
-const EMOJI_CHOICES = ['📝','✅','⭐','❤️','🧹','🧽','🧺','🧻','🍽️','🗑️','♻️','🛁','🚿','🪥','🍼','👶','🐕','🐾','🚶','🏃','🛒','🍳','🌱','🌼','💡','🔧','🔨','🚗','📞','✉️','💳','💊','🩺','📅','📦','🛏️','🪟','💧'];
+const EMOJI_CHOICES = [
+  // status / notater
+  '📝','✅','⭐','❤️','📌','🔔','⏰','🎯','📋','❗','❓',
+  // rengjøring / hjem
+  '🧹','🧽','🧼','🧺','🧻','🗑️','♻️','🪣','🧴','🛁','🚿','🚽','🪠','🚪','🪟','🛏️','🛋️','🪑','💡','🔌','🕯️','🏠','🪴','🌿',
+  // kjøkken / mat
+  '🍽️','🍳','🥘','🥗','🥪','🍞','🥛','🍎','🥦','🥕','🧀','🥚','☕','🍵','🧊','🎂','🍰','🍪','🍫','🫙',
+  // handel / penger
+  '🛒','🛍️','💳','💰','💵','🧾','🏷️',
+  // baby / barn
+  '🍼','👶','🧸','🧩','🎈','🖍️','🎨',
+  // dyr (Charlie)
+  '🐕','🐾','🦴','🐈','🐟',
+  // helse
+  '💊','🩺','🌡️','🩹','💉','🦷','😷','🧘','🛌',
+  // aktivitet / trening
+  '🚶','🏃','🚴','🏋️','⚽','🏊','🥾','🧗',
+  // folk
+  '🧑','👩','👨','👪','💪',
+  // stell
+  '💅','💇','🧖',
+  // hage / natur / vær
+  '🌱','🌼','🌸','🌳','🍂','☀️','🌧️','❄️','🔥','💧','🌊',
+  // transport / ærend
+  '🚗','⛽','🚲','🚌','✈️','🧳','🔑',
+  // kommunikasjon / jobb
+  '📞','✉️','📧','💬','📅','🗓️','💻','🖨️','📎','📦','📬','📚','✏️',
+  // verktøy / fikse
+  '🔧','🔨','🪛','🔩','🧰','🪜','🖌️','🧵','🪡',
+  // klær / vask
+  '👕','👖','🧦','🧤','🧣','👗','👟','🧥',
+  // feiring / div
+  '🎉','🎁','💐','📸','🎵'
+];
 function buildEmojiPicker(pickerId, current, onPick){
   const wrap = document.getElementById(pickerId);
   if(!wrap) return;
