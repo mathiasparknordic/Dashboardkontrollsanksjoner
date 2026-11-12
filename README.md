@@ -59,7 +59,10 @@ mellom flere (f.eks. deg og partneren din).
   (grønn markering med «Tatt kl …»). Forfalte doser får en diskret gul utheving,
   og et tall-merke på fanen viser hvor mange som gjenstår i dag. Egen logg over
   nylig tatt, pause-bryter per medisin, og alt synkes mellom telefonene.
-  **Push-varsel** (valgfritt, se under) minner deg på når det er tid.
+  **Push-varsel** (valgfritt, se under) minner deg på når det er tid. Når du
+  skriver inn navnet, foreslås ekte norske legemidler automatisk (merkenavn og
+  virkestoff) fra Legemiddelverkets offisielle liste – du kan fortsatt skrive
+  fritt.
 - **Renovasjon / kildesortering** (⚙️ Innstillinger) – henter faktiske
   tømmedatoer for adressen fra Min Renovasjon (Horten kommune) og viser en
   **diskret, men tydelig stripe** øverst i Planlagt de dagene det hentes
@@ -164,5 +167,15 @@ jobben; kun den private nøkkelen er hemmelig.
 | `sw.js` | Service worker – offline-cache + mottak av push-varsler |
 | `push/` | Avsender for medisin-varsler (`send.mjs`, `due.mjs`, `test.mjs`) |
 | `.github/workflows/med-reminders.yml` | Planlagt jobb som sender push-varslene |
+| `medisiner.json` | Legemiddelnavn til autofullføring (fra Legemiddelverket/FEST) |
+
+### Medisin-liste / datakilde
+
+`medisiner.json` er en liste over ~8 500 legemiddelnavn (merkenavn + virkestoff)
+hentet fra **FEST** (Forskrivnings- og ekspedisjonsstøtte) – Legemiddelverkets/
+DMPs offisielle, åpne legemiddeldata. Den brukes kun til lokal autofullføring i
+nettleseren (ingen oppslag mot nett). Oppdatere den? Last ned nyeste `fest251.zip`
+fra dmp.no, pakk ut XML-en, og hent ut unike `<Varenavn>` + substansnavn fra
+ATC-løvkoder til et JSON-array.
 | `icon-180/192/512.png`, `icon-maskable-512.png` | Hjem-skjerm-ikoner |
 | `.nojekyll` | Deaktiverer Jekyll på GitHub Pages |

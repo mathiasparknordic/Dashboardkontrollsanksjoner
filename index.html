@@ -556,6 +556,21 @@ input{font-family:inherit;}
 .med-push-banner.ok .mpb-txt{color:#1E8A5C;}
 .med-push-banner.ok button{background:var(--card);color:var(--custom-ink);border:1.5px solid var(--border);}
 /* Medisin-ark */
+.med-name-wrap{position:relative;}
+.med-sug{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 8px 24px rgba(43,42,61,.16);overflow:hidden;max-height:244px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.med-sug-item{
+  display:block;width:100%;text-align:left;padding:11px 14px;font-size:15px;font-weight:700;
+  color:var(--text);border-bottom:1px solid var(--border);
+}
+.med-sug-item:last-child{border-bottom:none;}
+.med-sug-item:active,.med-sug-item.active{background:var(--custom);color:var(--custom-ink);}
+.med-sug-item b{color:var(--custom-ink);font-weight:800;}
+.med-sug-item:active b,.med-sug-item.active b{color:var(--custom-ink);}
 .med-row2{display:flex;gap:12px;align-items:flex-end;}
 .med-stepper{display:flex;align-items:center;gap:0;background:var(--card-sunken);border-radius:var(--radius-sm);height:48px;overflow:hidden;}
 .med-stepper button{width:44px;height:48px;font-size:22px;font-weight:800;color:var(--custom-ink);}
@@ -1188,7 +1203,10 @@ input{font-family:inherit;}
   </div>
 
   <label class="field-label" for="medName">Navn</label>
-  <input type="text" class="field-input" id="medName" maxlength="60" autocomplete="off" placeholder="F.eks. Escitalopram" enterkeyhint="next" />
+  <div class="med-name-wrap">
+    <input type="text" class="field-input" id="medName" maxlength="60" autocomplete="off" placeholder="F.eks. Escitalopram" enterkeyhint="next" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="medNameSug" />
+    <div class="med-sug" id="medNameSug" role="listbox" hidden></div>
+  </div>
 
   <div class="med-row2">
     <div style="flex:1.3;min-width:0;">
@@ -2852,9 +2870,57 @@ function medTakeApply(ts){
   closeMedTakeSheet(); renderAll(); showToast('Registrert ✓');
 }
 
+/* Autofullføring av medisinnavn (offisiell liste fra Legemiddelverket/FEST) */
+let medNames=null, medNamesLoading=false, medSugItems=[], medSugActive=-1;
+async function ensureMedNames(){
+  if(medNames || medNamesLoading) return;
+  medNamesLoading=true;
+  try{ const r=await fetch('./medisiner.json',{cache:'force-cache'}); if(r.ok) medNames=await r.json(); }catch(e){}
+  medNamesLoading=false;
+}
+function hideMedSug(){
+  const box=document.getElementById('medNameSug');
+  if(box){ box.hidden=true; box.innerHTML=''; }
+  medSugItems=[]; medSugActive=-1;
+  const inp=document.getElementById('medName'); if(inp) inp.setAttribute('aria-expanded','false');
+}
+function medSugMatch(q){
+  if(!medNames) return [];
+  const ql=q.toLowerCase(); const starts=[], contains=[];
+  for(let i=0;i<medNames.length && starts.length<8;i++){
+    const nl=medNames[i].toLowerCase(); const idx=nl.indexOf(ql);
+    if(idx===0) starts.push(medNames[i]); else if(idx>0 && contains.length<8) contains.push(medNames[i]);
+  }
+  return starts.concat(contains).slice(0,8);
+}
+function renderMedNameSug(){
+  const inp=document.getElementById('medName'), box=document.getElementById('medNameSug');
+  if(!inp||!box) return;
+  const q=inp.value.trim();
+  if(q.length<2 || !medNames){ hideMedSug(); return; }
+  const matches=medSugMatch(q);
+  if(!matches.length || (matches.length===1 && matches[0].toLowerCase()===q.toLowerCase())){ hideMedSug(); return; }
+  medSugItems=matches; medSugActive=-1;
+  box.innerHTML=''; const ql=q.toLowerCase();
+  matches.forEach((name)=>{
+    const b=document.createElement('button'); b.type='button'; b.className='med-sug-item'; b.setAttribute('role','option');
+    const idx=name.toLowerCase().indexOf(ql);
+    if(idx>=0){
+      b.appendChild(document.createTextNode(name.slice(0,idx)));
+      const s=document.createElement('b'); s.textContent=name.slice(idx,idx+q.length); b.appendChild(s);
+      b.appendChild(document.createTextNode(name.slice(idx+q.length)));
+    } else b.textContent=name;
+    b.addEventListener('mousedown',(e)=> e.preventDefault());   // behold fokus til click
+    b.addEventListener('click',()=>{ inp.value=name; hideMedSug(); try{ document.getElementById('medDose').focus(); }catch(e){} });
+    box.appendChild(b);
+  });
+  box.hidden=false; inp.setAttribute('aria-expanded','true');
+}
+
 /* Legg til / rediger-ark */
 let medDraft=null, medEditId=null, medLastTrigger=null;
 function openMedSheet(id){
+  ensureMedNames(); hideMedSug();
   const m = id ? meds.find(x=>x.id===id && !x.deleted) : null;
   if(id && !m) return;
   medEditId = m?m.id:null;
@@ -2875,6 +2941,7 @@ function closeMedSheet(){
   document.getElementById('medSheet').classList.remove('show');
   if(medLastTrigger && medLastTrigger.focus && document.body.contains(medLastTrigger)){ try{ medLastTrigger.focus({preventScroll:true}); }catch(e){} }
   document.getElementById('sheetBackdrop').classList.remove('show');
+  hideMedSug();
   medDraft=null; medEditId=null;
 }
 function renderMedSheet(){
@@ -3634,6 +3701,24 @@ document.getElementById('tabFix').addEventListener('click',()=>showView('fix'));
 /* Medisin-interaksjoner */
 document.getElementById('medAddBtn').addEventListener('click',()=> openMedSheet(null));
 document.getElementById('medCancelBtn').addEventListener('click', closeMedSheet);
+// Autofullføring av medisinnavn
+document.getElementById('medName').addEventListener('input',()=>{ ensureMedNames().then(renderMedNameSug); });
+document.getElementById('medName').addEventListener('focus', ensureMedNames);
+document.getElementById('medName').addEventListener('blur',()=> setTimeout(hideMedSug,160));
+document.getElementById('medName').addEventListener('keydown',(e)=>{
+  const box=document.getElementById('medNameSug');
+  if(!box || box.hidden) return;
+  if(e.key==='ArrowDown' || e.key==='ArrowUp'){
+    e.preventDefault(); const n=medSugItems.length; if(!n) return;
+    medSugActive = e.key==='ArrowDown' ? (medSugActive+1)%n : (medSugActive-1+n)%n;
+    Array.from(box.children).forEach((c,i)=> c.classList.toggle('active', i===medSugActive));
+  } else if(e.key==='Enter'){
+    if(medSugActive>=0){ e.preventDefault(); e.stopPropagation();
+      document.getElementById('medName').value = medSugItems[medSugActive]; hideMedSug();
+      try{ document.getElementById('medDose').focus(); }catch(_){}
+    }
+  } else if(e.key==='Escape'){ hideMedSug(); }
+});
 document.getElementById('medSaveBtn').addEventListener('click', saveMedFromSheet);
 document.getElementById('medDeleteBtn').addEventListener('click',()=>{
   if(!medEditId) return;
