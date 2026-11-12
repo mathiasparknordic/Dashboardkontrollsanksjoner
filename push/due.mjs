@@ -1,7 +1,14 @@
-// Ren logikk for å regne ut hvilke medisin-doser som er "due" akkurat nå.
+// Ren logikk for å regne ut hvilke medisin-doser som skal varsles akkurat nå.
 // Ingen nettverk/IO her – gjør den enkel å teste.
+//
+// Medisafe-stil: purrer flere ganger til dosen er registrert som tatt.
+//   - Første varsel ved planlagt tid (ev. litt etter – cron kjører hvert 5. min)
+//   - Nytt varsel hvert REPEAT_EVERY_MIN til den er tatt, opptil MAX_REMINDERS
+//   - Gir opp etter GIVE_UP_MIN (slutter å mase for gamle doser)
 
-export const WINDOW_MIN = 120; // hvor lenge etter planlagt tid vi fortsatt minner (min)
+export const REPEAT_EVERY_MIN = 20;  // minutter mellom hver purring
+export const MAX_REMINDERS = 3;      // totalt antall varsler per dose (1 + 2 purringer)
+export const GIVE_UP_MIN = 120;      // varsle ikke doser eldre enn dette
 
 // Tidspunkt 'HH:MM' -> minutter siden midnatt
 export function hmToMin(hm) {
@@ -15,6 +22,14 @@ export function hmToMin(hm) {
 // Firebase-trygg nøkkel for et notif-merke (ingen . $ # [ ] /)
 export function slotKey(medId, dateISO, time) {
   return `${medId}_${dateISO}_${String(time).replace(/[^0-9]/g, '')}`;
+}
+
+// Les et notif-merke uansett format: {c,t} (nytt) eller ISO-streng (gammelt)
+export function readNotif(st) {
+  if (!st) return { count: 0, lastMs: 0 };
+  if (typeof st === 'object') return { count: st.c || 0, lastMs: st.t || 0 };
+  const ms = Date.parse(st);
+  return { count: 1, lastMs: isNaN(ms) ? 0 : ms }; // gammelt engangs-merke
 }
 
 // Oslo-lokale tidsdeler for et Date-objekt
@@ -31,6 +46,7 @@ export function osloParts(d = new Date()) {
     hhmm: `${hour}:${p.minute}`,
     minOfDay: (+hour) * 60 + (+p.minute),
     dow: dowMap[p.weekday],
+    ms: d.getTime(),
   };
 }
 
@@ -40,16 +56,21 @@ const asArray = (mapOrArr) =>
       ? Object.entries(mapOrArr).map(([id, v]) => ({ id, ...(v || {}) }))
       : [];
 
-// Regn ut due-doser for én husholdning.
+// Regn ut hvilke doser som skal varsles nå.
 // hh: { meds, medLog, medNotif } (maps eller arrays)
-// now: resultat fra osloParts()
-// Returnerer [{ med, time, slotId, key }]
-export function dueDoses(hh, now, windowMin = WINDOW_MIN) {
+// now: resultat fra osloParts() (må ha .ms for purre-timing)
+// opts: { everyMin, max, giveUp } – overstyrer standardverdiene
+// Returnerer [{ med, time, slotId, key, count }] der count = antall sendt hittil
+export function dueDoses(hh, now, opts = {}) {
+  const everyMin = opts.everyMin != null ? opts.everyMin : REPEAT_EVERY_MIN;
+  const max = opts.max != null ? opts.max : MAX_REMINDERS;
+  const giveUp = opts.giveUp != null ? opts.giveUp : GIVE_UP_MIN;
+  const nowMs = now.ms != null ? now.ms : Date.now();
+
   const meds = asArray(hh && hh.meds);
   const log = asArray(hh && hh.medLog);
   const notif = (hh && hh.medNotif) || {};
 
-  // Sett med allerede-tatte slots
   const takenSlots = new Set(
     log.filter((e) => e && !e.deleted && e.slot).map((e) => e.slot)
   );
@@ -59,7 +80,6 @@ export function dueDoses(hh, now, windowMin = WINDOW_MIN) {
     if (!med || med.deleted) continue;
     if (med.active === false) continue;
     const times = Array.isArray(med.times) ? med.times : [];
-    // days: array av ukedager (0=søn..6=lør). Mangler/ tom = hver dag.
     const days = Array.isArray(med.days) && med.days.length ? med.days.map(Number) : null;
     if (days && !days.includes(now.dow)) continue;
 
@@ -67,12 +87,18 @@ export function dueDoses(hh, now, windowMin = WINDOW_MIN) {
       const tm = hmToMin(t);
       if (tm == null) continue;
       const diff = now.minOfDay - tm;
-      if (diff < 0 || diff > windowMin) continue; // ikke forfalt enda, eller for gammelt
+      if (diff < 0 || diff > giveUp) continue;         // ikke forfalt enda, eller for gammelt
       const slotId = `${med.id}|${now.dateISO}|${t}`;
-      if (takenSlots.has(slotId)) continue;       // allerede tatt
+      if (takenSlots.has(slotId)) continue;            // allerede tatt
+
       const key = slotKey(med.id, now.dateISO, t);
-      if (notif[key]) continue;                    // allerede varslet
-      out.push({ med, time: t, slotId, key });
+      const { count, lastMs } = readNotif(notif[key]);
+      if (count >= max) continue;                      // ferdig å purre
+      if (count > 0) {
+        const minsSince = (nowMs - lastMs) / 60000;
+        if (minsSince < everyMin) continue;            // for tidlig for ny purring
+      }
+      out.push({ med, time: t, slotId, key, count });
     }
   }
   return out;

@@ -7,9 +7,12 @@
 //   FIREBASE_DB_URL     f.eks. https://xxx.europe-west1.firebasedatabase.app
 //   FIREBASE_HOUSEHOLD  husholdnings-kode(r), komma-separert for flere
 //   VAPID_PRIVATE_KEY   privat VAPID-nøkkel (hemmelig)
+// Purrer flere ganger til dosen er registrert som tatt (Medisafe-stil).
 // Valgfritt:
 //   VAPID_PUBLIC_KEY    (ellers brukes innebygd offentlig nøkkel)
 //   VAPID_SUBJECT       mailto:... (default mailto:hjemmetavla@example.com)
+//   REMIND_EVERY_MIN    minutter mellom purringer (default 20)
+//   REMIND_MAX          totalt antall varsler per dose (default 3)
 
 import webpush from 'web-push';
 import { osloParts, dueDoses } from './due.mjs';
@@ -21,6 +24,9 @@ const VAPID_PUBLIC = (process.env.VAPID_PUBLIC_KEY || '').trim()
   || 'BDwqaA3cAWw6DwZ5LgGfszFvkZJR56Pmk8M9VEaF0EChrDrYcu73SeHMwBTZo15R6D1KgSdiNmfHybNz64mxGzM';
 const VAPID_PRIVATE = (process.env.VAPID_PRIVATE_KEY || '').trim();
 const VAPID_SUBJECT = (process.env.VAPID_SUBJECT || '').trim() || 'mailto:hjemmetavla@example.com';
+const dueOpts = {};
+{ const e = parseInt(process.env.REMIND_EVERY_MIN || '', 10); if (!isNaN(e)) dueOpts.everyMin = e;
+  const m = parseInt(process.env.REMIND_MAX || '', 10); if (!isNaN(m)) dueOpts.max = m; }
 
 function fail(msg) { console.error('FEIL:', msg); process.exit(1); }
 // Hvis oppsettet ikke er lagt inn enda: hopp over stille (grønn kjøring),
@@ -67,18 +73,20 @@ async function processHousehold(code, now) {
   catch (e) { console.error(`[${code}] kunne ikke lese:`, e.message); return; }
   if (!hh) { console.log(`[${code}] tom husholdning`); return; }
 
-  const due = dueDoses(hh, now);
+  const due = dueDoses(hh, now, dueOpts);
   if (!due.length) { console.log(`[${code}] ingen due-doser (${now.hhmm})`); return; }
 
   const subs = subsFrom(hh.pushSubs).filter((s) => s && s.endpoint && s.keys);
   if (!subs.length) { console.log(`[${code}] ${due.length} due, men ingen abonnement`); return; }
 
   for (const d of due) {
+    const bodyBase = [d.med.dose, d.med.pills ? `ta ${d.med.pills} pille(r)` : '']
+      .filter(Boolean).join(', ') || 'Tid for medisinen';
+    const reminderNo = d.count + 1; // 1 = første varsel, 2 = første purring, ...
     const payload = JSON.stringify({
       title: `${d.med.icon || '💊'} ${d.med.name || 'Medisin'}`,
-      body: [d.med.dose, d.med.pills ? `ta ${d.med.pills} pille(r)` : '']
-        .filter(Boolean).join(', ') || 'Tid for medisinen',
-      tag: `med-${d.slotId}`,
+      body: reminderNo > 1 ? `${bodyBase} · påminnelse ${reminderNo}` : bodyBase,
+      tag: `med-${d.slotId}`,   // samme tag => erstatter forrige banner, ikke stabler
       time: d.time,
       slot: d.slotId,
       url: './index.html',
@@ -104,10 +112,11 @@ async function processHousehold(code, now) {
     }
 
     // Marker som varslet hvis minst én mottok, eller alle som feilet var "borte".
+    // Lagrer { c: antall sendt, t: tidspunkt } så neste purring kan tidsstyres.
     if (delivered > 0 || (gone > 0 && gone === subs.length)) {
-      try { await putJson(node(code, `medNotif/${d.key}`), new Date().toISOString()); }
+      try { await putJson(node(code, `medNotif/${d.key}`), { c: reminderNo, t: now.ms }); }
       catch (e) { console.error(`[${code}] kunne ikke merke ${d.key}:`, e.message); }
-      console.log(`[${code}] varslet «${d.med.name}» ${d.time} -> ${delivered} enhet(er)`);
+      console.log(`[${code}] varslet «${d.med.name}» ${d.time} (påminnelse ${reminderNo}) -> ${delivered} enhet(er)`);
     } else {
       console.log(`[${code}] «${d.med.name}» ${d.time}: ingen levert, prøver igjen neste runde`);
     }

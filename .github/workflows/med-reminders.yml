@@ -34,4 +34,7 @@ jobs:
           # men kan overstyres med secrets om ønskelig.
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          # Valgfri justering av purring (repository variables; tomt = standard 20 min / 3 ganger)
+          REMIND_EVERY_MIN: ${{ vars.REMIND_EVERY_MIN }}
+          REMIND_MAX: ${{ vars.REMIND_MAX }}
         run: node send.mjs

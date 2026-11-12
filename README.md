@@ -139,9 +139,16 @@ abonnementene ligger i den samme Firebase-basen som jobben leser fra.
    (eller «Få påminnelse» øverst i 💊-fanen), og godta varsler. Gjenta på hver
    telefon som skal få varsel.
 3. Ferdig. Jobben kjører hvert 5. minutt (`.github/workflows/med-reminders.yml`)
-   og sender et varsel når en dose er forfalt og ikke registrert som tatt. Den
-   sender aldri samme dose to ganger, og rydder bort abonnement som er utløpt.
+   og sender et varsel når en dose er forfalt og ikke registrert som tatt.
+   **Den purrer flere ganger (Medisafe-stil):** nytt varsel ca. hvert 20. minutt
+   til dosen hukes av, opptil 3 varsler per dose. Huker du av «tatt» (eller tar
+   den i appen), stopper purringen med en gang. Utløpte abonnement ryddes bort.
    Du kan kjøre den manuelt fra **Actions**-fanen (workflow_dispatch) for å teste.
+
+   Vil du justere hvor ofte / hvor mange ganger den purrer? Legg inn
+   **repository variables** (ikke secrets) `REMIND_EVERY_MIN` og `REMIND_MAX`
+   under Settings → Secrets and variables → Actions → *Variables*, og legg dem
+   til i workflow-ens `env:` (eller be Claude gjøre det). Standard er 20 min / 3.
 
 Teknisk: web-push med VAPID, abonnement lagres i Firebase under husholdningen
 (`pushSubs`), avsenderkoden ligger i `push/` (`send.mjs` + ren, testbar
