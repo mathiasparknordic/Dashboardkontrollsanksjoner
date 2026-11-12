@@ -32,6 +32,14 @@ export function readNotif(st) {
   return { count: 1, lastMs: isNaN(ms) ? 0 : ms }; // gammelt engangs-merke
 }
 
+// Varseltekst (uten dose – brukeren vet selv styrken). Riktig flertall.
+export function reminderBody(med, reminderNo) {
+  const n = (med && med.pills) || 1;
+  let s = `Ta ${n} ${n === 1 ? 'pille' : 'piller'}`;
+  if (reminderNo > 1) s += ` · påminnelse ${reminderNo}`;
+  return s;
+}
+
 // Oslo-lokale tidsdeler for et Date-objekt
 export function osloParts(d = new Date()) {
   const fmt = new Intl.DateTimeFormat('en-GB', {

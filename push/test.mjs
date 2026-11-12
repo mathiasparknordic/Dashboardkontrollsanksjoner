@@ -1,5 +1,5 @@
 // Tester for due-logikken, inkl. gjentatte påminnelser. Kjør: node test.mjs
-import { dueDoses, hmToMin, slotKey, readNotif, osloParts } from './due.mjs';
+import { dueDoses, hmToMin, slotKey, readNotif, osloParts, reminderBody } from './due.mjs';
 
 let pass = 0, fail = 0;
 const ok = (name, cond) => { (cond ? pass++ : fail++); console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}`); };
@@ -68,6 +68,13 @@ ok('inaktiv -> ikke due', dueDoses({ meds: { m1: { ...baseMed, active: false } }
 ok('slettet -> ikke due', dueDoses({ meds: { m1: { ...baseMed, deleted: true } } }, now).length === 0);
 ok('flere tidspunkt, kun forfalt teller', dueDoses({ meds: { m1: { ...baseMed, times: ['07:00', '20:00'] } } }, now).length === 1);
 ok('meds som array', dueDoses({ meds: [baseMed] }, now).length === 1);
+
+// --- varseltekst (uten dose, riktig flertall) ---
+ok('body: 1 pille', reminderBody({ pills: 1 }, 1) === 'Ta 1 pille');
+ok('body: 2 piller', reminderBody({ pills: 2 }, 1) === 'Ta 2 piller');
+ok('body: standard 1 når pills mangler', reminderBody({}, 1) === 'Ta 1 pille');
+ok('body: ingen dose i teksten', !/mg|15/.test(reminderBody({ pills: 1, dose: '15 mg' }, 1)));
+ok('body: purring viser påminnelse-nr', reminderBody({ pills: 1 }, 2) === 'Ta 1 pille · påminnelse 2');
 
 // --- osloParts ---
 const p = osloParts(new Date('2026-11-07T06:03:00Z'));

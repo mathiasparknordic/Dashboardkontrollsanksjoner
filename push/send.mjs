@@ -15,7 +15,7 @@
 //   REMIND_MAX          totalt antall varsler per dose (default 3)
 
 import webpush from 'web-push';
-import { osloParts, dueDoses } from './due.mjs';
+import { osloParts, dueDoses, reminderBody } from './due.mjs';
 
 const DB = (process.env.FIREBASE_DB_URL || '').trim().replace(/\/+$/, '');
 const HOUSEHOLDS = (process.env.FIREBASE_HOUSEHOLD || '')
@@ -80,12 +80,10 @@ async function processHousehold(code, now) {
   if (!subs.length) { console.log(`[${code}] ${due.length} due, men ingen abonnement`); return; }
 
   for (const d of due) {
-    const bodyBase = [d.med.dose, d.med.pills ? `ta ${d.med.pills} pille(r)` : '']
-      .filter(Boolean).join(', ') || 'Tid for medisinen';
     const reminderNo = d.count + 1; // 1 = første varsel, 2 = første purring, ...
     const payload = JSON.stringify({
       title: `${d.med.icon || '💊'} ${d.med.name || 'Medisin'}`,
-      body: reminderNo > 1 ? `${bodyBase} · påminnelse ${reminderNo}` : bodyBase,
+      body: reminderBody(d.med, reminderNo),
       tag: `med-${d.slotId}`,   // samme tag => erstatter forrige banner, ikke stabler
       time: d.time,
       slot: d.slotId,
