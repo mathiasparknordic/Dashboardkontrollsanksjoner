@@ -1023,6 +1023,20 @@ input{font-family:inherit;}
       </div>
     </div>
 
+    <!-- Apotek-hurtigvalg -->
+    <div class="settings-card">
+      <div class="settings-title">⚕️ Apotek-hurtigvalg</div>
+      <div class="settings-sub">Faste ting dere kjøper på apoteket. De vises som hurtigvalg i Apotek-fanen – for alle som deler listen.</div>
+      <div class="preset-list" id="apoPresetList"></div>
+      <div class="preset-add">
+        <div class="composer-row">
+          <input type="text" id="apoPresetTitle" class="field-input" placeholder="Navn, f.eks. Paracet …" maxlength="40" autocomplete="off" />
+          <input type="text" id="apoPresetEmoji" class="emoji-input" placeholder="💊" maxlength="8" autocomplete="off" />
+        </div>
+        <button class="wide-btn" id="addApoPresetBtn" style="margin-top:10px;">Legg til apotek-hurtigvalg</button>
+      </div>
+    </div>
+
     <!-- Daglige rutiner -->
     <div class="settings-card">
       <div class="settings-title">🔁 Daglige rutiner</div>
@@ -1441,10 +1455,13 @@ function deleteTask(id){
   syncDelete('tasks', id);
 }
 
-function addPreset(title, emoji, category){
+function taskPresets(){ return customPresets.filter(p=> p.list!=='apotek'); }
+function apoPresets(){ return customPresets.filter(p=> p.list==='apotek'); }
+function addPreset(title, emoji, category, list){
   title = (title||'').trim();
   if(!title) return null;
   const p = {id:uid(), title, emoji:emoji||'📝', category:category||'custom', createdAt:Date.now()};
+  if(list==='apotek') p.list = 'apotek';
   customPresets.push(p);
   savePresets();
   syncPush('presets', p.id, p);
@@ -1513,12 +1530,6 @@ function guessEmoji(name){
 }
 /* Apotek-handleliste: egne hurtigvalg + emoji-gjetting. Lagres i samme
    samling som handlelista, skilt med feltet list:'apotek'. */
-const APO_PRESETS = [
-  {name:'Paracet',emoji:'💊'},{name:'Ibux',emoji:'💊'},{name:'Plaster',emoji:'🩹'},
-  {name:'Nesespray',emoji:'👃'},{name:'Hostesaft',emoji:'🍯'},{name:'Allergitabletter',emoji:'🤧'},
-  {name:'D-vitamin',emoji:'☀️'},{name:'Tran / omega-3',emoji:'🐟'},{name:'Solkrem',emoji:'🧴'},
-  {name:'Tannkrem',emoji:'🪥'},{name:'Hente resept',emoji:'📋'},{name:'Bleier',emoji:'👶'}
-];
 const APO_EMOJI = [
   [/resept|hente/,'📋'],[/plaster|bandasje|kompress|sårsalve|sår/,'🩹'],[/nese|saltvann/,'👃'],
   [/hoste|hals|pastill|honning/,'🍯'],[/allergi|pollen/,'🤧'],[/vitamin|jern|magnesium|kosttilskudd/,'☀️'],
@@ -2474,7 +2485,7 @@ function renderCalendar(){
 function renderChips(){
   const wrap = document.getElementById('chips');
   wrap.innerHTML = '';
-  PRESETS.concat(customPresets).forEach(p=>{
+  PRESETS.concat(taskPresets()).forEach(p=>{
     const cat = catById(p.category);
     const b = document.createElement('button');
     b.className = 'chip';
@@ -3084,7 +3095,7 @@ function renderAll(){
   updateMedBadge();
   renderOverdue();
   if(currentView==='settings'){ renderSettings(); return; }
-  if(currentView==='shop' || currentView==='apo'){ renderShop(); return; }
+  if(currentView==='shop' || currentView==='apo'){ renderShopChips(); renderShop(); return; }
   if(currentView==='med'){ renderMedView(); return; }
   renderHeader();
   if(currentView==='fix'){ renderFix(); return; }
@@ -3098,13 +3109,24 @@ function renderSettings(){
   // Egne hurtigvalg
   const list = document.getElementById('presetList');
   list.innerHTML = '';
-  if(!customPresets.length){
+  if(!taskPresets().length){
     const e=document.createElement('div');
     e.className='preset-empty';
     e.textContent='Ingen egne hurtigvalg enda. Legg til under ↓';
     list.appendChild(e);
   }else{
-    customPresets.forEach(p=> list.appendChild(settingsRow('preset', p)));
+    taskPresets().forEach(p=> list.appendChild(settingsRow('preset', p)));
+  }
+  // Apotek-hurtigvalg
+  const alist = document.getElementById('apoPresetList');
+  if(alist){
+    alist.innerHTML = '';
+    const ap = apoPresets();
+    if(!ap.length){
+      const e=document.createElement('div'); e.className='preset-empty';
+      e.textContent='Ingen apotek-hurtigvalg enda. Legg til under ↓';
+      alist.appendChild(e);
+    } else ap.forEach(p=> alist.appendChild(settingsRow('apo', p)));
   }
   renderPresetCatPicker();
   renderRoutinesList();
@@ -3188,7 +3210,9 @@ function renderRoutinesList(){
 /* Rad for hurtigvalg/rutine i innstillinger – med redigering på stedet */
 let rowEdit = null;   // {kind:'preset'|'routine', id, title, emoji, category}
 function settingsRow(kind, item){
-  const isPreset = kind==='preset';
+  const isApo = kind==='apo';
+  const isPreset = kind==='preset' || isApo;
+  const fallbackEmoji = isApo ? '💊' : (isPreset ? '📝' : '🔁');
   const row = document.createElement('div');
   row.dataset.id = item.id;
   if(rowEdit && rowEdit.kind===kind && rowEdit.id===item.id){
@@ -3219,22 +3243,22 @@ function settingsRow(kind, item){
     const doSave = ()=>{
       const title = (rowEdit.title||'').trim();
       if(!title){ showToast('Skriv et navn'); return; }
-      const patch = {title, emoji: rowEdit.emoji || item.emoji || (isPreset?'📝':'🔁'), category: rowEdit.category};
+      const patch = {title, emoji: rowEdit.emoji || item.emoji || fallbackEmoji, category: rowEdit.category};
       if(isPreset) updatePreset(item.id, patch); else updateRoutine(item.id, patch);
-      rowEdit = null; renderSettings(); renderChips();
+      rowEdit = null; renderSettings(); renderChips(); renderShopChips();
       showToast(isPreset ? 'Hurtigvalg oppdatert' : 'Rutine oppdatert');
     };
     saveBtn.addEventListener('click', doSave);
     ti.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSave(); } });
     act.appendChild(cancel); act.appendChild(saveBtn);
-    row.appendChild(top); row.appendChild(cp); row.appendChild(act);
+    row.appendChild(top); if(!isApo) row.appendChild(cp); row.appendChild(act);
     return row;
   }
   const cat = catById(item.category);
   row.className = 'preset-row';
   const startEdit = ()=>{ rowEdit = {kind, id:item.id, title:item.title, emoji:item.emoji||'', category:item.category}; renderSettings(); };
   const em = document.createElement('div');
-  em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=item.emoji||(isPreset?'📝':'🔁');
+  em.className='pr-emoji'; em.style.background = isApo ? 'var(--card)' : cat.fill; em.textContent=item.emoji||fallbackEmoji;
   const ti = document.createElement('div');
   ti.className='pr-title tap'; ti.textContent=item.title; ti.title='Trykk for å endre';
   ti.addEventListener('click', startEdit);
@@ -3245,7 +3269,7 @@ function settingsRow(kind, item){
   const del = document.createElement('button');
   del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label', isPreset?'Slett hurtigvalg':'Slett rutine');
   del.addEventListener('click',()=>{
-    if(isPreset){ deletePreset(item.id); renderSettings(); renderChips(); }
+    if(isPreset){ deletePreset(item.id); renderSettings(); renderChips(); renderShopChips(); }
     else { deleteRoutine(item.id); renderSettings(); }
   });
   row.appendChild(em); row.appendChild(ti); row.appendChild(ed); row.appendChild(del);
@@ -3295,7 +3319,7 @@ const SHOP_LISTS = {
           emptyTitle:'Handlelisten er tom', emptySub:'Trykk et hurtigvalg, eller skriv en vare. Den som handler ser den med en gang.',
           doneToast:'Alt i kurven! 🎉'},
   apotek:{chips:'apoChips', list:'apoList', label:'apoListLabel', badge:'apoBadge', clear:'apoClearBtn',
-          input:'apoInput', add:'apoAddBtn', name:'Apotek-handleliste', presets:APO_PRESETS, fallback:'💊',
+          input:'apoInput', add:'apoAddBtn', name:'Apotek-handleliste', presets:null, fallback:'💊',
           emptyTitle:'Apotek-lista er tom', emptySub:'Trykk et hurtigvalg, eller skriv det dere trenger fra apoteket.',
           doneToast:'Alt fra apoteket er handlet! 🎉'}
 };
@@ -3305,11 +3329,18 @@ function renderShopChips(){
     const wrap = document.getElementById(cfg.chips);
     if(!wrap) return;
     wrap.innerHTML = '';
-    cfg.presets.forEach(p=>{
+    const presets = key==='apotek' ? apoPresets().map(p=>({name:p.title, emoji:p.emoji||'💊'})) : cfg.presets;
+    if(key==='apotek' && !presets.length){
+      const hint = document.createElement('div'); hint.className='preset-empty';
+      hint.textContent = 'Ingen hurtigvalg ennå – lag egne under ⚙️ Innstillinger → Apotek-hurtigvalg.';
+      wrap.appendChild(hint);
+    }
+    presets.forEach(p=>{
       const b = document.createElement('button');
       b.className = 'chip'; b.type='button';
       b.style.background = 'var(--card-sunken)'; b.style.color = 'var(--text)';
-      b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.name}`;
+      const ce = document.createElement('span'); ce.className='chip-emoji'; ce.textContent = p.emoji;
+      b.appendChild(ce); b.appendChild(document.createTextNode(p.name));
       b.addEventListener('click',()=>{
         b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
         addShopItem(p.name, p.emoji, key);
@@ -4151,6 +4182,20 @@ document.getElementById('addPresetBtn').addEventListener('click',()=>{
   renderSettings(); renderChips();
   showToast('Hurtigvalg lagt til');
 });
+document.getElementById('addApoPresetBtn').addEventListener('click',()=>{
+  const t = document.getElementById('apoPresetTitle').value.trim();
+  const e = document.getElementById('apoPresetEmoji').value.trim();
+  if(!t){ showToast('Skriv et navn'); return; }
+  if(apoPresets().some(p=> p.title.toLowerCase()===t.toLowerCase())){ showToast('Finnes allerede'); return; }
+  addPreset(t, e || guessApoEmoji(t), 'custom', 'apotek');
+  document.getElementById('apoPresetTitle').value='';
+  document.getElementById('apoPresetEmoji').value='';
+  renderSettings(); renderShopChips();
+  showToast('Apotek-hurtigvalg lagt til');
+});
+document.getElementById('apoPresetTitle').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addApoPresetBtn').click(); }
+});
 document.getElementById('presetTitle').addEventListener('keydown',(e)=>{
   if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addPresetBtn').click(); }
 });
@@ -4257,7 +4302,9 @@ function normalizeTask(id, d){
 }
 function normalizePreset(id, d){
   d = d || {};
-  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom', createdAt:d.createdAt||Date.now()};
+  const p = {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom', createdAt:d.createdAt||Date.now()};
+  if(d.list==='apotek') p.list = 'apotek';
+  return p;
 }
 
 function ingestMap(coll, map){

@@ -39,8 +39,9 @@ mellom flere (f.eks. deg og partneren din).
   varer, rask inntasting (skill flere med komma), auto-emoji, avhukede varer
   synker ned, og «Fjern avhukede» rydder etter handleturen. Synkes i sanntid.
 - **Apotek-handleliste** (⚕️-fanen, rett før Handleliste) – egen delt liste for
-  det som skal kjøpes på apoteket, med egne hurtigvalg (Paracet, plaster,
-  nesespray, hente resept …), auto-emoji og «Fjern avhukede». Holdes adskilt fra
+  det som skal kjøpes på apoteket, med auto-emoji og «Fjern avhukede».
+  Hurtigvalgene lager dere selv under ⚙️ Innstillinger → Apotek-hurtigvalg
+  (kan redigeres og slettes, deles med alle på lista). Holdes adskilt fra
   dagligvarelista, men synkes på samme måte.
 - **Rediger hurtigvalg og rutiner** (⚙️ Innstillinger): trykk på navnet eller ✎
   for å endre tittel, emoji og kategori på stedet – ingen grunn til å slette og
