@@ -169,6 +169,16 @@ Teknisk: web-push med VAPID, abonnement lagres i Firebase under husholdningen
 `due.mjs`, `node test.mjs`). Den offentlige VAPID-nøkkelen er innebygd i appen og
 jobben; kun den private nøkkelen er hemmelig.
 
+### Pålitelig varsling: Cloudflare Worker (`worker/`)
+
+GitHub starter planlagte jobber når det passer dem – i praksis kjørte
+«hvert 5. minutt»-jobben bare hver 4.–8. time, så varsler uteble. `worker/`
+inneholder derfor samme varsel-logikk som en Cloudflare Worker med cron **hvert
+minutt** (gratis-nivået holder lenge). Den gjenbruker `push/due.mjs`, har egen
+web-push-kryptering (WebCrypto) og testes med `node worker/test.mjs`.
+Utrulling: `worker/deploy.sh` (krever API-token med *Workers Scripts: Edit* og
+*Workers KV Storage: Edit*). GitHub-jobben beholdes som reserve.
+
 ## Filer
 
 | Fil | Rolle |
