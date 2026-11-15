@@ -354,6 +354,18 @@ input{font-family:inherit;}
   font-size:15px;display:flex;align-items:center;justify-content:center;transition:transform .12s var(--ease-std);
 }
 .preset-row .pr-del:active{transform:scale(.9);background:var(--danger-soft);color:var(--danger);}
+.preset-row .pr-title.tap{cursor:pointer;}
+.preset-row.editing{flex-direction:column;align-items:stretch;border-color:var(--custom-ink);background:var(--card);}
+.preset-row.editing .field-input{flex:1;min-width:0;height:44px;}
+.preset-row.editing .emoji-input{height:44px;width:54px;}
+.pr-actions{display:flex;gap:8px;}
+.pr-actions button{flex:1;height:40px;border-radius:var(--radius-sm);font-size:14px;font-weight:800;background:var(--card-sunken);color:var(--text);}
+.pr-actions button.primary{background:var(--custom-ink);color:#fff;}
+.emoji-own{
+  flex:0 0 auto;width:92px;height:40px;border-radius:10px;border:2px dashed var(--border-strong);
+  background:var(--card);text-align:center;font-size:14px;font-weight:700;color:var(--text);
+}
+.emoji-own:focus{outline:none;border-color:var(--custom-ink);}
 .preset-empty{font-size:13px;font-weight:600;color:var(--muted);padding:8px 2px;}
 .preset-add{margin-top:12px;}
 .emoji-input{
@@ -679,6 +691,13 @@ input{font-family:inherit;}
 .segment-5 button{padding:7px 1px 6px;font-size:10px;letter-spacing:-.2px;}
 .segment-5 .seg-ico{font-size:16px;}
 .segment-5 .tab-badge{top:2px;right:2px;}
+/* Seks faner */
+.segment-6 button{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  padding:7px 0 6px;font-size:9.5px;letter-spacing:-.3px;position:relative;white-space:nowrap;min-width:0;
+}
+.segment-6 .seg-ico{font-size:16px;line-height:1.1;}
+.segment-6 .tab-badge{position:absolute;top:2px;right:1px;margin:0;}
 
 /* ---------- Fikse hjemme ---------- */
 :root{ --fix-ink:#0E8C93; --fix:#D3F1F2; }
@@ -817,10 +836,11 @@ input{font-family:inherit;}
   </section>
 
   <!-- Visningsvalg -->
-  <div class="segment segment-5" id="mainTabs" role="tablist">
+  <div class="segment segment-6" id="mainTabs" role="tablist">
     <button id="tabPlan" class="active" role="tab"><span class="seg-ico">📋</span><span>Planlagt</span><span class="tab-badge warn" id="planBadge" hidden></span></button>
     <button id="tabMed" role="tab"><span class="seg-ico">💊</span><span>Medisin</span><span class="tab-badge warn" id="medBadge" hidden></span></button>
     <button id="tabFix" role="tab"><span class="seg-ico">🛠️</span><span>Fikse</span><span class="tab-badge warn" id="fixBadge" hidden></span></button>
+    <button id="tabApo" role="tab"><span class="seg-ico">⚕️</span><span>Apotek</span><span class="tab-badge" id="apoBadge" hidden></span></button>
     <button id="tabShop" role="tab"><span class="seg-ico">🛒</span><span>Handleliste</span><span class="tab-badge" id="shopBadge" hidden></span></button>
     <button id="tabHist" role="tab"><span class="seg-ico">🗂️</span><span>Historikk</span></button>
   </div>
@@ -946,6 +966,24 @@ input{font-family:inherit;}
     <div class="list" id="histList"></div>
   </div>
 
+  <!-- Apotek-handleliste -->
+  <div id="apoView" style="display:none;">
+    <div class="section-label">Hurtigvalg – trykk for å legge til</div>
+    <div class="chips" id="apoChips"></div>
+
+    <div class="composer">
+      <div class="composer-row">
+        <input type="text" id="apoInput" placeholder="Legg til apotekvare … (skill flere med komma)" maxlength="200"
+               autocomplete="off" enterkeyhint="done" />
+        <button class="add-btn" id="apoAddBtn" aria-label="Legg til apotekvare">+</button>
+      </div>
+    </div>
+
+    <div class="section-label" id="apoListLabel">Apotek-handleliste</div>
+    <div class="list" id="apoList"></div>
+    <button class="wide-btn ghost" id="apoClearBtn" hidden>🧹 Fjern avhukede</button>
+  </div>
+
   <!-- Handleliste-visning -->
   <div id="shopView" style="display:none;">
     <div class="section-label">Hurtigvalg – trykk for å legge til</div>
@@ -975,7 +1013,7 @@ input{font-family:inherit;}
       <div class="preset-list" id="presetList"></div>
       <div class="preset-add">
         <div class="composer-row">
-          <input type="text" id="presetTitle" placeholder="Navn på hurtigvalg …" maxlength="40" autocomplete="off" />
+          <input type="text" id="presetTitle" class="field-input" placeholder="Navn på hurtigvalg …" maxlength="40" autocomplete="off" />
           <input type="text" id="presetEmoji" class="emoji-input" placeholder="🙂" maxlength="2" autocomplete="off" />
         </div>
         <div class="cat-picker" id="presetCatPicker">
@@ -992,7 +1030,7 @@ input{font-family:inherit;}
       <div class="preset-list" id="routineList"></div>
       <div class="preset-add">
         <div class="composer-row">
-          <input type="text" id="routineTitle" placeholder="Ny daglig rutine …" maxlength="40" autocomplete="off" />
+          <input type="text" id="routineTitle" class="field-input" placeholder="Ny daglig rutine …" maxlength="40" autocomplete="off" />
           <input type="text" id="routineEmoji" class="emoji-input" placeholder="🔁" maxlength="2" autocomplete="off" />
         </div>
         <div class="cat-picker" id="routineCatPicker">
@@ -1412,6 +1450,21 @@ function addPreset(title, emoji, category){
   syncPush('presets', p.id, p);
   return p;
 }
+function updatePreset(id, patch){
+  const p = customPresets.find(x=>x.id===id); if(!p) return null;
+  Object.assign(p, patch);
+  savePresets(); syncPush('presets', id, p); return p;
+}
+function updateRoutine(id, patch){
+  const i = routines.findIndex(x=>x.id===id); if(i<0) return null;
+  const r = normalizeRoutine(id, Object.assign({}, routines[i], patch, {updatedAt:Date.now()}));
+  routines[i] = r; saveRoutines(); syncPush('routines', id, r);
+  // Oppdater dagens/kommende, ikke-fullførte auto-oppgaver for rutinen
+  const prefix = 'dr_'+id+'_', today = todayISO();
+  tasks.filter(t=> t.id.indexOf(prefix)===0 && !t.done && t.date>=today)
+       .forEach(t=> updateTask(t.id, {title:r.title, emoji:r.emoji, category:r.category}));
+  return r;
+}
 function deletePreset(id){
   customPresets = customPresets.filter(p=>p.id!==id);
   savePresets();
@@ -1458,6 +1511,28 @@ function guessEmoji(name){
   for(const [re,em] of SHOP_EMOJI){ if(re.test(n)) return em; }
   return '🛒';
 }
+/* Apotek-handleliste: egne hurtigvalg + emoji-gjetting. Lagres i samme
+   samling som handlelista, skilt med feltet list:'apotek'. */
+const APO_PRESETS = [
+  {name:'Paracet',emoji:'💊'},{name:'Ibux',emoji:'💊'},{name:'Plaster',emoji:'🩹'},
+  {name:'Nesespray',emoji:'👃'},{name:'Hostesaft',emoji:'🍯'},{name:'Allergitabletter',emoji:'🤧'},
+  {name:'D-vitamin',emoji:'☀️'},{name:'Tran / omega-3',emoji:'🐟'},{name:'Solkrem',emoji:'🧴'},
+  {name:'Tannkrem',emoji:'🪥'},{name:'Hente resept',emoji:'📋'},{name:'Bleier',emoji:'👶'}
+];
+const APO_EMOJI = [
+  [/resept|hente/,'📋'],[/plaster|bandasje|kompress|sårsalve|sår/,'🩹'],[/nese|saltvann/,'👃'],
+  [/hoste|hals|pastill|honning/,'🍯'],[/allergi|pollen/,'🤧'],[/vitamin|jern|magnesium|kosttilskudd/,'☀️'],
+  [/tran|omega/,'🐟'],[/solkrem|krem|salve|lotion|fuktighet|sjampo|balsam|såpe/,'🧴'],
+  [/tannkrem|tannbørst|tanntråd|munnskyll/,'🪥'],[/bleie|smokk|baby|tåteflask|våtserviett/,'👶'],
+  [/termometer|feber/,'🌡️'],[/sprøyte|vaksine/,'💉'],[/øye|linse/,'👁️'],[/munnbind|antibac|sprit/,'😷'],
+  [/bind|tampong|truseinnlegg/,'🌸'],[/prevensjon|kondom|p-pille/,'❤️'],[/test/,'🧪']
+];
+function guessApoEmoji(name){
+  const n = (name||'').toLowerCase();
+  for(const [re,em] of APO_EMOJI){ if(re.test(n)) return em; }
+  return '💊';
+}
+function shopItems(list){ return shop.filter(i=> (i.list||'shop')===list); }
 function loadShop(){
   try{ const a=JSON.parse(localStorage.getItem(SHOP_KEY)); if(Array.isArray(a)) return a; }catch(e){}
   return [];
@@ -1466,16 +1541,18 @@ function saveShop(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(shop)); 
 function normalizeShop(id, d){
   d = d || {};
   return {id, title:d.title||'', emoji:d.emoji||'🛒', done:!!d.done, doneAt:d.doneAt||null,
+          list:(d.list==='apotek'?'apotek':'shop'),
           createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
 }
-function addShopItem(name, emoji){
+function addShopItem(name, emoji, list){
   name = (name||'').trim();
   if(!name) return null;
-  // Dedupe mot varer som ikke er huket av (case-insensitivt)
-  const existing = shop.find(i=>!i.done && i.title.toLowerCase()===name.toLowerCase());
+  list = list==='apotek' ? 'apotek' : 'shop';
+  // Dedupe mot varer som ikke er huket av (case-insensitivt), innen samme liste
+  const existing = shop.find(i=>!i.done && (i.list||'shop')===list && i.title.toLowerCase()===name.toLowerCase());
   if(existing) return existing;
   const now = Date.now();
-  const it = {id:uid(), title:name, emoji:emoji||guessEmoji(name), done:false, doneAt:null, createdAt:now, updatedAt:now};
+  const it = {id:uid(), title:name, emoji:emoji||(list==='apotek'?guessApoEmoji(name):guessEmoji(name)), done:false, doneAt:null, list, createdAt:now, updatedAt:now};
   shop.push(it);
   saveShop();
   syncPush('shop', it.id, it);
@@ -1495,9 +1572,10 @@ function deleteShopItem(id){
   saveShop();
   syncDelete('shop', id);
 }
-function clearCheckedShop(){
-  const done = shop.filter(i=>i.done);
-  shop = shop.filter(i=>!i.done);
+function clearCheckedShop(list){
+  list = list==='apotek' ? 'apotek' : 'shop';
+  const done = shop.filter(i=>i.done && (i.list||'shop')===list);
+  shop = shop.filter(i=>!(i.done && (i.list||'shop')===list));
   saveShop();
   done.forEach(i=> syncDelete('shop', i.id));
 }
@@ -2594,8 +2672,11 @@ let currentView = 'plan';
 function updateShopBadge(){
   const badge = document.getElementById('shopBadge');
   if(!badge) return;
-  const remaining = shop.filter(i=>!i.done).length;
+  const remaining = shopItems('shop').filter(i=>!i.done).length;
   if(remaining>0){ badge.hidden=false; badge.textContent=String(remaining); } else { badge.hidden=true; }
+  const ab = document.getElementById('apoBadge');
+  if(ab){ const r2 = shopItems('apotek').filter(i=>!i.done).length;
+    if(r2>0){ ab.hidden=false; ab.textContent=String(r2); } else ab.hidden=true; }
 }
 /* ============================================================
    Renovasjon – diskret påminnelse om tømmedager (Min Renovasjon / Vesar)
@@ -3003,7 +3084,7 @@ function renderAll(){
   updateMedBadge();
   renderOverdue();
   if(currentView==='settings'){ renderSettings(); return; }
-  if(currentView==='shop'){ renderShop(); return; }
+  if(currentView==='shop' || currentView==='apo'){ renderShop(); return; }
   if(currentView==='med'){ renderMedView(); return; }
   renderHeader();
   if(currentView==='fix'){ renderFix(); return; }
@@ -3023,20 +3104,7 @@ function renderSettings(){
     e.textContent='Ingen egne hurtigvalg enda. Legg til under ↓';
     list.appendChild(e);
   }else{
-    customPresets.forEach(p=>{
-      const cat = catById(p.category);
-      const row=document.createElement('div');
-      row.className='preset-row';
-      const em=document.createElement('div');
-      em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=p.emoji||'📝';
-      const ti=document.createElement('div');
-      ti.className='pr-title'; ti.textContent=p.title;
-      const del=document.createElement('button');
-      del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label','Slett hurtigvalg');
-      del.addEventListener('click',()=>{ deletePreset(p.id); renderSettings(); renderChips(); });
-      row.appendChild(em); row.appendChild(ti); row.appendChild(del);
-      list.appendChild(row);
-    });
+    customPresets.forEach(p=> list.appendChild(settingsRow('preset', p)));
   }
   renderPresetCatPicker();
   renderRoutinesList();
@@ -3114,20 +3182,74 @@ function renderRoutinesList(){
     list.appendChild(e);
     return;
   }
-  routines.forEach(r=>{
-    const cat = catById(r.category);
-    const row=document.createElement('div');
-    row.className='preset-row';
-    const em=document.createElement('div');
-    em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=r.emoji||'🔁';
-    const ti=document.createElement('div');
-    ti.className='pr-title'; ti.textContent=r.title;
-    const del=document.createElement('button');
-    del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label','Slett rutine');
-    del.addEventListener('click',()=>{ deleteRoutine(r.id); renderSettings(); });
-    row.appendChild(em); row.appendChild(ti); row.appendChild(del);
-    list.appendChild(row);
+  routines.forEach(r=> list.appendChild(settingsRow('routine', r)));
+}
+
+/* Rad for hurtigvalg/rutine i innstillinger – med redigering på stedet */
+let rowEdit = null;   // {kind:'preset'|'routine', id, title, emoji, category}
+function settingsRow(kind, item){
+  const isPreset = kind==='preset';
+  const row = document.createElement('div');
+  row.dataset.id = item.id;
+  if(rowEdit && rowEdit.kind===kind && rowEdit.id===item.id){
+    row.className = 'preset-row editing';
+    const top = document.createElement('div'); top.className='composer-row';
+    const ti = document.createElement('input'); ti.type='text'; ti.className='field-input pr-edit-title';
+    ti.maxLength=40; ti.value=rowEdit.title; ti.autocomplete='off'; ti.setAttribute('enterkeyhint','done');
+    ti.addEventListener('input',()=>{ rowEdit.title = ti.value; });
+    const em = document.createElement('input'); em.type='text'; em.className='emoji-input pr-edit-emoji';
+    em.maxLength=8; em.value=rowEdit.emoji; em.autocomplete='off'; em.setAttribute('aria-label','Emoji');
+    em.addEventListener('input',()=>{ rowEdit.emoji = em.value.trim(); });
+    top.appendChild(ti); top.appendChild(em);
+    const cp = document.createElement('div'); cp.className='cat-picker';
+    const lab = document.createElement('span'); lab.className='cp-label'; lab.textContent='Kategori'; cp.appendChild(lab);
+    categories.forEach(c=>{
+      const cat = catById(c.id);
+      const b = document.createElement('button'); b.type='button';
+      b.className = 'cat-opt'+(c.id===rowEdit.category?' sel':'');
+      b.style.background = cat.fill; b.style.color = cat.ink;
+      b.innerHTML = `<span class="cat-opt-dot" style="background:${cat.ink}"></span>${cat.label}`;
+      b.addEventListener('click',()=>{ rowEdit.category = c.id; renderSettings(); });
+      cp.appendChild(b);
+    });
+    const act = document.createElement('div'); act.className='pr-actions';
+    const cancel = document.createElement('button'); cancel.type='button'; cancel.textContent='Avbryt';
+    cancel.addEventListener('click',()=>{ rowEdit=null; renderSettings(); });
+    const saveBtn = document.createElement('button'); saveBtn.type='button'; saveBtn.className='primary pr-save'; saveBtn.textContent='Lagre';
+    const doSave = ()=>{
+      const title = (rowEdit.title||'').trim();
+      if(!title){ showToast('Skriv et navn'); return; }
+      const patch = {title, emoji: rowEdit.emoji || item.emoji || (isPreset?'📝':'🔁'), category: rowEdit.category};
+      if(isPreset) updatePreset(item.id, patch); else updateRoutine(item.id, patch);
+      rowEdit = null; renderSettings(); renderChips();
+      showToast(isPreset ? 'Hurtigvalg oppdatert' : 'Rutine oppdatert');
+    };
+    saveBtn.addEventListener('click', doSave);
+    ti.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSave(); } });
+    act.appendChild(cancel); act.appendChild(saveBtn);
+    row.appendChild(top); row.appendChild(cp); row.appendChild(act);
+    return row;
+  }
+  const cat = catById(item.category);
+  row.className = 'preset-row';
+  const startEdit = ()=>{ rowEdit = {kind, id:item.id, title:item.title, emoji:item.emoji||'', category:item.category}; renderSettings(); };
+  const em = document.createElement('div');
+  em.className='pr-emoji'; em.style.background=cat.fill; em.textContent=item.emoji||(isPreset?'📝':'🔁');
+  const ti = document.createElement('div');
+  ti.className='pr-title tap'; ti.textContent=item.title; ti.title='Trykk for å endre';
+  ti.addEventListener('click', startEdit);
+  const ed = document.createElement('button');
+  ed.type='button'; ed.className='pr-del pr-edit'; ed.textContent='✎';
+  ed.setAttribute('aria-label', isPreset?'Endre hurtigvalg':'Endre rutine');
+  ed.addEventListener('click', startEdit);
+  const del = document.createElement('button');
+  del.type='button'; del.className='pr-del'; del.innerHTML='🗑'; del.setAttribute('aria-label', isPreset?'Slett hurtigvalg':'Slett rutine');
+  del.addEventListener('click',()=>{
+    if(isPreset){ deletePreset(item.id); renderSettings(); renderChips(); }
+    else { deleteRoutine(item.id); renderSettings(); }
   });
+  row.appendChild(em); row.appendChild(ti); row.appendChild(ed); row.appendChild(del);
+  return row;
 }
 
 function renderCategoriesList(){
@@ -3166,27 +3288,41 @@ function renderDaySwitch(){
   wrap.querySelector('[data-day="tomorrow"]').classList.toggle('active', selectedDate===tm);
 }
 
-/* --- Handleliste-rendring --- */
+/* --- Handleliste-rendring (dagligvarer + apotek) --- */
+const SHOP_LISTS = {
+  shop:  {chips:'shopChips', list:'shopList', label:'shopListLabel', badge:'shopBadge', clear:'clearCheckedBtn',
+          input:'shopInput', add:'shopAddBtn', name:'Handleliste', presets:SHOP_PRESETS, fallback:'🛒',
+          emptyTitle:'Handlelisten er tom', emptySub:'Trykk et hurtigvalg, eller skriv en vare. Den som handler ser den med en gang.',
+          doneToast:'Alt i kurven! 🎉'},
+  apotek:{chips:'apoChips', list:'apoList', label:'apoListLabel', badge:'apoBadge', clear:'apoClearBtn',
+          input:'apoInput', add:'apoAddBtn', name:'Apotek-handleliste', presets:APO_PRESETS, fallback:'💊',
+          emptyTitle:'Apotek-lista er tom', emptySub:'Trykk et hurtigvalg, eller skriv det dere trenger fra apoteket.',
+          doneToast:'Alt fra apoteket er handlet! 🎉'}
+};
 function renderShopChips(){
-  const wrap = document.getElementById('shopChips');
-  if(!wrap) return;
-  wrap.innerHTML = '';
-  SHOP_PRESETS.forEach(p=>{
-    const b = document.createElement('button');
-    b.className = 'chip'; b.type='button';
-    b.style.background = 'var(--card-sunken)'; b.style.color = 'var(--text)';
-    b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.name}`;
-    b.addEventListener('click',()=>{
-      b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
-      addShopItem(p.name, p.emoji);
-      renderShop();
-      try{navigator.vibrate && navigator.vibrate(12);}catch(e){}
+  Object.keys(SHOP_LISTS).forEach(key=>{
+    const cfg = SHOP_LISTS[key];
+    const wrap = document.getElementById(cfg.chips);
+    if(!wrap) return;
+    wrap.innerHTML = '';
+    cfg.presets.forEach(p=>{
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type='button';
+      b.style.background = 'var(--card-sunken)'; b.style.color = 'var(--text)';
+      b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.name}`;
+      b.addEventListener('click',()=>{
+        b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+        addShopItem(p.name, p.emoji, key);
+        renderShop();
+        try{navigator.vibrate && navigator.vibrate(12);}catch(e){}
+      });
+      wrap.appendChild(b);
     });
-    wrap.appendChild(b);
   });
 }
 
 function shopNode(item){
+  const key = (item.list||'shop'), cfg = SHOP_LISTS[key] || SHOP_LISTS.shop;
   const el = document.createElement('div');
   el.className = 'task'+(item.done?' done':'');
   el.style.borderLeft = 'none';
@@ -3202,8 +3338,8 @@ function shopNode(item){
     toggleShopItem(item.id);
     if(!wasDone){
       try{navigator.vibrate && navigator.vibrate(15);}catch(e){}
-      const items = shop;
-      if(items.length && items.every(x=>x.done)){ burstConfetti(ev.clientX, ev.clientY); showToast('Alt i kurven! 🎉'); }
+      const items = shopItems(key);
+      if(items.length && items.every(x=>x.done)){ burstConfetti(ev.clientX, ev.clientY); showToast(cfg.doneToast); }
     }
     renderShop();
   });
@@ -3211,7 +3347,7 @@ function shopNode(item){
   const emoji = document.createElement('div');
   emoji.className='task-emoji';
   emoji.style.background = 'var(--card-sunken)';
-  emoji.textContent = item.emoji || '🛒';
+  emoji.textContent = item.emoji || cfg.fallback;
 
   const body = document.createElement('div');
   body.className='task-body';
@@ -3233,30 +3369,22 @@ function shopNode(item){
 }
 
 function renderShop(){
-  const list = document.getElementById('shopList');
-  if(!list) return;
-  list.innerHTML='';
-  const items = shop.slice().sort((a,b)=> (a.done-b.done) || (a.createdAt-b.createdAt));
-  const remaining = items.filter(i=>!i.done).length;
-  const doneCount = items.filter(i=>i.done).length;
-
-  const label = document.getElementById('shopListLabel');
-  label.textContent = items.length ? `Handleliste – ${remaining} av ${items.length} i kurven` : 'Handleliste';
-
-  // Oppdater fane-merket (antall igjen å kjøpe)
-  const badge = document.getElementById('shopBadge');
-  if(badge){ if(remaining>0){ badge.hidden=false; badge.textContent=String(remaining); } else { badge.hidden=true; } }
-
-  if(!items.length){
-    list.appendChild(emptyNode('🛒','Handlelisten er tom','Trykk et hurtigvalg, eller skriv en vare. Den som handler ser den med en gang.'));
-  }else{
-    items.forEach(it=> list.appendChild(shopNode(it)));
-  }
-  const clearBtn = document.getElementById('clearCheckedBtn');
-  if(clearBtn){
-    clearBtn.hidden = doneCount===0;
-    clearBtn.textContent = `🧹 Fjern avhukede (${doneCount})`;
-  }
+  Object.keys(SHOP_LISTS).forEach(key=>{
+    const cfg = SHOP_LISTS[key];
+    const list = document.getElementById(cfg.list);
+    if(!list) return;
+    list.innerHTML='';
+    const items = shopItems(key).sort((a,b)=> (a.done-b.done) || (a.createdAt-b.createdAt));
+    const remaining = items.filter(i=>!i.done).length;
+    const doneCount = items.filter(i=>i.done).length;
+    const label = document.getElementById(cfg.label);
+    if(label) label.textContent = items.length ? `${cfg.name} – ${remaining} av ${items.length} igjen` : cfg.name;
+    if(!items.length) list.appendChild(emptyNode(cfg.fallback, cfg.emptyTitle, cfg.emptySub));
+    else items.forEach(it=> list.appendChild(shopNode(it)));
+    const clearBtn = document.getElementById(cfg.clear);
+    if(clearBtn){ clearBtn.hidden = doneCount===0; clearBtn.textContent = `🧹 Fjern avhukede (${doneCount})`; }
+  });
+  updateShopBadge();
 }
 
 /* --- Rediger oppgave (endre dato, tittel, kategori) --- */
@@ -3571,74 +3699,160 @@ document.getElementById('nextMonth').addEventListener('click',()=>{
 
 /* Gjetter en passende emoji ut fra oppgaveteksten, så egne oppgaver ikke blir like.
    Faller tilbake til et kategori-ikon, så til 📝. */
+/* Automatisk emoji ut fra teksten. Spesifikke ting (julekort, tannlege …)
+   står FØR generelle verb (bestille, kjøpe …), slik at «bestille julekort»
+   gir 💌 og ikke 📅. Teksten normaliseres til « ord ord » slik at ' ord'
+   = ordstart og 'ord ' = ordslutt (fungerer også med æøå). */
 const TASK_EMOJI = [
-  [/charlie|hund|valp/,'🐕'],
-  [/\btur\b|gå ?tur|spasér|spaser|lufte/,'🚶'],
-  [/puss.*tenn|tannpuss|tenner/,'🪥'],
-  [/inhal|medisin|tablett|pille|dråp|drap/,'💊'],
-  [/william|baby|bleie|amme|smokk|tåteflask|tateflask/,'🍼'],
-  [/\bbade\b|\bbader\b|dusj/,'🛁'],
-  [/oppvask|skylle/,'🍽️'],
-  [/klesvask|vaske klær|vask.*klær|tøyvask|henge.*tøy|brette tøy/,'🧺'],
-  [/støvsug/,'🧹'],
-  [/vindu/,'🪟'],
-  [/vaske|\bvask\b|rengjør|rengjor|skure|moppe|tørke støv|tørk støv/,'🧽'],
-  [/rydde|\brydd\b|ordne/,'🧺'],
-  [/søppel|avfall|resirk|panter|\bpant\b|retur|kaste/,'🗑️'],
-  [/handle|butikk|kjøpe|kjope|købe|innkjøp|dagligvare/,'🛒'],
-  [/\bring(e|er)?\b|telefon/,'📞'],
-  [/\bmail\b|e-?post|epost|melding|\bsms\b/,'✉️'],
-  [/betal|regning|faktura|\bbank\b/,'💳'],
-  [/\blege\b|tannlege|legetime|\btime\b|frisør|frisor/,'🩺'],
-  [/\bbil\b|dekk|bensin|diesel|\blade\b|verksted/,'🚗'],
-  [/hage|plen|gress|klippe|vanne|blomst|luke|rake|måke|snømåk/,'🌱'],
-  [/lyspære|\blampe\b|\bpære\b|skifte lys/,'💡'],
-  [/\bmate\b|fôr|kattemat|hundemat|mat til/,'🐾'],
-  [/koke|lage mat|middag|\bbake\b|matlaging|lunsj|frokost/,'🍳'],
-  [/seng|sengetøy|re opp|skift.*seng/,'🛏️'],
-  [/hente pakke|\bpakke\b|\bpost\b|levere/,'📦'],
-  [/trene|\btren\b|løpe|\bløp\b|\bgym\b|jogg/,'🏃'],
-  [/møte|avtale|booke|bestille/,'📅']
+  // --- jul / høytid / feiring ---
+  [/ julekort| julebrev| julehilsen/,'💌'],
+  [/ julegave| julepresang| pakkekalender| adventskalender| adventsgave| kalendergave/,'🎁'],
+  [/ juletre| julepynt| pynte til jul| julelys| julestjerne/,'🎄'],
+  [/ julebak| pepperkake| julekake| lussekatt/,'🍪'],
+  [/ julemiddag| julemat| ribbe| pinnekj[øo]tt| julebord/,'🍽️'],
+  [/ nisse| julenisse/,'🎅'],
+  [/ advent/,'🕯️'],
+  [/ jul | jula | julen | jule| romjul/,'🎄'],
+  [/ nytt[åa]r| rakett| fyrverkeri/,'🎆'],
+  [/ p[åa]ske/,'🐣'],
+  [/ 17 mai| syttende mai| nasjonaldag/,'🇳🇴'],
+  [/ halloween| gresskar/,'🎃'],
+  [/ bryllup| forlovelse/,'💍'],
+  [/ bursdag| f[øo]dselsdag| geburtsdag/,'🎂'],
+  [/ gave| presang| gavekort/,'🎁'],
+  [/ sende kort| skrive kort| lage kort| takkekort| bursdagskort| postkort| gratulasjonskort| invitasjon/,'💌'],
+  [/ selskap| fest | feire| party/,'🎉'],
+  [/ blomster | bukett| blomsterbutikk/,'💐'],
+  // --- dyr ---
+  [/ dyrlege| veterin/,'🐾'],
+  [/ charlie| hund| valp/,'🐕'],
+  [/ katt| pus /,'🐈'],
+  [/ mate | f[ôo]r | kattemat| hundemat| mat til /,'🐾'],
+  // --- barn ---
+  [/ barnehage| bhg /,'🎒'],
+  [/ skole| lekser| foreldrem[øo]te| sfo /,'📚'],
+  [/ william| baby| bleie| amme| smokk| t[åa]teflask| barnevogn/,'🍼'],
+  [/ leker | leke | lekerom| lego/,'🧸'],
+  // --- helse ---
+  [/ tannlege| tannpleier/,'🦷'],
+  [/ vaksine| spr[øo]yte/,'💉'],
+  [/ apotek| resept/,'💊'],
+  [/ lege | legen | legetime| fastlege| helsestasjon| sykehus| kontroll hos/,'🩺'],
+  [/ inhal| medisin| tablett| pille| dr[åa]per/,'💊'],
+  [/ fris[øo]r| klippe h[åa]r| h[åa]rklipp/,'💇'],
+  [/ briller| optiker| linser/,'👓'],
+  [/ puss.*tenn| tannpuss| tenner/,'🪥'],
+  [/ negler| manikyr/,'💅'],
+  [/ bade | bader | dusj| badekar/,'🛁'],
+  // --- husarbeid ---
+  [/ oppvask| skylle| t[øo]mme maskin/,'🍽️'],
+  [/ stryke| stryking/,'👕'],
+  [/ klesvask| vaske kl[æe]r| vask.*kl[æe]r| t[øo]yvask| henge.*t[øo]y| brette t[øo]y| vaskemaskin| t[øo]rketrommel/,'🧺'],
+  [/ st[øo]vsug/,'🧹'],
+  [/ vindu/,'🪟'],
+  [/ do | doen | toalett/,'🚽'],
+  [/ kj[øo]leskap| fryser/,'🧊'],
+  [/ pant | panter | pante /,'♻️'],
+  [/ s[øo]ppel| avfall| resirk| kildesort| gjenvinning| kaste /,'🗑️'],
+  [/ seng | senga | sengen | senget[øo]y| re opp| skift.*seng/,'🛏️'],
+  [/ vaske | vask | rengj[øo]r| skure| moppe| t[øo]rke st[øo]v| t[øo]rk st[øo]v/,'🧽'],
+  [/ rydde | rydd | ordne | sortere/,'🧺'],
+  // --- mat ---
+  [/ bestille bord| restaurant| spise ute/,'🍽️'],
+  [/ matpakke| nistepakke/,'🥪'],
+  [/ bake | baker | kake| boller/,'🍰'],
+  [/ grill/,'🔥'],
+  [/ kaffe/,'☕'],
+  [/ koke | lage mat| middag| matlaging| lunsj| frokost| kveldsmat/,'🍳'],
+  // --- bil / transport / reise ---
+  [/ bensin| diesel| fylle tank/,'⛽'],
+  [/ lade | lader | elbil/,'🔌'],
+  [/ bil | bilen | dekk| dekkskift| eu kontroll| verksted| bilvask/,'🚗'],
+  [/ sykkel| sykle/,'🚲'],
+  [/ buss | tog | togbillett| bussbillett/,'🚌'],
+  [/ fly | flybillett| reise| ferie| koffert| hotell| passet | fornye pass/,'✈️'],
+  // --- hus / fikse ---
+  [/ male | maling| pensel| tapet/,'🖌️'],
+  [/ lysp[æe]re| lampe | p[æe]re | skifte lys/,'💡'],
+  [/ batteri/,'🔋'],
+  [/ r[øo]ykvarsler| brannslukker| brannvarsler/,'🚨'],
+  [/ snekre| spikre| hammer/,'🔨'],
+  [/ skru | montere| henge opp| bore | reparer| fikse | fiks | bytte pakning/,'🔧'],
+  [/ vedstabel| hente ved| b[æe]re ved| kj[øo]pe ved| stable ved| fyre | peis/,'🪵'],
+  [/ sn[øo]m[åa]k| m[åa]ke sn[øo]| br[øo]yt| str[øo] /,'❄️'],
+  [/ hage| plen | plenen | gress| klippe | vanne | blomst| luke | rake | plante/,'🌱'],
+  // --- økonomi / papir ---
+  [/ skatt| selvangivelse| s[øo]knad| skjema| kontrakt| forsikring| nav /,'📄'],
+  [/ betal| regning| faktura| bank | banken | vipps| l[åa]n /,'💳'],
+  // --- kommunikasjon / post ---
+  [/ ring | ringe | ringer | telefon/,'📞'],
+  [/ mail | e ?post| epost| melding| sms | svare /,'✉️'],
+  [/ hente pakke| pakke | pakken | post | posten | levere | returnere| retur /,'📦'],
+  // --- fritid / trening ---
+  [/ sv[øo]mm/,'🏊'],
+  [/ fotball/,'⚽'],
+  [/ ski | skitur| langrenn| slalom/,'🎿'],
+  [/ trene | tren | trening| l[øo]pe | l[øo]p | gym | jogg| yoga/,'🏃'],
+  [/ tur | turen | g[åa] ?tur| spas[ée]r| lufte /,'🚶'],
+  [/ bilder | foto| fotobok| kamera/,'📸'],
+  [/ film | kino| serie /,'🎬'],
+  [/ lese | bok | boka | bibliotek/,'📚'],
+  [/ musikk| konsert| spilleliste/,'🎵'],
+  [/ sy | strikk| hekle/,'🧵'],
+  [/ kl[æe]r | jakke| bukse| genser| dress | kjole/,'👕'],
+  [/ sko | skoene | st[øo]vler/,'👟'],
+  // --- teknologi / jobb ---
+  [/ mobil| iphone| app | appen /,'📱'],
+  [/ pc | data | datamaskin| passord| backup| oppdater| wifi| nettverk| skriver /,'💻'],
+  [/ tv | tven | fjernkontroll/,'📺'],
+  [/ jobb | jobben | arbeid| rapport| presentasjon/,'💼'],
+  // --- generelle verb (sist!) ---
+  [/ m[øo]te | m[øo]tet | avtale| booke | time | timen /,'📅'],
+  [/ handle | butikk| kj[øo]pe | kj[øo]p | innkj[øo]p| dagligvare| meny | rema | kiwi | coop | bestill/,'🛒']
 ];
 function guessTaskEmoji(title, category){
-  const n = (title||'').toLowerCase();
-  for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; }
+  const n = ' ' + (title||'').toLowerCase().replace(/[^a-z0-9æøåäöéèôü]+/g,' ').trim() + ' ';
+  if(n.trim()){ for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; } }
   const catMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
   return catMap[category] || '📝';
 }
 const EMOJI_CHOICES = [
   // status / notater
-  '📝','✅','⭐','❤️','📌','🔔','⏰','🎯','📋','❗','❓',
+  '📝','✅','⭐','❤️','📌','🔔','⏰','🎯','📋','❗','❓','⚠️','💯','🆗','🚫','👍','🙏','👏',
   // rengjøring / hjem
-  '🧹','🧽','🧼','🧺','🧻','🗑️','♻️','🪣','🧴','🛁','🚿','🚽','🪠','🚪','🪟','🛏️','🛋️','🪑','💡','🔌','🕯️','🏠','🪴','🌿',
+  '🧹','🧽','🧼','🧺','🧻','🗑️','♻️','🪣','🧴','🛁','🚿','🚽','🪠','🚰','🚪','🪟','🛏️','🛋️','🪑','🪞','💡','🔌','🔋','🕯️','🏠','🪴','🌿','📺','🧯','🚨','🪵',
   // kjøkken / mat
-  '🍽️','🍳','🥘','🥗','🥪','🍞','🥛','🍎','🥦','🥕','🧀','🥚','☕','🍵','🧊','🎂','🍰','🍪','🍫','🫙',
+  '🍽️','🍳','🥘','🍲','🥗','🥪','🍞','🥐','🥞','🧇','🥛','🧈','🍎','🍌','🍓','🍇','🍋','🥑','🥦','🥕','🥔','🍅','🌽','🧅','🧄','🧀','🥚','🍗','🥩','🐟','🍕','🍔','🌮','🍝','🍜','🍣','☕','🍵','🧃','🥤','🍷','🍺','🧊','🎂','🍰','🍪','🍫','🍿','🍦','🫙',
   // handel / penger
-  '🛒','🛍️','💳','💰','💵','🧾','🏷️',
+  '🛒','🛍️','💳','💰','💵','🧾','🏷️','🏦',
   // baby / barn
-  '🍼','👶','🧸','🧩','🎈','🖍️','🎨',
-  // dyr (Charlie)
-  '🐕','🐾','🦴','🐈','🐟',
-  // helse
-  '💊','🩺','🌡️','🩹','💉','🦷','😷','🧘','🛌',
+  '🍼','👶','🚼','👧','👦','🧸','🧩','🎈','🖍️','🎨','🎒','🛝','🎠','🪁','📖','🧷',
+  // dyr
+  '🐕','🐾','🦴','🐈','🐦','🦋','🐝','🐴',
+  // helse / apotek
+  '💊','🩺','🌡️','🩹','💉','🦷','😷','🤒','🤧','👓','🧘','🛌','⚕️',
   // aktivitet / trening
-  '🚶','🏃','🚴','🏋️','⚽','🏊','🥾','🧗',
-  // folk
-  '🧑','👩','👨','👪','💪',
+  '🚶','🏃','🚴','🏋️','⚽','🏐','🏓','🏊','🎿','⛸️','🤸','🥾','🧗','🚣','🎣',
+  // folk / humør
+  '🧑','👩','👨','👪','👵','👴','💪','😀','😊','😍','🥳','😴','😎',
   // stell
-  '💅','💇','🧖',
+  '💅','💇','🧖','🪒',
   // hage / natur / vær
-  '🌱','🌼','🌸','🌳','🍂','☀️','🌧️','❄️','🔥','💧','🌊',
-  // transport / ærend
-  '🚗','⛽','🚲','🚌','✈️','🧳','🔑',
+  '🌱','🌼','🌸','🌷','🌳','🌲','🍂','🍄','☀️','⛅','🌧️','☔','⚡','❄️','⛄','🌈','🌙','🔥','💧','🌊','⛰️','🏖️','🏕️',
+  // transport / reise
+  '🚗','⛽','🚲','🛴','🚌','🚆','✈️','🚢','🚤','🚑','🧳','🔑','🗺️',
   // kommunikasjon / jobb
-  '📞','✉️','📧','💬','📅','🗓️','💻','🖨️','📎','📦','📬','📚','✏️',
+  '📞','📱','✉️','💌','📧','💬','📅','🗓️','💻','🖨️','📎','📦','📬','📮','📚','✏️','🖊️','💼','📄','🗂️','📊','🔒',
   // verktøy / fikse
-  '🔧','🔨','🪛','🔩','🧰','🪜','🖌️','🧵','🪡',
+  '🔧','🔨','🪛','🔩','🧰','🪜','🖌️','🧱','🧵','🪡','🧶',
   // klær / vask
-  '👕','👖','🧦','🧤','🧣','👗','👟','🧥',
-  // feiring / div
-  '🎉','🎁','💐','📸','🎵'
+  '👕','👖','🧦','🧤','🧣','👗','👟','🥿','🧥','👒',
+  // jul / høytid / feiring
+  '🎄','🎅','🤶','🎁','🦌','🌟','🧑‍🎄','🎆','🎇','🥂','🍾','🐣','🐰','🎃','🇳🇴','💍','🎉','🎊','💐',
+  // hobby / fritid
+  '📸','🎵','🎬','🎮','🎲','🎤','🎸','🎭','🎟️','🧮',
+  // farger
+  '🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','💙','💚','💛','🧡','💜','🖤','🤍'
 ];
 function buildEmojiPicker(pickerId, current, onPick){
   const wrap = document.getElementById(pickerId);
@@ -3649,6 +3863,12 @@ function buildEmojiPicker(pickerId, current, onPick){
   auto.textContent = '🪄'; auto.title = 'Velg automatisk'; auto.setAttribute('aria-label','Velg automatisk');
   auto.addEventListener('click',()=> onPick(null));
   wrap.appendChild(auto);
+  // Skriv/lim inn en hvilken som helst emoji fra telefonens emoji-tastatur
+  const own = document.createElement('input');
+  own.type='text'; own.className='emoji-own'; own.placeholder='Egen 🙂…'; own.autocomplete='off';
+  own.setAttribute('aria-label','Skriv inn en egen emoji');
+  own.addEventListener('input',()=>{ const e = firstEmoji(own.value); if(e) onPick(e); });
+  wrap.appendChild(own);
   EMOJI_CHOICES.forEach(e=>{
     const b = document.createElement('button');
     b.type='button'; b.className = 'emoji-opt'+(e===current?' sel':'');
@@ -3656,6 +3876,20 @@ function buildEmojiPicker(pickerId, current, onPick){
     b.addEventListener('click',()=> onPick(e));
     wrap.appendChild(b);
   });
+}
+/* Første emoji (hele tegnet, også sammensatte som 🧑‍🎄 og flagg) i en tekst */
+function firstEmoji(str){
+  str = (str||'').trim();
+  if(!str) return '';
+  let parts;
+  try{ parts = Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(str), x=>x.segment); }
+  catch(e){ parts = Array.from(str); }
+  for(const g of parts){
+    let isEmoji = false;
+    try{ isEmoji = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(g); }catch(e){ isEmoji = /[^\x00-\x7F]/.test(g); }
+    if(isEmoji) return g;
+  }
+  return '';
 }
 
 /* Emoji-velger i skrivefeltet for egne oppgaver (null = automatisk) */
@@ -3709,7 +3943,7 @@ function showView(v){
   if(v==='settings' && currentView!=='settings') settingsReturn = currentView;
   currentView = v;
   const isSettings = v==='settings';
-  const hideCal = isSettings || v==='shop' || v==='fix' || v==='med';   // disse har egen visning
+  const hideCal = isSettings || v==='shop' || v==='apo' || v==='fix' || v==='med';   // disse har egen visning
   document.getElementById('settingsView').style.display = isSettings?'':'none';
   document.querySelector('.segment').style.display = isSettings?'none':'';
   document.querySelector('.calendar').style.display = hideCal?'none':'';
@@ -3717,6 +3951,8 @@ function showView(v){
   document.getElementById('medView').style.display = (v==='med')?'':'none';
   document.getElementById('histView').style.display = (v==='hist')?'':'none';
   document.getElementById('shopView').style.display = (v==='shop')?'':'none';
+  document.getElementById('apoView').style.display = (v==='apo')?'':'none';
+  document.getElementById('tabApo').classList.toggle('active', v==='apo');
   document.getElementById('fixView').style.display = (v==='fix')?'':'none';
   document.getElementById('tabFix').classList.toggle('active', v==='fix');
   document.getElementById('tabPlan').classList.toggle('active', v==='plan');
@@ -3730,6 +3966,7 @@ document.getElementById('tabPlan').addEventListener('click',()=>showView('plan')
 document.getElementById('tabMed').addEventListener('click',()=>showView('med'));
 document.getElementById('tabHist').addEventListener('click',()=>showView('hist'));
 document.getElementById('tabShop').addEventListener('click',()=>showView('shop'));
+document.getElementById('tabApo').addEventListener('click',()=>showView('apo'));
 document.getElementById('tabFix').addEventListener('click',()=>showView('fix'));
 
 /* Medisin-interaksjoner */
@@ -3836,20 +4073,24 @@ document.getElementById('fxToShop').addEventListener('click',()=>{
 });
 
 /* Handleliste-interaksjoner */
-function submitShop(){
-  const input = document.getElementById('shopInput');
+function submitShop(key){
+  key = key==='apotek' ? 'apotek' : 'shop';
+  const input = document.getElementById(SHOP_LISTS[key].input);
   const raw = input.value.trim();
   if(!raw) return;
-  raw.split(',').map(s=>s.trim()).filter(Boolean).forEach(name=> addShopItem(name));
+  raw.split(',').map(s=>s.trim()).filter(Boolean).forEach(name=> addShopItem(name, null, key));
   input.value='';
   input.focus();               // hold tastaturet oppe for rask inntasting
   renderShop();
 }
-document.getElementById('shopAddBtn').addEventListener('click', submitShop);
-document.getElementById('shopInput').addEventListener('keydown',(e)=>{
-  if(e.key==='Enter'){ e.preventDefault(); submitShop(); }
+Object.keys(SHOP_LISTS).forEach(key=>{
+  const cfg = SHOP_LISTS[key];
+  document.getElementById(cfg.add).addEventListener('click',()=> submitShop(key));
+  document.getElementById(cfg.input).addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); submitShop(key); }
+  });
+  document.getElementById(cfg.clear).addEventListener('click',()=>{ clearCheckedShop(key); renderShop(); });
 });
-document.getElementById('clearCheckedBtn').addEventListener('click',()=>{ clearCheckedShop(); renderShop(); });
 document.getElementById('settingsBtn').addEventListener('click',()=>showView('settings'));
 document.getElementById('backBtn').addEventListener('click',()=> goBack());
 

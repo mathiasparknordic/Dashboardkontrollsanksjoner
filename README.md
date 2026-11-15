@@ -38,6 +38,17 @@ mellom flere (f.eks. deg og partneren din).
   hjemmefra og den andre krysser dem av i butikken. Hurtigvalg for vanlige
   varer, rask inntasting (skill flere med komma), auto-emoji, avhukede varer
   synker ned, og «Fjern avhukede» rydder etter handleturen. Synkes i sanntid.
+- **Apotek-handleliste** (⚕️-fanen, rett før Handleliste) – egen delt liste for
+  det som skal kjøpes på apoteket, med egne hurtigvalg (Paracet, plaster,
+  nesespray, hente resept …), auto-emoji og «Fjern avhukede». Holdes adskilt fra
+  dagligvarelista, men synkes på samme måte.
+- **Rediger hurtigvalg og rutiner** (⚙️ Innstillinger): trykk på navnet eller ✎
+  for å endre tittel, emoji og kategori på stedet – ingen grunn til å slette og
+  legge inn på nytt.
+- **Smart emoji:** automatisk emoji-valg kjenner igjen langt flere ting (jul,
+  bursdag, lege/tannlege, bil, hage, økonomi …) og lar spesifikke ord vinne over
+  generelle verb («bestille julekort» → 💌). Velgeren har ~300 emoji, pluss et
+  eget felt der du kan skrive inn hvilken som helst emoji fra tastaturet.
 - **Forfalte oppgaver:** et eget felt øverst i Planlagt samler gjøremål som
   ligger på en tidligere dato uten å være fullført, med etikett for hvor lenge
   siden. Flytt én til i dag, «Flytt alle til i dag», rediger dato, eller fullfør
