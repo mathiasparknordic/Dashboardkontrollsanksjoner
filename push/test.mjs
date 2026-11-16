@@ -26,7 +26,7 @@ ok('første varsel er due', d.length === 1 && d[0].count === 0);
 
 // --- timing ---
 ok('ikke due før tid', dueDoses({ meds: { m1: { ...baseMed, times: ['09:00'] } } }, now).length === 0);
-ok('ikke due hvis for gammelt (>120 min)', dueDoses({ meds: { m1: { ...baseMed, times: ['04:00'] } } }, now).length === 0);
+ok('gammel dose samme dag varsles fortsatt (ikke tatt)', dueDoses({ meds: { m1: { ...baseMed, times: ['04:00'] } } }, now).length === 1);
 
 // --- tatt ---
 ok('tatt -> ikke due', dueDoses({
@@ -42,9 +42,18 @@ ok('nylig varslet (5 min siden) -> ikke due enda', dueDoses({
 d = dueDoses({ meds: { m1: baseMed }, medNotif: { [KEY]: { c: 1, t: minsAgo(25) } } }, now);
 ok('varslet for 25 min siden -> purrer (due, count 1)', d.length === 1 && d[0].count === 1);
 
-ok('nådd maks (3) -> slutter å purre', dueDoses({
-  meds: { m1: baseMed }, medNotif: { [KEY]: { c: 3, t: minsAgo(60) } },
+ok('etter 3 varsler: ikke ny purring før det er gått en time', dueDoses({
+  meds: { m1: baseMed }, medNotif: { [KEY]: { c: 3, t: minsAgo(45) } },
 }, now).length === 0);
+ok('etter 3 varsler: fast purring hver time', dueDoses({
+  meds: { m1: baseMed }, medNotif: { [KEY]: { c: 3, t: minsAgo(61) } },
+}, now).length === 1);
+ok('fortsetter (f.eks. varsel 9) til den er tatt', dueDoses({
+  meds: { m1: baseMed }, medNotif: { [KEY]: { c: 8, t: minsAgo(61) } },
+}, now).length === 1);
+ok('valgfri maksgrense respekteres', dueDoses({
+  meds: { m1: baseMed }, medNotif: { [KEY]: { c: 3, t: minsAgo(90) } },
+}, now, { max: 3 }).length === 0);
 
 d = dueDoses({ meds: { m1: baseMed }, medNotif: { [KEY]: { c: 2, t: minsAgo(30) } } }, now);
 ok('andre purring etter nok tid (due, count 2)', d.length === 1 && d[0].count === 2);

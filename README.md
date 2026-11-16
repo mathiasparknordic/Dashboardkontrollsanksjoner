@@ -155,9 +155,10 @@ abonnementene ligger i den samme Firebase-basen som jobben leser fra.
    telefon som skal få varsel.
 3. Ferdig. Jobben kjører hvert 5. minutt (`.github/workflows/med-reminders.yml`)
    og sender et varsel når en dose er forfalt og ikke registrert som tatt.
-   **Den purrer flere ganger (Medisafe-stil):** nytt varsel ca. hvert 20. minutt
-   til dosen hukes av, opptil 3 varsler per dose. Huker du av «tatt» (eller tar
-   den i appen), stopper purringen med en gang. Utløpte abonnement ryddes bort.
+   **Den purrer til dosen er tatt (Medisafe-stil):** de tre første varslene
+   kommer med ca. 20 minutters mellomrom, deretter ett fast varsel i timen ut
+   dagen. Huker du av «tatt», stopper purringen med en gang. Utløpte abonnement
+   ryddes bort.
    Du kan kjøre den manuelt fra **Actions**-fanen (workflow_dispatch) for å teste.
 
    Vil du justere hvor ofte / hvor mange ganger den purrer? Legg inn

@@ -11,8 +11,8 @@
 // Valgfritt:
 //   VAPID_PUBLIC_KEY    (ellers brukes innebygd offentlig nøkkel)
 //   VAPID_SUBJECT       mailto:... (default mailto:hjemmetavla@example.com)
-//   REMIND_EVERY_MIN    minutter mellom purringer (default 20)
-//   REMIND_MAX          totalt antall varsler per dose (default 3)
+//   REMIND_EVERY_MIN    minutter mellom de første purringene (default 20)
+//   REMIND_MAX          maks antall varsler per dose (default: ingen grense)
 
 import webpush from 'web-push';
 import { osloParts, dueDoses, reminderBody } from './due.mjs';

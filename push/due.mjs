@@ -2,13 +2,16 @@
 // Ingen nettverk/IO her – gjør den enkel å teste.
 //
 // Medisafe-stil: purrer flere ganger til dosen er registrert som tatt.
-//   - Første varsel ved planlagt tid (ev. litt etter – cron kjører hvert 5. min)
-//   - Nytt varsel hvert REPEAT_EVERY_MIN til den er tatt, opptil MAX_REMINDERS
-//   - Gir opp etter GIVE_UP_MIN (slutter å mase for gamle doser)
+//   - Første varsel ved planlagt tid
+//   - De første FAST_REMINDERS varslene kommer med REPEAT_EVERY_MIN mellomrom
+//   - Deretter fast purring hver SLOW_EVERY_MIN til dosen er tatt
+//   - Stopper ved midnatt (ny dag = nye doser), eller når MAX_REMINDERS er nådd
 
-export const REPEAT_EVERY_MIN = 20;  // minutter mellom hver purring
-export const MAX_REMINDERS = 3;      // totalt antall varsler per dose (1 + 2 purringer)
-export const GIVE_UP_MIN = 120;      // varsle ikke doser eldre enn dette
+export const REPEAT_EVERY_MIN = 20;   // minutter mellom de første purringene
+export const FAST_REMINDERS = 3;      // antall varsler i «tett» fase (1 + 2 purringer)
+export const SLOW_EVERY_MIN = 60;     // deretter: fast purring hver time
+export const MAX_REMINDERS = Infinity; // ingen øvre grense – purrer til dosen er tatt
+export const GIVE_UP_MIN = 24 * 60;   // i praksis ut dagen
 
 // Tidspunkt 'HH:MM' -> minutter siden midnatt
 export function hmToMin(hm) {
@@ -72,6 +75,8 @@ const asArray = (mapOrArr) =>
 export function dueDoses(hh, now, opts = {}) {
   const everyMin = opts.everyMin != null ? opts.everyMin : REPEAT_EVERY_MIN;
   const max = opts.max != null ? opts.max : MAX_REMINDERS;
+  const fast = opts.fast != null ? opts.fast : FAST_REMINDERS;
+  const slowEvery = opts.slowEvery != null ? opts.slowEvery : SLOW_EVERY_MIN;
   const giveUp = opts.giveUp != null ? opts.giveUp : GIVE_UP_MIN;
   const nowMs = now.ms != null ? now.ms : Date.now();
 
@@ -104,7 +109,8 @@ export function dueDoses(hh, now, opts = {}) {
       if (count >= max) continue;                      // ferdig å purre
       if (count > 0) {
         const minsSince = (nowMs - lastMs) / 60000;
-        if (minsSince < everyMin) continue;            // for tidlig for ny purring
+        const gap = count < fast ? everyMin : slowEvery; // tett først, deretter hver time
+        if (minsSince < gap) continue;                  // for tidlig for ny purring
       }
       out.push({ med, time: t, slotId, key, count });
     }
