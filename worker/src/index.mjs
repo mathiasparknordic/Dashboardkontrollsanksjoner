@@ -66,6 +66,12 @@ async function run(env) {
   if (log.length || now.hhmm.endsWith(':00')) {
     await env.CFG.put('status', JSON.stringify({ at: new Date().toISOString(), oslo: now.hhmm, log }));
   }
+  // Egen hendelseslogg (siste 30) som ikke overskrives av hjerteslaget.
+  if (log.length) {
+    const ev = (await env.CFG.get('events', 'json')) || [];
+    ev.push({ at: new Date().toISOString(), oslo: `${now.dateISO} ${now.hhmm}`, log });
+    await env.CFG.put('events', JSON.stringify(ev.slice(-30)));
+  }
   return log;
 }
 
@@ -86,7 +92,8 @@ export default {
     }
     if (url.pathname === '/status') {
       const cfg = await env.CFG.get('config', 'json');
-      return Response.json({ configured: !!cfg, registeredAt: cfg && cfg.at, last: await env.CFG.get('status', 'json') });
+      return Response.json({ configured: !!cfg, registeredAt: cfg && cfg.at, last: await env.CFG.get('status', 'json'),
+        events: ((await env.CFG.get('events', 'json')) || []).slice(-8) });
     }
     if (req.method === 'POST' && url.pathname === '/run') return Response.json({ log: await run(env) });
     return new Response('not found', { status: 404 });
