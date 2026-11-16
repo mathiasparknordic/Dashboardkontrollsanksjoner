@@ -24,6 +24,21 @@ jobs:
       - name: Installer avhengigheter
         working-directory: push
         run: npm ci
+      # Cloudflare-Workeren (cron hvert minutt) er hovedmotoren for varsler.
+      # Her registreres Firebase-oppsettet hos den, og status skrives ut.
+      - name: Registrer oppsett hos Cloudflare-Workeren
+        env:
+          WORKER_URL: https://hjemmetavla-push.mathias-froholm.workers.dev
+          FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          FIREBASE_HOUSEHOLD: ${{ secrets.FIREBASE_HOUSEHOLD }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+        run: |
+          if [ -z "$FIREBASE_DB_URL" ] || [ -z "$VAPID_PRIVATE_KEY" ]; then echo "Hopper over – secrets mangler"; exit 0; fi
+          body=$(node -e 'console.log(JSON.stringify({db:process.env.FIREBASE_DB_URL,households:process.env.FIREBASE_HOUSEHOLD}))')
+          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 -X POST "$WORKER_URL/register" \
+                 -H "x-key: $VAPID_PRIVATE_KEY" -H "content-type: application/json" -d "$body" || echo "000")
+          echo "register: HTTP $code"
+          echo "status:"; curl -sS --max-time 30 "$WORKER_URL/status" -H "x-key: $VAPID_PRIVATE_KEY" || true; echo
       - name: Send varsler
         working-directory: push
         env:
