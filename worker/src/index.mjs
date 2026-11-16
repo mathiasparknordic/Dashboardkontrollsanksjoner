@@ -51,6 +51,28 @@ async function processHousehold(db, code, now, vapid, log) {
   }
 }
 
+// Feilsøking: hva ser Workeren i dag, og hvorfor varsles det (ikke)?
+async function debugSnapshot(env) {
+  const cfg = await env.CFG.get('config', 'json');
+  if (!cfg) return { error: 'ingen konfig' };
+  const now = osloParts(); const out = { now: `${now.dateISO} ${now.hhmm}`, dow: now.dow, households: [] };
+  for (const code of cfg.households) {
+    const r = await fetch(node(cfg.db, code, ''));
+    const hh = r.ok ? await r.json() : null;
+    if (!hh) { out.households.push({ read: r.status, empty: true }); continue; }
+    const taken = new Set(Object.values(hh.medLog || {}).filter((e) => e && !e.deleted && e.slot).map((e) => e.slot));
+    const meds = Object.entries(hh.meds || {}).map(([id, m]) => ({ id, ...(m || {}) }));
+    out.households.push({
+      read: r.status, keys: Object.keys(hh), subs: Object.keys(hh.pushSubs || {}).length,
+      due: dueDoses(hh, now).map((d) => `${d.med.name} ${d.time} (#${d.count + 1})`),
+      meds: meds.map((m) => ({ name: m.name, active: m.active !== false, deleted: !!m.deleted, days: m.days || 'alle',
+        doses: (m.times || []).map((t) => ({ t, taken: taken.has(`${m.id}|${now.dateISO}|${t}`),
+          notif: (hh.medNotif || {})[`${m.id}_${now.dateISO}_${String(t).replace(/[^0-9]/g, '')}`] || null })) })),
+    });
+  }
+  return out;
+}
+
 async function run(env) {
   const cfg = await env.CFG.get('config', 'json');
   const now = osloParts();
@@ -71,6 +93,11 @@ async function run(env) {
     const ev = (await env.CFG.get('events', 'json')) || [];
     ev.push({ at: new Date().toISOString(), oslo: `${now.dateISO} ${now.hhmm}`, log });
     await env.CFG.put('events', JSON.stringify(ev.slice(-30)));
+  }
+  // Midlertidig feilsøking: skriv et øyeblikksbilde til KV mens 'debugUntil' er i fremtiden.
+  const until = +(await env.CFG.get('debugUntil')) || 0;
+  if (until > Date.now()) {
+    try { await env.CFG.put('debug', JSON.stringify(await debugSnapshot(env))); } catch (e) { await env.CFG.put('debug', JSON.stringify({ error: String(e && e.message) })); }
   }
   return log;
 }
@@ -96,27 +123,7 @@ export default {
         events: ((await env.CFG.get('events', 'json')) || []).slice(-8) });
     }
     if (req.method === 'POST' && url.pathname === '/run') return Response.json({ log: await run(env) });
-    if (url.pathname === '/debug') {
-      // Feilsøking (kun med nøkkel): hva ser Workeren i dag, og hvorfor varsles det (ikke)?
-      const cfg = await env.CFG.get('config', 'json');
-      if (!cfg) return Response.json({ error: 'ingen konfig' });
-      const now = osloParts(); const out = { now: `${now.dateISO} ${now.hhmm}`, dow: now.dow, households: [] };
-      for (const code of cfg.households) {
-        const r = await fetch(node(cfg.db, code, ''));
-        const hh = r.ok ? await r.json() : null;
-        if (!hh) { out.households.push({ read: r.status, empty: true }); continue; }
-        const taken = new Set(Object.values(hh.medLog || {}).filter((e) => e && !e.deleted && e.slot).map((e) => e.slot));
-        const meds = Object.entries(hh.meds || {}).map(([id, m]) => ({ id, ...(m || {}) }));
-        out.households.push({
-          read: r.status, subs: Object.keys(hh.pushSubs || {}).length,
-          due: dueDoses(hh, now).map((d) => `${d.med.name} ${d.time} (#${d.count + 1})`),
-          meds: meds.map((m) => ({ name: m.name, active: m.active !== false, deleted: !!m.deleted, days: m.days || 'alle',
-            doses: (m.times || []).map((t) => ({ t, taken: taken.has(`${m.id}|${now.dateISO}|${t}`),
-              notif: (hh.medNotif || {})[`${m.id}_${now.dateISO}_${String(t).replace(/[^0-9]/g, '')}`] || null })) })),
-        });
-      }
-      return Response.json(out);
-    }
+    if (url.pathname === '/debug') return Response.json(await debugSnapshot(env));
     return new Response('not found', { status: 404 });
   },
 };
