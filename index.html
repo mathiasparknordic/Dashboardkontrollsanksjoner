@@ -1641,11 +1641,13 @@ function updateMed(id, patch){
   saveMeds(); syncPush('meds', id, nm); return nm;
 }
 function deleteMed(id){
-  meds = meds.filter(x=>x.id!==id);
+  // Myk sletting: medisinen merkes som slettet og synkes (nyeste vinner), slik at
+  // en annen telefon med gammel kopi ikke kan «gjenopplive» den – og varslene stopper.
+  const m = meds.find(x=>x.id===id);
+  if(m){ m.deleted = true; m.active = false; m.updatedAt = Date.now(); syncPush('meds', id, m); }
   const gone = medLog.filter(l=>l.medId===id);
   medLog = medLog.filter(l=>l.medId!==id);
   saveMeds(); saveMedLog();
-  syncDelete('meds', id);
   gone.forEach(l=> syncDelete('medLog', l.id));
 }
 
@@ -4313,8 +4315,52 @@ function normalizePreset(id, d){
   return p;
 }
 
+/* --- «Sett på server»-register: hindrer at slettede ting gjenoppstår ---
+   Hver enhet husker hvilke id-er den har sett i den delte lista. Ved oppkobling:
+   et lokalt element som HAR vært på serveren, men ikke er der lenger, er slettet
+   av noen andre -> fjernes lokalt (lastes ikke opp igjen). Et lokalt element som
+   aldri har vært på serveren er nytt (laget uten nett) -> lastes opp som før. */
+const SEEN_KEY = 'hjemme_seen_v1';
+const PRUNE_COLLS = ['tasks','presets','shop','meds','medLog','routines'];
+function collGet(c){ return c==='tasks'?tasks : c==='presets'?customPresets : c==='shop'?shop : c==='meds'?meds : c==='medLog'?medLog : routines; }
+function collSet(c, v){ if(c==='tasks') tasks=v; else if(c==='presets') customPresets=v; else if(c==='shop') shop=v; else if(c==='meds') meds=v; else if(c==='medLog') medLog=v; else routines=v; }
+let seenRemote = (function(){
+  try{ const o=JSON.parse(localStorage.getItem(SEEN_KEY)); if(o && typeof o==='object'){ const r={}; Object.keys(o).forEach(k=> r[k]=new Set(o[k])); return r; } }catch(e){}
+  return null;   // null = denne enheten har ikke registeret ennå
+})();
+let seenTimer = null, resumeConnect = false;
+function saveSeenSoon(){
+  clearTimeout(seenTimer);
+  seenTimer = setTimeout(()=>{ try{ const o={}; Object.keys(seenRemote||{}).forEach(k=> o[k]=Array.from(seenRemote[k])); localStorage.setItem(SEEN_KEY, JSON.stringify(o)); }catch(e){} }, 300);
+}
+function markSeen(c, id){ if(!seenRemote || PRUNE_COLLS.indexOf(c)<0) return; (seenRemote[c] || (seenRemote[c]=new Set())).add(id); saveSeenSoon(); }
+function unmarkSeen(c, id){ if(seenRemote && seenRemote[c]){ seenRemote[c].delete(id); saveSeenSoon(); } }
+function pruneRemotelyDeleted(rd){
+  const boot = !seenRemote;
+  if(boot && !resumeConnect) return 0;        // aller første tilkobling: behold alt lokalt, flett inn
+  const cutoff = Date.now() - 3600e3; let dropped = 0;
+  PRUNE_COLLS.forEach(c=>{
+    const remote = rd[c] || {}, seen = boot ? null : (seenRemote[c] || new Set());
+    collSet(c, collGet(c).filter(it=>{
+      if(Object.prototype.hasOwnProperty.call(remote, it.id)) return true;
+      // Uten register (første gang etter oppdatering): alt eldre enn en time som
+      // mangler på serveren regnes som slettet der.
+      const gone = boot ? ((it.updatedAt || it.createdAt || 0) < cutoff) : seen.has(it.id);
+      if(gone) dropped++;
+      return !gone;
+    }));
+  });
+  return dropped;
+}
+function rebuildSeen(rd){
+  seenRemote = seenRemote || {};
+  PRUNE_COLLS.forEach(c=>{ const set = new Set(Object.keys((rd||{})[c] || {})); collGet(c).forEach(it=> set.add(it.id)); seenRemote[c] = set; });
+  saveSeenSoon();
+}
+
 function ingestMap(coll, map){
   const ent = Object.entries(map||{});
+  if(seenRemote && PRUNE_COLLS.indexOf(coll)>=0){ seenRemote[coll] = new Set(ent.map(e=>e[0])); saveSeenSoon(); }
   if(coll==='tasks') tasks = ent.map(([id,d])=>normalizeTask(id,d));
   else if(coll==='categories') categories = ent.map(([id,d])=>normCat({id, label:d.label, color:d.color, createdAt:d.createdAt}));
   else if(coll==='shop') shop = ent.map(([id,d])=>normalizeShop(id,d));
@@ -4390,6 +4436,7 @@ function unionRemote(remote){
   if(remote.fixmeta && remote.fixmeta.seeded){ fixMeta.seeded = true; saveFixMeta(); }
 }
 function upsertRemote(coll, id, data){
+  if(data==null) unmarkSeen(coll, id); else markSeen(coll, id);
   if(coll==='tasks'){
     if(data==null){ tasks = tasks.filter(t=>t.id!==id); return; }
     const t = normalizeTask(id,data), i = tasks.findIndex(x=>x.id===id);
@@ -4458,9 +4505,11 @@ async function pushAllLocal(){
 }
 function syncPush(coll, id, obj){
   if(!syncConf.enabled || applyingRemote) return;
+  markSeen(coll, id);
   rawPut(coll+'/'+id, obj).catch(()=>{});
 }
 function syncDelete(coll, id){
+  unmarkSeen(coll, id);
   if(!syncConf.enabled || applyingRemote) return;
   fetch(nodeUrl(coll+'/'+id), {method:'DELETE'}).catch(()=>{});
 }
@@ -4477,7 +4526,9 @@ function onStream(raw, isPatch){
       fix = fix.filter(i=> !(i.id.indexOf('fx_s')===0 && (i.updatedAt||0) <= fixMeta.localSeedAt));
     }
     if(fixMeta.localSeedAt){ delete fixMeta.localSeedAt; saveFixMeta(); }
+    pruneRemotelyDeleted(rd);       // ikke gjenoppliv det andre har slettet
     unionRemote(rd);
+    rebuildSeen(rd);
     pendingMerge = false;
     applyingRemote = false;
     save(); savePresets(); saveCategories(); saveShop(); saveMeds(); saveMedLog(); saveRoutines(); saveFix();
@@ -4510,8 +4561,9 @@ function openStream(){
   };
 }
 
-function connectSync(){
+function connectSync(resume){
   if(!syncConf.url || !syncConf.code){ showToast('Fyll inn URL og kode'); return; }
+  resumeConnect = !!resume;      // true = gjenopptar en synk som allerede var i gang
   syncConf.enabled = true; saveSync();
   setSyncState('wait');
   pendingMerge = true;
@@ -4615,7 +4667,7 @@ if(invite){
 }
 /* Gjenoppta synk hvis vi var tilkoblet fra før */
 if(syncConf.enabled && syncConf.url && syncConf.code){
-  connectSync();
+  connectSync(true);
 }
 renderSyncUI();
 
