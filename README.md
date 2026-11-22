@@ -192,6 +192,7 @@ Utrulling: `worker/deploy.sh` (krever API-token med *Workers Scripts: Edit* og
 | `push/` | Avsender for medisin-varsler (`send.mjs`, `due.mjs`, `test.mjs`) |
 | `.github/workflows/med-reminders.yml` | Planlagt jobb som sender push-varslene |
 | `emoji.json` | Hele emoji-settet med norske navn (Unicode CLDR via emojibase, MIT) – for søk i emoji-velgeren |
+| `emojiord.json` | Ordbok for automatisk emoji-valg: ca. 4 000 norske ord og fraser → emoji, pluss lister over svake/sterke verb |
 | `medisiner.json` | Legemiddelnavn til autofullføring (fra Legemiddelverket/FEST) |
 
 ### Medisin-liste / datakilde

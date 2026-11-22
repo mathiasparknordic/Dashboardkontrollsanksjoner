@@ -3864,9 +3864,130 @@ const TASK_EMOJI = [
   [/ m[øo]te | m[øo]tet | avtale| booke | time | timen /,'📅'],
   [/ handle | butikk| kj[øo]pe | kj[øo]p | innkj[øo]p| dagligvare| meny | rema | kiwi | coop | bestill/,'🛒']
 ];
+/* ---------- Ordbok-basert emoji-gjett (emojiord.json: ~4000 norske ord og fraser) ----------
+   Rangering: fraser > konkrete ting > sterke verb > sammensatte ord > vanlige verb > rom/personer > svake verb. */
+const EmojiOrd = (() => {
+// Gjettemotor for emoji ut fra norsk oppgavetekst. Samme kode limes inn i index.html.
+// data: { f:{frase:emoji}, t:{ting:emoji}, h:{handling:emoji}, x:{toppord:emoji},
+//         w:[svake verb], s:[sterke verb], l:[svake substantiv: rom/personer], g:[generelle etterledd] }
+function normTokens(title) {
+  return (title || '').toLowerCase().replace(/[^a-z0-9æøåäöéèôü]+/g, ' ').trim().split(' ').filter(Boolean);
+}
+// Mulige grunnformer av et bøyd norsk ord (bilen -> bil, kakene -> kake, vasker -> vaske, brillene -> briller)
+const SUFFIXES = ['enes', 'ene', 'ane', 'ens', 'ets', 'ers', 'er', 'en', 'et', 'ne', 'te', 'de', 'a', 'e', 'r', 's', 't'];
+function stems(w) {
+  const out = [];
+  for (const suf of SUFFIXES) {
+    if (w.length - suf.length >= 3 && w.endsWith(suf)) {
+      const base = w.slice(0, -suf.length);
+      out.push(base, base + 'e');
+      if (suf === 'ene' || suf === 'ne' || suf === 'enes') out.push(base + 'er', base + 'r');
+      if (base.length >= 4 && base[base.length - 1] === base[base.length - 2]) out.push(base.slice(0, -1)); // «dekkene» ok, «gymmen» -> gym
+    }
+  }
+  return out;
+}
+function buildIndex(data) {
+  const idx = { f: new Map(), t: new Map(), h: new Map(), x: new Map(), maxPhrase: 1,
+    weak: new Set(data.w || []), strong: new Set(data.s || []), low: new Set(data.l || []), gen: new Set(data.g || []) };
+  const add = (map, k, e) => { const key = normTokens(k).join(' '); if (!key) return; if (key.indexOf(' ') >= 0) { idx.f.set(key, e); idx.maxPhrase = Math.max(idx.maxPhrase, key.split(' ').length); } else map.set(key, e); };
+  for (const [k, e] of Object.entries(data.f || {})) add(idx.f, k, e);
+  for (const [k, e] of Object.entries(data.t || {})) add(idx.t, k, e);
+  for (const [k, e] of Object.entries(data.h || {})) add(idx.h, k, e);
+  for (const [k, e] of Object.entries(data.x || {})) add(idx.x, k, e);
+  return idx;
+}
+const find = (map, w) => { if (map.has(w)) return w; for (const s of stems(w)) if (map.has(s)) return s; return null; };
+
+// Sammensatte ord. Hodet står sist («vinterjakke» -> jakke), men er etterleddet generelt
+// («hundeforsikring», «skikort», «avisabonnement») er det forleddet som sier hva det gjelder.
+function compound(idx, w) {
+  const forms = [w].concat(stems(w));
+  let tail = null, head = null;
+  for (const f of forms) {
+    for (let i = 3; i <= f.length - 4; i++) {
+      const t = f.slice(i), h = f.slice(0, i);
+      const isGen = idx.gen.has(t);
+      if (!idx.t.has(t) && !isGen) continue;
+      const hk = find(idx.t, h) || find(idx.t, h.replace(/[es]$/, '')) || null;
+      if (!idx.t.has(t) && !hk && !find(idx.h, h)) continue;
+      if (t.length < 5 && !hk) continue;                 // korte etterledd krever kjent forledd
+      if (!tail || t.length > tail.len) tail = { key: t, len: t.length, headKey: hk };
+    }
+  }
+  for (const f of forms) {
+    for (let i = f.length - 3; i >= 4 && !head; i--) {
+      const h = f.slice(0, i);
+      const hk = find(idx.t, h) || (h.length >= 5 ? find(idx.t, h.replace(/[es]$/, '')) : null);
+      if (hk && hk.length >= 4) head = { key: hk, len: hk.length };
+    }
+    if (head) break;
+  }
+  if (tail) {
+    const generic = idx.gen.has(tail.key) || idx.low.has(tail.key);
+    const hk = tail.headKey || (head && head.key);
+    if (generic && hk) return { e: idx.t.get(hk), q: 6 };
+    if (generic) { const w0 = forms.find((f) => f.endsWith(tail.key)); const vh = w0 && find(idx.h, w0.slice(0, -tail.key.length)); if (vh && !idx.weak.has(vh)) return { e: idx.h.get(vh), q: 4 }; }
+    if (!idx.t.has(tail.key)) return head ? { e: idx.t.get(head.key), q: 2 } : null;
+    return { e: idx.t.get(tail.key), q: 5 + Math.min(tail.len, 9) / 10 };
+  }
+  if (head) return { e: idx.t.get(head.key), q: 2 };
+  return null;
+}
+
+const PART = new Set('opp ned ut inn på av til tilbake fram frem bort over om med i fra unna igjen for ny nye nytt'.split(' '));
+function guess(title, idx, trace) {
+  const tok = normTokens(title);
+  if (!tok.length) return null;
+  let best = null; const covered = new Set();
+  const consider = (e, score, pos, why) => { if (trace) trace.push([why, e, score]); if (e && (!best || score > best.score || (score === best.score && pos < best.pos))) best = { e, score, pos }; };
+  // 0) toppord (f.eks. kjæledyrets navn) vinner alltid
+  tok.forEach((w, i) => { const k = find(idx.x, w); if (k) consider(idx.x.get(k), 400, i, 'topp ' + k); });
+  // 1) fraser (lengst først), også med grunnform av siste ord. Fraser som starter med et svakt verb
+  //    («bestille time») eller bare er verb + småord («henge opp») skal ikke slå en konkret ting.
+  for (let n = Math.min(idx.maxPhrase, tok.length, 4); n >= 2; n--) {
+    for (let i = 0; i + n <= tok.length; i++) {
+      const words = tok.slice(i, i + n);
+      let key = words.join(' '), hit = idx.f.has(key) ? key : null;
+      if (!hit) for (const s of stems(words[n - 1])) { const k2 = words.slice(0, n - 1).concat(s).join(' '); if (idx.f.has(k2)) { hit = k2; break; } }
+      if (!hit) continue;
+      const verbOnly = words.slice(1).every((x) => PART.has(x));
+      for (let j = i; j < i + n; j++) covered.add(j);
+      consider(idx.f.get(hit), (verbOnly ? 165 : idx.weak.has(words[0]) ? 170 : 300) + n * 10, i, 'frase ' + hit);
+    }
+  }
+  // 2) enkeltord: konkret ting > sterkt verb > sammensetning > vanlig verb > rom/personer > svakt verb
+  tok.forEach((w, i) => {
+    const tScore = (k, exact) => (idx.low.has(k) ? 120 : (idx.weak.has(k) && i === 0) ? 99 : 200) - (exact ? 0 : 3);
+    const hScore = (k, exact) => (idx.strong.has(k) ? 190 : idx.weak.has(k) ? 100 : 160) - (exact ? 0 : 3);
+    if (covered.has(i)) return;
+    if (idx.t.has(w)) { consider(idx.t.get(w), tScore(w, 1), i, 'ting ' + w); return; }
+    if (idx.h.has(w)) { consider(idx.h.get(w), hScore(w, 1), i, 'handling ' + w); return; }
+    if (PART.has(w) || idx.weak.has(w)) return;
+    const tk = find(idx.t, w);
+    if (tk) { consider(idx.t.get(tk), tScore(tk, 0), i, 'ting~ ' + tk); return; }
+    const hk = find(idx.h, w);
+    if (hk) { consider(idx.h.get(hk), hScore(hk, 0), i, 'handling~ ' + hk); return; }
+    if (w.length >= 6) { const c = compound(idx, w); if (c) consider(c.e, 170 + c.q, i, 'sammensatt ' + w); }
+  });
+  return best ? best.e : null;
+}
+
+return { buildIndex, guess };
+})();
+var emojiOrdIdx = null, emojiOrdLoading = null;
+function ensureEmojiOrd(){
+  if(emojiOrdIdx) return Promise.resolve();
+  if(emojiOrdLoading) return emojiOrdLoading;
+  emojiOrdLoading = fetch('./emojiord.json').then(r=> r.ok ? r.json() : null).then(d=>{
+    if(d && d.t){ emojiOrdIdx = EmojiOrd.buildIndex(d); try{ updateComposerEmojiBtn(); }catch(e){} }
+  }).catch(()=>{}).then(()=>{ emojiOrdLoading = null; });
+  return emojiOrdLoading;
+}
 function guessTaskEmoji(title, category){
   const n = ' ' + (title||'').toLowerCase().replace(/[^a-z0-9æøåäöéèôü]+/g,' ').trim() + ' ';
   if(n.trim()){
+    if(emojiOrdIdx){ const g = EmojiOrd.guess(title, emojiOrdIdx); if(g) return g; }
     for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; }
     // Ingen regel traff: slå opp ordene i hele emoji-settet (f.eks. «gitar» -> 🎸)
     if(emojiWordIndex){ for(const w of n.trim().split(' ')){ const e = emojiWordIndex.get(w); if(e) return e; } }
@@ -4737,6 +4858,7 @@ renderChips();
 renderCatPicker();
 updateComposerEmojiBtn();
 renderShopChips();
+try{ ensureEmojiOrd(); }catch(e){}
 setTimeout(()=>{ try{ ensureEmojiData(); }catch(e){} }, 1500);   // forhåndslast emoji-settet i ro og mak
 seedIfFirstRun();
 tasks = load();

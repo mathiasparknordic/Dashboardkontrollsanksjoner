@@ -1,10 +1,11 @@
 /* Enkel service worker: cacher app-skallet slik at appen kan legges til
    på hjem-skjermen og fungere uten nett. */
-const CACHE = 'hjemme-v18';
+const CACHE = 'hjemme-v19';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './emojiord.json',
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',
