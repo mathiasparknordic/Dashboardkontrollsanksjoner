@@ -362,7 +362,7 @@ input{font-family:inherit;}
 .pr-actions button{flex:1;height:40px;border-radius:var(--radius-sm);font-size:14px;font-weight:800;background:var(--card-sunken);color:var(--text);}
 .pr-actions button.primary{background:var(--custom-ink);color:#fff;}
 .emoji-own{
-  flex:0 0 auto;width:92px;height:40px;border-radius:10px;border:2px dashed var(--border-strong);
+  flex:1 1 150px;min-width:150px;height:40px;border-radius:10px;border:2px dashed var(--border-strong);
   background:var(--card);text-align:center;font-size:14px;font-weight:700;color:var(--text);
 }
 .emoji-own:focus{outline:none;border-color:var(--custom-ink);}
@@ -3798,6 +3798,7 @@ const TASK_EMOJI = [
   [/ rydde | rydd | ordne | sortere/,'🧺'],
   // --- mat ---
   [/ bestille bord| restaurant| spise ute/,'🍽️'],
+  [/ kokk | kokken | kokke | kokkekurs/,'🧑‍🍳'],
   [/ matpakke| nistepakke/,'🥪'],
   [/ bake | baker | kake| boller/,'🍰'],
   [/ grill/,'🔥'],
@@ -3891,7 +3892,31 @@ const EMOJI_CHOICES = [
   // hobby / fritid
   '📸','🎵','🎬','🎮','🎲','🎤','🎸','🎭','🎟️','🧮',
   // farger
-  '🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','💙','💚','💛','🧡','💜','🖤','🤍'
+  '🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','💙','💚','💛','🧡','💜','🖤','🤍',
+  // yrker / roller
+  '🧑‍🍳','👨‍🍳','👩‍🍳','🧑‍⚕️','👨‍⚕️','👩‍⚕️','🧑‍🏫','🧑‍🔧','🧑‍🌾','🧑‍💻','🧑‍🎨','🧑‍🚒','🧑‍✈️','🧑‍🔬','🧑‍⚖️','🧑‍🎓','🧑‍💼','🧑‍🏭','🧑‍🚀','👮','👷','💂','🕵️','🧙','🦸','🤵','👰','🤰','🤱','🧓','👼','🤴','👸',
+  // ansikter
+  '😁','😂','🤣','🙂','😉','😇','🥰','😘','😋','😜','🤪','🤔','🤫','🙄','😬','😌','😪','🥱','🤕','🤢','🤮','🥵','🥶','😵','🤯','🤠','🥸','🤓','🧐','😕','😟','😮','😳','🥺','😢','😭','😱','😤','😡','🤬','😈','💀','💩','🤡','👻','👽','🤖',
+  // hender / kropp
+  '👋','🤚','✋','👌','🤌','✌️','🤞','🤟','🤙','👈','👉','👆','👇','☝️','👎','✊','👊','🙌','🤝','✍️','🤳','🦵','🦶','👂','👃','🧠','🫀','🫁','👀','👁️','👅','👄',
+  // flere dyr
+  '🐶','🐱','🐭','🐹','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐤','🦆','🦅','🦉','🐺','🐗','🦄','🐛','🐌','🐞','🐜','🕷️','🐢','🐍','🐙','🦀','🦐','🐠','🐬','🐳','🦈','🐊','🐘','🦒','🐪','🐑','🐐','🐇','🐿️','🦔','🐓','🦢','🕊️','🐩','🐈‍⬛','🦮',
+  // mer mat / drikke
+  '🍏','🍐','🍊','🍉','🍒','🍑','🥭','🍍','🥥','🥝','🫐','🍆','🥒','🥬','🌶️','🫑','🍠','🥜','🌰','🥖','🥨','🥯','🧆','🥓','🌭','🥙','🌯','🫔','🍛','🍚','🍙','🍱','🥟','🍤','🍥','🥮','🍡','🍧','🍨','🍩','🧁','🥧','🍬','🍭','🍮','🍯','🍶','🍸','🍹','🧉','🧋','🥃','🍻','🥄','🍴','🔪','🥣','🫖','🧂','🫕','🥡','🥢',
+  // flere ting i hjemmet
+  '🧲','🪤','🪥','🛗','🖼️','🪆','🎀','🎗️','🔦','🏮','🪔','📻','☎️','📟','⌚','⏱️','⏲️','🕰️','⌛','⏳','📡','🔭','🔬','💎','🪙','💸','💷','💶','🧿','📿','🪬','🛎️','🗝️','🔐','🔓','🧨','🎐','🪩',
+  // kontor / skole
+  '📓','📔','📒','📕','📗','📘','📙','📰','🗞️','📑','🔖','📐','📏','✂️','🖇️','📍','🗃️','🗄️','📈','📉','🗒️','📆','🖥️','⌨️','🖱️','💾','💿','📷','📹','🎥','🎙️','🎧','📢','📣','🔍','🔎','🔗','🏫','🎓',
+  // steder / bygg
+  '🏡','🏘️','🏢','🏬','🏪','🏥','🏨','🏛️','⛪','🏰','🏭','🏗️','🏟️','⛲','🎡','🎢','🎪','🗽','🗼','🌉','🌋','🏔️','🏝️','🏜️','🏞️','🛣️','🛤️','🚏','🅿️','🚧','⚓','🛟',
+  // mer transport
+  '🚕','🚙','🚐','🚚','🚛','🚜','🏎️','🏍️','🛵','🚓','🚒','🚎','🚇','🚊','🚀','🛸','🚁','🛩️','⛵','🛶','🚠','🛷','🛹','🛼','🦽','🦼',
+  // mer sport / fritid
+  '🏈','⚾','🥎','🏀','🎾','🏉','🥏','🎱','🏸','🏒','🏑','🥍','🏏','⛳','🏹','🥅','🤿','🥊','🥋','🎽','⛷️','🏂','🏌️','🏄','🚵','🤾','🤺','🏇','♟️','🎳','🎰','🎹','🥁','🎺','🎻','🪕','🎷','🪘','🎼','🏆','🥇','🥈','🥉','🏅','🎖️',
+  // natur / vær mer
+  '🌻','🌹','🥀','🌺','💮','🪷','🌾','🍀','☘️','🍃','🍁','🪹','🪺','🌵','🌴','🪨','🌍','🌕','🌑','🌞','🌝','🌠','☁️','🌤️','🌦️','⛈️','🌨️','🌬️','🌪️','🌫️','💨','💦','🫧','☄️',
+  // symboler
+  '✔️','❌','⭕','➕','➖','✖️','❣️','💔','💕','💞','💓','💗','💖','💘','💝','💟','⚜️','🔱','📛','🔰','✳️','❇️','💤','💢','💭','🗯️','🔊','🔇','🔕','🎶','➡️','⬅️','⬆️','⬇️','🔄','🔁','🆕','🆓','🆙','🔝','ℹ️','⁉️','‼️','💲','©️','®️','™️','🏁','🚩','🏳️','🏴','🏳️‍🌈'
 ];
 function buildEmojiPicker(pickerId, current, onPick){
   const wrap = document.getElementById(pickerId);
@@ -3904,7 +3929,7 @@ function buildEmojiPicker(pickerId, current, onPick){
   wrap.appendChild(auto);
   // Skriv/lim inn en hvilken som helst emoji fra telefonens emoji-tastatur
   const own = document.createElement('input');
-  own.type='text'; own.className='emoji-own'; own.placeholder='Egen 🙂…'; own.autocomplete='off';
+  own.type='text'; own.className='emoji-own'; own.placeholder='Annen? Skriv her'; own.autocomplete='off';
   own.setAttribute('aria-label','Skriv inn en egen emoji');
   own.addEventListener('input',()=>{ const e = firstEmoji(own.value); if(e) onPick(e); });
   wrap.appendChild(own);
