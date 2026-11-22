@@ -3866,7 +3866,11 @@ const TASK_EMOJI = [
 ];
 function guessTaskEmoji(title, category){
   const n = ' ' + (title||'').toLowerCase().replace(/[^a-z0-9æøåäöéèôü]+/g,' ').trim() + ' ';
-  if(n.trim()){ for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; } }
+  if(n.trim()){
+    for(const [re,em] of TASK_EMOJI){ if(re.test(n)) return em; }
+    // Ingen regel traff: slå opp ordene i hele emoji-settet (f.eks. «gitar» -> 🎸)
+    if(emojiWordIndex){ for(const w of n.trim().split(' ')){ const e = emojiWordIndex.get(w); if(e) return e; } }
+  }
   const catMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
   return catMap[category] || '📝';
 }
@@ -3941,19 +3945,72 @@ function buildEmojiPicker(pickerId, current, onPick){
   auto.textContent = '🪄'; auto.title = 'Velg automatisk'; auto.setAttribute('aria-label','Velg automatisk');
   auto.addEventListener('click',()=> onPick(null));
   wrap.appendChild(auto);
-  // Skriv/lim inn en hvilken som helst emoji fra telefonens emoji-tastatur
+  // Søk i ALLE emoji (norske navn), eller skriv/lim inn en emoji direkte
   const own = document.createElement('input');
-  own.type='text'; own.className='emoji-own'; own.placeholder='Annen? Skriv her'; own.autocomplete='off';
-  own.setAttribute('aria-label','Skriv inn en egen emoji');
-  own.addEventListener('input',()=>{ const e = firstEmoji(own.value); if(e) onPick(e); });
+  own.type='search'; own.className='emoji-own'; own.placeholder='Søk, f.eks. kokk'; own.autocomplete='off';
+  own.setAttribute('aria-label','Søk etter emoji');
   wrap.appendChild(own);
-  EMOJI_CHOICES.forEach(e=>{
-    const b = document.createElement('button');
-    b.type='button'; b.className = 'emoji-opt'+(e===current?' sel':'');
-    b.textContent = e;
-    b.addEventListener('click',()=> onPick(e));
-    wrap.appendChild(b);
-  });
+  const renderGrid = ()=>{
+    wrap.querySelectorAll('.emoji-opt:not(.auto), .emoji-none').forEach(n=>n.remove());
+    const q = own.value.trim().toLowerCase();
+    let list;
+    if(!q){
+      // Uten søk: de vanligste først, deretter resten av hele settet
+      const seen = new Set(EMOJI_CHOICES);
+      list = EMOJI_CHOICES.concat((emojiData||[]).map(x=>x[0]).filter(e=>!seen.has(e)));
+    }else{
+      list = searchEmoji(q);
+      if(!list.length){
+        const none = document.createElement('div'); none.className='preset-empty emoji-none';
+        none.textContent = emojiData ? 'Ingen treff – prøv et annet ord.' : 'Laster emoji …';
+        wrap.appendChild(none);
+      }
+    }
+    const frag = document.createDocumentFragment();
+    list.forEach(e=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className = 'emoji-opt'+(e===current?' sel':'');
+      b.textContent = e;
+      b.addEventListener('click',()=> onPick(e));
+      frag.appendChild(b);
+    });
+    wrap.appendChild(frag);
+  };
+  own.addEventListener('input',()=>{ const e = firstEmoji(own.value); if(e){ onPick(e); return; } renderGrid(); });
+  renderGrid();
+  if(!emojiData) ensureEmojiData().then(()=>{ if(document.body.contains(own)) renderGrid(); });
+}
+/* Hele emoji-settet (Unicode, norske navn fra CLDR via emojibase) – lastes ved behov */
+var emojiData = null, emojiLoading = null, emojiWordIndex = null;   // var: brukes av funksjoner definert tidligere
+function ensureEmojiData(){
+  if(emojiData) return Promise.resolve();
+  if(emojiLoading) return emojiLoading;
+  emojiLoading = fetch('./emoji.json',{cache:'force-cache'}).then(r=> r.ok ? r.json() : null).then(d=>{
+    if(Array.isArray(d)){
+      emojiData = d;
+      // Ordindeks for auto-gjetting: kun emojiens HOVEDNAVN når det er ett ord (substantiv
+      // som «gitar», «paraply»). Stikkord brukes ikke – de gir tull («helt» -> superhelt).
+      const stop = new Set(['gratis','kult','fritt','nytt','opp','ned','topp','slutt','snart','tilbake','på','av','ja','nei','ok','stopp','stille','annet','helt','mann','kvinne','person','hånd','ansikt','knapp','pil','klokka']);
+      emojiWordIndex = new Map();
+      d.forEach(([e,terms])=>{ const label = terms.split('|')[0];
+        if(label.length>=4 && !/[^a-zæøåéèôü]/.test(label) && !stop.has(label) && !emojiWordIndex.has(label)) emojiWordIndex.set(label, e); });
+      try{ updateComposerEmojiBtn(); }catch(e){}
+    }
+  }).catch(()=>{}).then(()=>{ emojiLoading = null; });
+  return emojiLoading;
+}
+function searchEmoji(q){
+  if(!emojiData) return [];
+  const words = q.split(/\s+/).filter(Boolean);
+  const exact=[], starts=[], rest=[];
+  for(const [e,terms] of emojiData){
+    if(!words.every(w=> terms.indexOf(w)>=0)) continue;
+    const parts = terms.split('|');
+    if(parts.indexOf(q)>=0) exact.push(e);
+    else if(parts.some(p=> p.indexOf(q)===0)) starts.push(e);
+    else rest.push(e);
+  }
+  return exact.concat(starts, rest).slice(0, 240);
 }
 /* Første emoji (hele tegnet, også sammensatte som 🧑‍🎄 og flagg) i en tekst */
 function firstEmoji(str){
@@ -4680,6 +4737,7 @@ renderChips();
 renderCatPicker();
 updateComposerEmojiBtn();
 renderShopChips();
+setTimeout(()=>{ try{ ensureEmojiData(); }catch(e){} }, 1500);   // forhåndslast emoji-settet i ro og mak
 seedIfFirstRun();
 tasks = load();
 customPresets = loadPresets();

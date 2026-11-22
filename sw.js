@@ -1,6 +1,6 @@
 /* Enkel service worker: cacher app-skallet slik at appen kan legges til
    på hjem-skjermen og fungere uten nett. */
-const CACHE = 'hjemme-v17';
+const CACHE = 'hjemme-v18';
 const ASSETS = [
   './',
   './index.html',

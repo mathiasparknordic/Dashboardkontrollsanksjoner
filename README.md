@@ -48,8 +48,9 @@ mellom flere (f.eks. deg og partneren din).
   legge inn på nytt.
 - **Smart emoji:** automatisk emoji-valg kjenner igjen langt flere ting (jul,
   bursdag, lege/tannlege, bil, hage, økonomi …) og lar spesifikke ord vinne over
-  generelle verb («bestille julekort» → 💌). Velgeren har ~300 emoji, pluss et
-  eget felt der du kan skrive inn hvilken som helst emoji fra tastaturet.
+  generelle verb («bestille julekort» → 💌). Velgeren inneholder **alle** emoji
+  (ca. 1 900) og har søk på norsk («kokk», «gitar», «kjeks»); du kan også lime
+  inn en emoji direkte i søkefeltet.
 - **Forfalte oppgaver:** et eget felt øverst i Planlagt samler gjøremål som
   ligger på en tidligere dato uten å være fullført, med etikett for hvor lenge
   siden. Flytt én til i dag, «Flytt alle til i dag», rediger dato, eller fullfør
@@ -190,6 +191,7 @@ Utrulling: `worker/deploy.sh` (krever API-token med *Workers Scripts: Edit* og
 | `sw.js` | Service worker – offline-cache + mottak av push-varsler |
 | `push/` | Avsender for medisin-varsler (`send.mjs`, `due.mjs`, `test.mjs`) |
 | `.github/workflows/med-reminders.yml` | Planlagt jobb som sender push-varslene |
+| `emoji.json` | Hele emoji-settet med norske navn (Unicode CLDR via emojibase, MIT) – for søk i emoji-velgeren |
 | `medisiner.json` | Legemiddelnavn til autofullføring (fra Legemiddelverket/FEST) |
 
 ### Medisin-liste / datakilde
