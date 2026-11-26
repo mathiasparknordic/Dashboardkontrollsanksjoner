@@ -355,6 +355,7 @@ input{font-family:inherit;}
 }
 .preset-row .pr-del:active{transform:scale(.9);background:var(--danger-soft);color:var(--danger);}
 .preset-row .pr-title.tap{cursor:pointer;}
+.preset-row .pr-subs{font-size:12.5px;font-weight:600;opacity:.6;margin-top:2px;}
 .preset-row.editing{flex-direction:column;align-items:stretch;border-color:var(--custom-ink);background:var(--card);}
 .preset-row.editing .field-input{flex:1;min-width:0;height:44px;}
 .preset-row.editing .emoji-input{height:44px;width:54px;}
@@ -1016,6 +1017,7 @@ input{font-family:inherit;}
           <input type="text" id="presetTitle" class="field-input" placeholder="Navn på hurtigvalg …" maxlength="40" autocomplete="off" />
           <input type="text" id="presetEmoji" class="emoji-input" placeholder="🙂" maxlength="2" autocomplete="off" />
         </div>
+        <input type="text" id="presetSubs" class="field-input" style="margin-top:10px;width:100%;" placeholder="Underpunkter (valgfritt), skill med komma" maxlength="300" autocomplete="off" />
         <div class="cat-picker" id="presetCatPicker">
           <span class="cp-label">Kategori</span>
         </div>
@@ -1047,6 +1049,7 @@ input{font-family:inherit;}
           <input type="text" id="routineTitle" class="field-input" placeholder="Ny daglig rutine …" maxlength="40" autocomplete="off" />
           <input type="text" id="routineEmoji" class="emoji-input" placeholder="🔁" maxlength="2" autocomplete="off" />
         </div>
+        <input type="text" id="routineSubs" class="field-input" style="margin-top:10px;width:100%;" placeholder="Underpunkter (valgfritt), skill med komma" maxlength="300" autocomplete="off" />
         <div class="cat-picker" id="routineCatPicker">
           <span class="cp-label">Kategori</span>
         </div>
@@ -1426,6 +1429,10 @@ function normSubs(v){
   return arr.filter(x=>x && (x.text||'').trim())
             .map(x=>({id:x.id||uid(), text:String(x.text).trim(), done:!!x.done}));
 }
+function normSubTexts(v){
+  const arr = Array.isArray(v) ? v : (v && typeof v==='object' ? Object.values(v) : []);
+  return arr.map(x=> String(x && typeof x==='object' ? (x.text||'') : (x||'')).trim()).filter(Boolean).slice(0,30);
+}
 function splitSubs(str){ return (str||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean); }
 function addTask(title, emoji, category, date, subs){
   title = (title||'').trim();
@@ -1457,11 +1464,12 @@ function deleteTask(id){
 
 function taskPresets(){ return customPresets.filter(p=> p.list!=='apotek'); }
 function apoPresets(){ return customPresets.filter(p=> p.list==='apotek'); }
-function addPreset(title, emoji, category, list){
+function addPreset(title, emoji, category, list, subs){
   title = (title||'').trim();
   if(!title) return null;
   const p = {id:uid(), title, emoji:emoji||'📝', category:category||'custom', createdAt:Date.now()};
   if(list==='apotek') p.list = 'apotek';
+  const ps = normSubTexts(subs); if(ps.length) p.subs = ps;
   customPresets.push(p);
   savePresets();
   syncPush('presets', p.id, p);
@@ -1470,16 +1478,23 @@ function addPreset(title, emoji, category, list){
 function updatePreset(id, patch){
   const p = customPresets.find(x=>x.id===id); if(!p) return null;
   Object.assign(p, patch);
+  if(p.subs){ p.subs = normSubTexts(p.subs); if(!p.subs.length) delete p.subs; }
   savePresets(); syncPush('presets', id, p); return p;
 }
 function updateRoutine(id, patch){
   const i = routines.findIndex(x=>x.id===id); if(i<0) return null;
+  const patch_hasSubs = patch && patch.subs !== undefined;
   const r = normalizeRoutine(id, Object.assign({}, routines[i], patch, {updatedAt:Date.now()}));
   routines[i] = r; saveRoutines(); syncPush('routines', id, r);
   // Oppdater dagens/kommende, ikke-fullførte auto-oppgaver for rutinen
   const prefix = 'dr_'+id+'_', today = todayISO();
   tasks.filter(t=> t.id.indexOf(prefix)===0 && !t.done && t.date>=today)
-       .forEach(t=> updateTask(t.id, {title:r.title, emoji:r.emoji, category:r.category}));
+       .forEach(t=>{
+         const patch = {title:r.title, emoji:r.emoji, category:r.category};
+         // Underpunkter: behold avhukingen på de som finnes fra før
+         if(patch_hasSubs){ const old = t.subs||[]; patch.subs = r.subs.map(x=> old.find(o=>o.text===x) || {id:uid(), text:x, done:false}); }
+         updateTask(t.id, patch);
+       });
   return r;
 }
 function deletePreset(id){
@@ -1704,7 +1719,7 @@ const DEFAULT_ROUTINES = [
 ];
 function normalizeRoutine(id, d){
   d = d || {};
-  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom',
+  return {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom', subs:normSubTexts(d.subs),
           lastGen:d.lastGen||null, createdAt:d.createdAt||Date.now(), updatedAt:d.updatedAt||d.createdAt||Date.now()};
 }
 function loadRoutines(){
@@ -1713,11 +1728,11 @@ function loadRoutines(){
 }
 function saveRoutines(){ try{ localStorage.setItem(ROUTINE_KEY, JSON.stringify(routines)); }catch(e){} }
 
-function addRoutine(title, emoji, category){
+function addRoutine(title, emoji, category, subs){
   title = (title||'').trim();
   if(!title) return null;
   const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'🔁'};
-  const r = normalizeRoutine(uid(), {title, emoji:emoji||emojiMap[category]||'🔁', category:category||'custom'});
+  const r = normalizeRoutine(uid(), {title, emoji:emoji||emojiMap[category]||'🔁', category:category||'custom', subs});
   routines.push(r);
   saveRoutines();
   syncPush('routines', r.id, r);
@@ -1759,7 +1774,8 @@ function ensureDailyTasks(){
       if(!tasks.find(t=>t.id===tid)){
         const now = Date.now();
         const t = {id:tid, title:r.title, emoji:r.emoji||'📝', category:r.category||'custom',
-                   date:d, done:false, doneAt:null, createdAt:now, updatedAt:now};
+                   date:d, done:false, doneAt:null,
+                   subs:(r.subs||[]).map(x=>({id:uid(), text:x, done:false})), createdAt:now, updatedAt:now};
         tasks.push(t);
         syncPush('tasks', t.id, t);
         changed = true;
@@ -1770,6 +1786,19 @@ function ensureDailyTasks(){
     if(!r.lastGen || r.lastGen < endISO){ r.lastGen = endISO; r.updatedAt = Date.now(); syncPush('routines', r.id, r); changed = true; }
   });
   if(changed){ save(); saveRoutines(); }
+}
+/* Legges inn én gang for hele husholdningen (merke på serveren hindrer at den
+   kommer tilbake fra den andre telefonen hvis den slettes). */
+function maybeSeedFryser(remote){
+  if(fixMeta.fryser) return;
+  const remoteDone = remote && remote.fixmeta && remote.fixmeta.fryser;
+  if(!remoteDone && !routines.find(r=>r.id==='r_fryser')){
+    const r = normalizeRoutine('r_fryser', {title:'Ta opp av fryseren', emoji:'🧊', category:'custom', subs:['Melk','Grøtpinner','Brød']});
+    routines.push(r); saveRoutines(); syncPush('routines', r.id, r);
+    ensureDailyTasks();
+  }
+  fixMeta.fryser = true; saveFixMeta();
+  if(!remoteDone) syncPush('fixmeta', 'fryser', true);
 }
 function seedRoutinesOnce(){
   if(localStorage.getItem(ROUTINE_SEED_FLAG)) return;
@@ -2497,7 +2526,7 @@ function renderChips(){
     b.innerHTML = `<span class="chip-emoji">${p.emoji}</span>${p.title}`;
     b.addEventListener('click',()=>{
       b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
-      addTask(p.title, p.emoji, p.category, selectedDate);
+      addTask(p.title, p.emoji, p.category, selectedDate, p.subs);
       renderAll();
       showToast(`«${p.title}» lagt til`);
     });
@@ -3216,7 +3245,7 @@ function renderRoutinesList(){
 }
 
 /* Rad for hurtigvalg/rutine i innstillinger – med redigering på stedet */
-let rowEdit = null;   // {kind:'preset'|'routine', id, title, emoji, category}
+let rowEdit = null;   // {kind:'preset'|'routine', id, title, emoji, category, subs}
 function settingsRow(kind, item){
   const isApo = kind==='apo';
   const isPreset = kind==='preset' || isApo;
@@ -3244,6 +3273,10 @@ function settingsRow(kind, item){
       b.addEventListener('click',()=>{ rowEdit.category = c.id; renderSettings(); });
       cp.appendChild(b);
     });
+    const si = document.createElement('input'); si.type='text'; si.className='field-input pr-edit-subs';
+    si.maxLength=300; si.value=rowEdit.subs||''; si.autocomplete='off'; si.placeholder='Underpunkter, skill med komma';
+    si.setAttribute('aria-label','Underpunkter'); si.setAttribute('enterkeyhint','done');
+    si.addEventListener('input',()=>{ rowEdit.subs = si.value; });
     const act = document.createElement('div'); act.className='pr-actions';
     const cancel = document.createElement('button'); cancel.type='button'; cancel.textContent='Avbryt';
     cancel.addEventListener('click',()=>{ rowEdit=null; renderSettings(); });
@@ -3252,23 +3285,26 @@ function settingsRow(kind, item){
       const title = (rowEdit.title||'').trim();
       if(!title){ showToast('Skriv et navn'); return; }
       const patch = {title, emoji: rowEdit.emoji || item.emoji || fallbackEmoji, category: rowEdit.category};
+      if(!isApo) patch.subs = splitSubs(rowEdit.subs);
       if(isPreset) updatePreset(item.id, patch); else updateRoutine(item.id, patch);
       rowEdit = null; renderSettings(); renderChips(); renderShopChips();
       showToast(isPreset ? 'Hurtigvalg oppdatert' : 'Rutine oppdatert');
     };
     saveBtn.addEventListener('click', doSave);
     ti.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSave(); } });
+    si.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSave(); } });
     act.appendChild(cancel); act.appendChild(saveBtn);
-    row.appendChild(top); if(!isApo) row.appendChild(cp); row.appendChild(act);
+    row.appendChild(top); if(!isApo){ row.appendChild(si); row.appendChild(cp); } row.appendChild(act);
     return row;
   }
   const cat = catById(item.category);
   row.className = 'preset-row';
-  const startEdit = ()=>{ rowEdit = {kind, id:item.id, title:item.title, emoji:item.emoji||'', category:item.category}; renderSettings(); };
+  const startEdit = ()=>{ rowEdit = {kind, id:item.id, title:item.title, emoji:item.emoji||'', category:item.category, subs:(item.subs||[]).join(', ')}; renderSettings(); };
   const em = document.createElement('div');
   em.className='pr-emoji'; em.style.background = isApo ? 'var(--card)' : cat.fill; em.textContent=item.emoji||fallbackEmoji;
   const ti = document.createElement('div');
   ti.className='pr-title tap'; ti.textContent=item.title; ti.title='Trykk for å endre';
+  if(!isApo && item.subs && item.subs.length){ const sm = document.createElement('div'); sm.className='pr-subs'; sm.textContent = item.subs.join(' · '); ti.appendChild(sm); }
   ti.addEventListener('click', startEdit);
   const ed = document.createElement('button');
   ed.type='button'; ed.className='pr-del pr-edit'; ed.textContent='✎';
@@ -4401,7 +4437,8 @@ document.getElementById('addPresetBtn').addEventListener('click',()=>{
   const e = document.getElementById('presetEmoji').value.trim();
   if(!t){ showToast('Skriv et navn'); return; }
   const emojiMap = {dog:'🐾',baby:'🍼',cleaning:'🧽',laundry:'🧺',custom:'📝'};
-  addPreset(t, e || emojiMap[presetCat] || '📝', presetCat);
+  addPreset(t, e || emojiMap[presetCat] || '📝', presetCat, null, splitSubs(document.getElementById('presetSubs').value));
+  document.getElementById('presetSubs').value='';
   document.getElementById('presetTitle').value='';
   document.getElementById('presetEmoji').value='';
   renderSettings(); renderChips();
@@ -4430,7 +4467,8 @@ document.getElementById('addRoutineBtn').addEventListener('click',()=>{
   const t = document.getElementById('routineTitle').value.trim();
   const e = document.getElementById('routineEmoji').value.trim();
   if(!t){ showToast('Skriv et navn'); return; }
-  addRoutine(t, e || undefined, routineCat);
+  addRoutine(t, e || undefined, routineCat, splitSubs(document.getElementById('routineSubs').value));
+  document.getElementById('routineSubs').value='';
   document.getElementById('routineTitle').value='';
   document.getElementById('routineEmoji').value='';
   renderSettings(); renderAll();
@@ -4529,6 +4567,7 @@ function normalizePreset(id, d){
   d = d || {};
   const p = {id, title:d.title||'', emoji:d.emoji||'📝', category:d.category||'custom', createdAt:d.createdAt||Date.now()};
   if(d.list==='apotek') p.list = 'apotek';
+  const ps = normSubTexts(d.subs); if(ps.length) p.subs = ps;
   return p;
 }
 
@@ -4749,7 +4788,8 @@ function onStream(raw, isPatch){
     pendingMerge = false;
     applyingRemote = false;
     save(); savePresets(); saveCategories(); saveShop(); saveMeds(); saveMedLog(); saveRoutines(); saveFix();
-    maybeSeedFix(p.data || {});     // legg inn startlista én gang for hele husholdningen
+    maybeSeedFix(p.data || {});
+    try{ maybeSeedFryser(p.data || {}); }catch(e){}     // legg inn startlista én gang for hele husholdningen
     ensureDailyTasks();             // generer dagens rutine-oppgaver for synkede rutiner
     pushAllLocal();                 // last opp lokale-only elementer (fire & forget)
     setSyncState('on');
@@ -4870,7 +4910,7 @@ seedRoutinesOnce();      // forhåndsfyll de faste daglige rutinene (kun første
 ensureDailyTasks();      // legg inn dagens forekomster
 fix = loadFix();
 const _inv = (location.hash||'').indexOf('sync=')>=0;
-if(!(syncConf.enabled && syncConf.url && syncConf.code) && !_inv) maybeSeedFix(null);   // med synk: venter på første snapshot
+if(!(syncConf.enabled && syncConf.url && syncConf.code) && !_inv){ maybeSeedFix(null); maybeSeedFryser(null); }   // med synk: venter på første snapshot
 renderAll();
 
 /* Renovasjon: oppfrisk hentedatoer i bakgrunnen (henter kun ved behov) */
